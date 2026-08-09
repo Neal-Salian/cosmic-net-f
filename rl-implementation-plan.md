@@ -299,7 +299,8 @@ class EdgePolicyNet(nn.Module):
         u, v = edge_index
         nu = F.leaky_relu(self.node_proj(node_emb[u]), 0.1)       # [E,H]
         nv = F.leaky_relu(self.node_proj(node_emb[v]), 0.1)       # [E,H]
-        c = context.unsqueeze(0).expand(e.size(0), -1)            # [E,H]
+        c = F.leaky_relu(self.node_proj(context.unsqueeze(0)), 0.1)  # [1,H]
+        c = c.expand(e.size(0), -1)                               # [E,H]
         h = torch.cat([nu, nv, e, c], dim=-1)                     # [E,4H]
         return self.fc(h)                                          # [E,1]
 
@@ -406,8 +407,9 @@ def test_sparsity_curriculum_guides_keeps():
     assert r_at_target > r_keeps_all
 
 def test_virial_penalty():
-    p_bad = virial_ratio_pruned(ke_retained=2.0, pe_retained=0.5)   # ratio 8.0 -> penalty
-    p_good = virial_ratio_pruned(ke_retained=1.0, pe_retained=1.0)  # ratio 1.0 -> 0
+    assert virial_ratio_pruned(ke_retained=2.0, pe_retained=0.5) == 8.0  # ratio
+    p_bad = virial_penalty(ke_retained=2.0, pe_retained=0.5)   # ratio 8.0 -> penalty > 0
+    p_good = virial_penalty(ke_retained=1.0, pe_retained=2.0)  # ratio 1.0 -> penalty 0
     assert p_bad > 0 and p_good == 0
 
 def test_connectivity_penalty():
@@ -513,13 +515,15 @@ def test_pg_loss_encourages_positive_advantage_actions():
                             entropy=torch.zeros(1))[0]
     assert l_good.item() < l_bad.item()
 
-def test_pg_loss_clips_negative_advantage():
+def test_pg_loss_decreases_negative_advantage_action_prob():
     # Negative advantage must DECREASE the prob of the sampled action.
+    # d(loss)/d(logp) = -adv > 0 → minimizing the loss pushes logp DOWN.
     adv = torch.tensor([-1.0])
-    logp = torch.tensor([-0.5])
+    logp = torch.tensor([-0.5], requires_grad=True)
     l = compute_pg_loss(logp, adv, torch.zeros(1), torch.zeros(1),
                         entropy=torch.zeros(1))[0]
-    assert l.item() > 0
+    l.backward()
+    assert logp.grad.item() > 0
 ```
 
 - [ ] **Step 2: Run tests, verify FAIL** (`ModuleNotFoundError: No module named 'rls.policy_gradient'`)
@@ -650,9 +654,9 @@ def test_hard_mask_respects_min_keep():
 def test_repair_connectivity_no_isolated_nodes():
     N, E = 5, 4
     edge_index = torch.tensor([[0, 1, 2, 3], [1, 2, 3, 4]])  # path graph
-    mask = torch.tensor([1, 1, 0, 0])        # node 4 loses its only edge
+    mask = torch.tensor([1, 1, 0, 0])        # nodes 3 and 4 lose all edges
     repaired = repair_connectivity(edge_index, mask)
-    assert repaired.sum() == mask.sum()      # repair adds exactly the needed edges
+    assert (repaired >= mask).all()          # repair only ADDS edges
     # every node must have degree >= 1
     deg = torch.zeros(N)
     for i in range(repaired.shape[0]):

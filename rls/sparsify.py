@@ -4,13 +4,14 @@ import torch
 
 def hard_mask(probs, min_keep_frac=0.1):
     """Threshold at 0.5, then force-keep the top-k highest-prob edges so the
-    kept fraction is at least min_keep_frac."""
-    mask = (probs >= 0.5).long()
+    kept fraction is at least min_keep_frac. Returns a BOOL mask — boolean
+    indexing everywhere (edge_index[:, mask]) requires bool, not 0/1 long."""
+    mask = (probs >= 0.5)
     k_min = int(torch.ceil(torch.tensor(min_keep_frac) * probs.numel()))
     if mask.sum() < k_min:
         top = torch.topk(probs, k_min).indices
-        mask = torch.zeros_like(mask)
-        mask[top] = 1
+        mask = torch.zeros_like(mask, dtype=torch.bool)
+        mask[top] = True
     return mask
 
 
