@@ -7,6 +7,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from rls.sparsify import hard_mask, repair_connectivity
 
 
 def _r2(a, b):
@@ -82,3 +83,55 @@ def save_paper_plots(rows, out_dir="outputs/rls"):
     plt.close(fig)
     df.to_csv(os.path.join(out_dir, "results_table.csv"), index=False)
     return df
+
+
+def evaluate_tta(policy, graphs, gnn, cfg, device, ks=(0, 5, 10, 20),
+                 inits=("offline",), target_sparsity=0.5):
+    """Run TTA at several K values on every graph; labels used ONLY for the
+    final RMSE (never in the reward). Returns rows for the paper table:
+    {mode, K, init, rmse, fidelity, keep_frac, mean_steps, mean_time_s}."""
+    import time
+    from rls.tta import adapt_at_test_time
+    rows = []
+    for init in inits:
+        for k in ks:
+            preds, fulls, ys, keeps, steps, secs = [], [], [], [], [], []
+            for g in graphs:
+                gd = {kk: v.to(device) for kk, v in g.items()
+                      if isinstance(v, torch.Tensor)}
+                t0 = time.time()
+                if k == 0 or init == "frozen":  # FROZEN mode: no adaptation
+                    with torch.no_grad():
+                        p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"],
+                                                 gd["edge_index"], gd["ctx"])).squeeze(-1)
+                        mask = repair_connectivity(
+                            gd["edge_index"],
+                            hard_mask(p, cfg.get("min_keep_frac", 0.1)))
+                else:
+                    mask, info = adapt_at_test_time(policy, gd, gnn, cfg, device,
+                                                    init=init,
+                                                    target_sparsity=target_sparsity)
+                    steps.append(info["steps_run"])
+                # predict with frozen GNN on adapted mask
+                from torch_geometric.data import Data, Batch
+                d = Data(x=gd["x"], edge_index=gd["edge_index"][:, mask],
+                         edge_attr=gd["edge_attr"][mask])
+                with torch.no_grad():
+                    pred, _ = gnn(Batch.from_data_list([d]))
+                    dfull = Data(x=gd["x"], edge_index=gd["edge_index"],
+                                 edge_attr=gd["edge_attr"])
+                    pred_full, _ = gnn(Batch.from_data_list([dfull]))
+                secs.append(time.time() - t0)
+                preds.append(float(pred.view(-1)[0])); fulls.append(float(pred_full.view(-1)[0]))
+                ys.append(float(gd["y"].view(-1)[0])); keeps.append(float(mask.float().mean()))
+            import numpy as np
+            preds, fulls, ys = np.array(preds), np.array(fulls), np.array(ys)
+            rows.append({
+                "mode": "frozen" if k == 0 else "tta", "K": k, "init": init,
+                "rmse": float(np.sqrt(((preds - ys) ** 2).mean())),
+                "fidelity": float(np.corrcoef(preds, fulls)[0, 1]) if len(preds) > 1 else float("nan"),
+                "keep_frac": float(np.mean(keeps)),
+                "mean_steps": float(np.mean(steps)) if steps else 0.0,
+                "mean_time_s": float(np.mean(secs)),
+            })
+    return rows
