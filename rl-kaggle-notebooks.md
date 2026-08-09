@@ -1,8 +1,13 @@
 # RL-Cosmic-Net — Kaggle GPU Notebooks
 
-Three complete notebooks, each with copy-paste cells. Upload `tng100_clustered.csv` and `best_model_augmented.pt` as a private Kaggle dataset first, then create 3 notebooks (GPU accelerator, internet ON) and paste each section's cells in order.
+Four complete notebooks, each with copy-paste cells. Upload `tng100_clustered.csv` and `best_model_augmented.pt` as a private Kaggle dataset first, then create 4 notebooks (GPU accelerator, internet ON) and paste each section's cells in order.
 
-> **Important:** these notebooks are self-contained (they inline the small RL helper functions so they run even before the `rls/` package is pushed). Once `rls/` exists in the repo, you may replace the inline definitions with `from rls import ...`.
+- **A** — setup, data, graphs, baselines (incl. mass-ratio + gradient-saliency)
+- **B** — offline policy training (Stage A) + optional GNN fine-tune (Stage B)
+- **C** — evaluation, physics validation, cross-sim, plots
+- **D** — **RL at inference (TTA)**: label-free reward, frozen-vs-TTA in-domain and OOD, K ablation — the headline results
+
+> **Important:** these notebooks are self-contained (they inline the small RL helper functions so they run even before the `rls/` package is pushed). Once `rls/` exists in the repo, you may replace the inline definitions with `from rls import ...`. All notebook code follows the corrected plan: policy gradient (REINFORCE + baseline, honestly NOT PPO), real PyG `Batch` wrapping, `(preds, embeds)` tuple unpacking, and gradients actually flowing to the policy.
 
 ---
 
@@ -50,13 +55,15 @@ cfg["data"]["num_workers"] = 0          # Kaggle/Win-safe
 cfg["data"]["batch_size"] = 16
 cfg["model"]["mc_samples"] = 30
 cfg["rls"] = {
-    "policy_hidden": 64, "lr": 0.001, "clip_eps": 0.2, "gamma": 0.99,
-    "gae_lambda": 0.95, "entropy_coef": 0.01, "value_coef": 0.5,
+    "policy_hidden": 64, "lr": 0.001, "entropy_coef": 0.01, "value_coef": 0.5,
     "epochs": 60, "batch_size": 32,
     "target_sparsity_start": 0.9, "target_sparsity_end": 0.4,
     "sparsity_anneal_epochs": 40,
-    "w_acc": 1.0, "w_sp": 0.5, "w_conn": 1.0, "w_virial": 1.0,
+    "w_acc": 1.0, "w_sp": 0.5, "w_conn": 1.0, "w_virial": 1.0, "w_unc": 0.5,
     "virial_anneal_start_epoch": 10, "min_keep_frac": 0.1, "seed": 42,
+    # TTA ("RL at inference") — tune on VAL split only, then freeze
+    "tta_lr": 1e-4, "tta_steps": 10, "tta_mc_samples": 15, "tta_patience": 3,
+    "tta_target_sparsity": 0.5,
 }
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("device:", device, "| source:", cfg["data"]["source"])
@@ -88,7 +95,7 @@ with torch.no_grad():
     single = pyg_data.Data(x=b0.x[0:2], edge_index=b0.edge_index[:, :4],
                            edge_attr=b0.edge_attr[:4])
     single.batch = torch.zeros(single.x.shape[0], dtype=torch.long)
-    pred = gnn(single)
+    pred, _ = gnn(single)   # forward returns (predictions, embeddings) tuple
 print("smoke prediction:", pred.item(), "| params:", sum(p.numel() for p in gnn.parameters()))
 ```
 
@@ -144,7 +151,7 @@ def virial_ratio_pruned(ke, pe, eps=1e-8):
 ```
 
 ```python
-# CELL 7: Baseline masks (random / degree / distance / attention-topk)
+# CELL 7: Baseline masks (random / degree / distance / mass-ratio / gradient-saliency / attention-topk)
 def random_mask(edge_index, edge_attr, pos, frac, seed=0):
     g = torch.Generator().manual_seed(seed)
     k = int(frac * edge_attr.shape[0])
@@ -168,6 +175,30 @@ def distance_mask(edge_index, edge_attr, pos, frac):
     m[torch.topk(-d, int(frac*n)).indices] = True
     return m
 
+def mass_ratio_mask(edge_index, edge_attr, pos, frac, idx=3):
+    # DEGENERATE-shortcut baseline: keep highest mass_ratio edges (feature 3).
+    # RL must beat this for the U_ij alignment claim to mean anything.
+    n = edge_index.shape[1]
+    m = torch.zeros(n, dtype=torch.bool)
+    m[torch.topk(edge_attr[:, idx], int(frac*n)).indices] = True
+    return m
+
+def gradient_saliency_mask(edge_index, edge_attr, pos, frac, graph=None):
+    # The repo's existing explainer pathway (explain/explainer.py), used as the
+    # mandatory 'why RL?' control: gradient importance on node features.
+    n = edge_index.shape[1]
+    g = graph
+    x = g.x.clone().requires_grad_(True)
+    d = pg.Data(x=x, edge_index=g.edge_index, edge_attr=g.edge_attr)
+    d.batch = torch.zeros(x.shape[0], dtype=torch.long, device=device)
+    pred, _ = gnn(d)
+    pred.backward()
+    ng = x.grad.abs().sum(dim=1)
+    scores = (ng[edge_index[0]] + ng[edge_index[1]]) / 2
+    m = torch.zeros(n, dtype=torch.bool)
+    m[torch.topk(scores, int(frac*n)).indices] = True
+    return m
+
 def attention_topk_mask(edge_index, edge_attr, pos, frac, scores):
     m = torch.zeros(edge_index.shape[1], dtype=torch.bool)
     m[torch.topk(scores, int(frac*edge_index.shape[1])).indices] = True
@@ -184,20 +215,25 @@ def pred_for_mask(graph, mask):
                 edge_attr=graph.edge_attr[mask])
     g.batch = torch.zeros(g.x.shape[0], dtype=torch.long)
     with torch.no_grad():
-        return gnn(g).item()
+        pred, _ = gnn(g)          # forward returns (predictions, embeddings)
+        return pred.item()
 
 results = []
 fractions = [0.1, 0.25, 0.4, 0.6, 0.8, 1.0]
 for frac in fractions:
     for name, mask_fn in [("random", random_mask), ("degree", degree_mask),
-                          ("distance", distance_mask)]:
+                          ("distance", distance_mask), ("mass_ratio", mass_ratio_mask),
+                          ("grad_saliency", gradient_saliency_mask)]:
         preds, targets, keeps = [], [], []
         for b in test_loader:
             b = b.to(device)
             for i in range(b.num_graphs):
                 g = b.get_example(i)
                 pos = g.pos if hasattr(g, "pos") else g.x[:, :3]
-                mask = mask_fn(g.edge_index, g.edge_attr, pos, frac)
+                if name == "grad_saliency":
+                    mask = mask_fn(g.edge_index, g.edge_attr, pos, frac, graph=g)
+                else:
+                    mask = mask_fn(g.edge_index, g.edge_attr, pos, frac)
                 preds.append(pred_for_mask(g, mask))
                 targets.append(g.y.item())
                 keeps.append(mask.float().mean().item())
@@ -227,7 +263,7 @@ print("saved outputs/rls/baselines_pareto.png")
 
 ---
 
-# NOTEBOOK B — PPO Policy Training (Stage A) + GNN Fine-tune (Stage B)
+# NOTEBOOK B — Offline Policy Training (Stage A) + GNN Fine-tune (Stage B, optional)
 
 *(Cells 1–5 identical to Notebook A. Start from Cell 6 below.)*
 
@@ -235,6 +271,7 @@ print("saved outputs/rls/baselines_pareto.png")
 # CELL 6: Precompute frozen node embeddings + graph contexts for ALL graphs
 from torch_geometric.nn import global_mean_pool
 import torch_geometric.data as pg
+import pandas as pd   # used by the training-log save in Cell 10
 
 gnn.eval()
 def prepare(loader):
@@ -264,7 +301,8 @@ print("train graphs:", len(train_graphs), "| ctx dim:", train_graphs[0]["ctx"].s
 ```
 
 ```python
-# CELL 7: PPO helpers (GAE + clipped loss + value net)
+# CELL 7: Policy-gradient helpers (REINFORCE + learned baseline — honestly NOT PPO:
+# one-step MDP => no GAE, no importance ratio; advantage = reward - baseline)
 class ValueNet(nn.Module):
     def __init__(self, emb_dim, hidden_dim=64):
         super().__init__()
@@ -273,15 +311,12 @@ class ValueNet(nn.Module):
                                  nn.Linear(hidden_dim, 1))
     def forward(self, ctx): return self.net(ctx).squeeze(-1)
 
-def compute_gae(rewards, values, gamma=0.99, lam=0.95):
-    T = rewards.shape[0]
-    adv = torch.zeros_like(rewards); gae = 0.0
-    for t in reversed(range(T)):
-        nv = values[t+1] if t+1 < T else torch.zeros_like(values[t])
-        delta = rewards[t] + gamma*nv - values[t]
-        gae = delta + gamma*lam*gae
-        adv[t] = gae
-    return adv
+def compute_advantages(rewards, values):
+    return rewards - values.detach()
+
+def bernoulli_entropy(p, eps=1e-8):
+    p = p.clamp(eps, 1.0 - eps)
+    return -(p * torch.log(p) + (1 - p) * torch.log(1 - p))
 ```
 
 ```python
@@ -319,7 +354,8 @@ def gnns_adapter(g, mask):
         d = pg.Data(x=g["x"], edge_index=edge_index, edge_attr=edge_attr)
         d.batch = torch.zeros(d.x.shape[0], dtype=torch.long, device=device)
         with torch.no_grad():
-            return gnn(d).view(-1)
+            pred, _ = gnn(d)      # forward returns (predictions, embeddings)
+            return pred.view(-1)
     mask = mask.to(device)
     pred_full = run(g["edge_index"], g["edge_attr"])
     pred_pruned = run(g["edge_index"][:, mask], g["edge_attr"][mask])
@@ -327,7 +363,11 @@ def gnns_adapter(g, mask):
 ```
 
 ```python
-# CELL 10: PPO training loop (Stage A) — ~20-30 min on T4
+# CELL 10: Policy-gradient training loop (Stage A) — ~20-30 min on T4
+# REINFORCE + learned baseline (one-step MDP: no GAE, no importance ratio).
+# GRADIENT FLOW (the bug class the review caught): the policy forward pass runs
+# OUTSIDE torch.no_grad() so loss.backward() reaches policy.parameters().
+# Only masks/GNN/rewards are under no_grad.
 rls = cfg["rls"]
 policy = EdgePolicyNet(edge_dim=cfg["graph"]["edge_features"].__len__(),
                        node_emb_dim=cfg["model"]["output_dim"],
@@ -341,7 +381,7 @@ def target_sparsity(epoch):
     return rls["target_sparsity_start"] + (rls["target_sparsity_end"] - rls["target_sparsity_start"]) * p
 
 log = []
-best_val = float("inf")
+vrmse = float("inf")
 for epoch in range(rls["epochs"]):
     ts = target_sparsity(epoch)
     order = torch.randperm(len(train_graphs)).tolist()
@@ -349,44 +389,42 @@ for epoch in range(rls["epochs"]):
     for start in range(0, len(train_graphs), rls["batch_size"]):
         batch = [train_graphs[i] for i in order[start:start + rls["batch_size"]]]
         if not batch: continue
-        advs, old_lp, new_lp, vals, rets = [], [], [], [], []
+        logps, ents, vals, rews = [], [], [], []
         for g in batch:
             ctx = g["ctx"].to(device)
+            # --- grad-carrying: policy + value net forwards ---
+            probs = torch.sigmoid(policy(g["edge_attr"].to(device), g["emb"].to(device),
+                                         g["edge_index"].to(device), ctx)).squeeze(-1)
+            action = torch.bernoulli(probs)
+            logps.append(bernoulli_logp(probs, action).mean())
+            ents.append(bernoulli_entropy(probs).mean())
+            v = value_net(ctx)
+            vals.append(v)
+            # --- no-grad: masks, GNN forwards, physics, rewards ---
             with torch.no_grad():
-                probs = torch.sigmoid(policy(g["edge_attr"].to(device), g["emb"].to(device),
-                                             g["edge_index"].to(device), ctx)).squeeze(-1)
-                action = torch.bernoulli(probs)
-                old_lp.append(bernoulli_logp(probs, action).mean())
-                hard = hard_mask(probs, rls["min_keep_frac"])
-                hard = repair_connectivity(g["edge_index"].to(device), hard)
+                hard = repair_connectivity(g["edge_index"].to(device),
+                                           hard_mask(probs, rls["min_keep_frac"]))
                 pf, pp = gnns_adapter(g, hard)
                 ke, pe = graph_physics_terms(g, hard)
                 vp = ((virial_ratio_pruned(ke, pe) - 1).clamp(min=0.0) ** 2) if rls["w_virial"] > 0 else torch.zeros(1, device=device)
-                deg0 = torch.zeros(g["x"].shape[0], device=device)
-                deg0.index_add_(0, g["edge_index"][0].to(device), torch.ones(g["edge_index"].shape[1], device=device))
-                deg1 = torch.zeros_like(deg0)
-                deg1.index_add_(0, g["edge_index"][0, hard].to(device), torch.ones(hard.sum(), device=device))
-                conn_ok = bool((hard.sum() > 0) and (deg1 >= 1).all())
+                deg = torch.zeros(g["x"].shape[0], device=device)
+                deg.index_add_(0, g["edge_index"][0, hard].to(device), torch.ones(hard.sum(), device=device))
+                deg.index_add_(0, g["edge_index"][1, hard].to(device), torch.ones(hard.sum(), device=device))
+                conn_ok = bool((hard.sum() > 0) and (deg >= 1).all())
                 r = compute_rewards(pp, pf, g["y"].to(device), hard.float().mean(), ts, vp, rls, conn_ok)
-                v = value_net(ctx)
-                advs.append(compute_gae(r.view(1), v.view(1), rls["gamma"], rls["gae_lambda"]))
-                vals.append(v); rets.append((r + rls["gamma"]*v).detach())
-            probs = probs.detach().requires_grad_(True)
-            with torch.no_grad():
-                new_logp = bernoulli_logp(probs, action).mean()
-            new_lp.append(new_logp)
-        adv = torch.stack(advs).squeeze(-1)
-        adv = (adv - adv.mean()) / (adv.std() + 1e-8)
-        old = torch.stack(old_lp); new = torch.stack(new_lp)
-        ratio = torch.exp(new - old)
-        pg_loss = -torch.min(ratio*adv, torch.clamp(ratio, 1-rls["clip_eps"], 1+rls["clip_eps"])*adv).mean()
-        vals2 = torch.stack(vals); rets2 = torch.stack(rets)
-        vf_loss = F.mse_loss(vals2, rets2.detach())
-        entropy = -torch.mean(torch.sigmoid(torch.randn_like(new)) * torch.log(torch.sigmoid(torch.randn_like(new)) + 1e-8))  # placeholder entropy on Bernoulli means
-        loss = pg_loss + rls["value_coef"]*vf_loss - rls["entropy_coef"]*entropy
-        opt.zero_grad(); loss.backward(); torch.nn.utils.clip_grad_norm_(policy.parameters(), 1.0); opt.step()
+            rews.append(r.view(1))
+        logp = torch.stack(logps); ent = torch.stack(ents).mean()
+        values = torch.stack(vals); rewards = torch.cat(rews)
+        adv = compute_advantages(rewards, values)
+        # policy update (REINFORCE + entropy)
+        pg_total = -(adv.detach() * logp).mean() - rls["entropy_coef"] * ent
+        opt.zero_grad(); pg_total.backward()
+        torch.nn.utils.clip_grad_norm_(policy.parameters(), 1.0); opt.step()
+        # baseline (value net) update
+        vf_loss = F.mse_loss(values, rewards.detach())
         vopt.zero_grad(); vf_loss.backward(); vopt.step()
-        ep_loss.append(loss.item()); ep_rewards.append(r.item())
+        ep_loss.append((pg_total.detach() + vf_loss.detach()).item())
+        ep_rewards.append(float(rewards.mean()))
     log.append([epoch, ts, float(np.mean(ep_loss)), float(np.mean(ep_rewards))])
     # validation: mean keep-fraction vs target, val RMSE on pruned graphs
     if epoch % 10 == 0:
@@ -404,7 +442,7 @@ for epoch in range(rls["epochs"]):
               f"keep={np.mean(keeps):.2f} (target {ts:.2f}) valRMSE={vrmse:.4f}")
         torch.save(policy.state_dict(), "outputs/rls/policy.pt")
         torch.save(value_net.state_dict(), "outputs/rls/value_net.pt")
-print("Stage A done. Best val RMSE:", vrmse)
+print("Stage A done. Last val RMSE:", vrmse)
 pd.DataFrame(log, columns=["epoch", "target_sp", "loss", "reward"]).to_csv("outputs/rls/training_log.csv", index=False)
 ```
 
@@ -427,7 +465,7 @@ for epoch in range(10):
     for g, m in zip(ft_graphs, masks):
         gx = pg.Data(x=g["x"], edge_index=g["edge_index"][:, m], edge_attr=g["edge_attr"][m])
         gx.batch = torch.zeros(gx.x.shape[0], dtype=torch.long, device=device)
-        pred = gnn(gx)
+        pred, _ = gnn(gx)
         loss = F.mse_loss(pred, g["y"].to(device).float())
         ft_opt.zero_grad(); loss.backward(); torch.nn.utils.clip_grad_norm_(gnn.parameters(), 1.0); ft_opt.step()
         losses.append(loss.item())
@@ -453,10 +491,12 @@ with torch.no_grad():
             m = repair_connectivity(g.edge_index, hard_mask(p, rls["min_keep_frac"]))
             d = pg.Data(x=g.x, edge_index=g.edge_index[:, m], edge_attr=g.edge_attr[m])
             d.batch = torch.zeros(n, dtype=torch.long, device=device)
-            preds_pol.append(gnn(d).item()); targets.append(g.y.item())
+            p_pol, _ = gnn(d)
+            preds_pol.append(p_pol.item()); targets.append(g.y.item())
             dfull = pg.Data(x=g.x, edge_index=g.edge_index, edge_attr=g.edge_attr)
             dfull.batch = torch.zeros(n, dtype=torch.long, device=device)
-            preds_full.append(gnn(dfull).item())
+            p_full, _ = gnn(dfull)
+            preds_full.append(p_full.item())
 preds_pol = torch.tensor(preds_pol); preds_full = torch.tensor(preds_full); targets = torch.tensor(targets)
 mp, mf = MetricsComputer.compute_all(preds_pol, targets), MetricsComputer.compute_all(preds_full, targets)
 print(f"FULL  graph: RMSE={mf['rmse']:.4f} R2={mf['r2']:.4f}")
@@ -545,19 +585,24 @@ try:
     gb2 = GraphBuilder(cfg2)
     graphs2 = gb2.build_graphs(halos2[:100])
     predsF, predsP, ys = [], [], []
+    from torch_geometric.data import Batch as PyGBatch
     with torch.no_grad():
         for g in graphs2:
             g = g.to(device)
-            emb = gnn.get_embeddings(g, embedding_point="pre_pooling")
-            ctx = global_mean_pool(emb, torch.zeros(emb.shape[0], dtype=torch.long, device=device))
+            # get_embeddings/forward REQUIRE a Batch (has .batch); a bare Data crashes
+            gb = PyGBatch.from_data_list([g])
+            emb = gnn.get_embeddings(gb, embedding_point="pre_pooling")
+            ctx = global_mean_pool(emb, gb.batch)
             p = torch.sigmoid(policy(g.edge_attr, emb, g.edge_index, ctx)).squeeze(-1)
             m = repair_connectivity(g.edge_index, hard_mask(p, rls["min_keep_frac"]))
             d = pg.Data(x=g.x, edge_index=g.edge_index, edge_attr=g.edge_attr)
             d.batch = torch.zeros(g.x.shape[0], dtype=torch.long, device=device)
-            predsF.append(gnn(d).item())
+            pf, _ = gnn(d)
+            predsF.append(pf.item())
             dp = pg.Data(x=g.x, edge_index=g.edge_index[:, m], edge_attr=g.edge_attr[m])
             dp.batch = torch.zeros(g.x.shape[0], dtype=torch.long, device=device)
-            predsP.append(gnn(dp).item())
+            pp, _ = gnn(dp)
+            predsP.append(pp.item())
             ys.append(g.y.item())
     mf2 = MetricsComputer.compute_all(torch.tensor(predsF), torch.tensor(ys))
     mp2 = MetricsComputer.compute_all(torch.tensor(predsP), torch.tensor(ys))
@@ -607,3 +652,206 @@ print("saved outputs/rls/results_table.csv + paper_figures.png")
 shutil.make_archive("/kaggle/working/rls_outputs", "zip", "outputs/rls")
 print("Download /kaggle/working/rls_outputs.zip — contains all results, plots, policy.pt, finetuned_gnn.pt")
 ```
+
+---
+
+# NOTEBOOK D — RL at Inference (TTA): the headline results
+
+*(Cells 1–5 of A, then B's cells 6–10 — you need the trained offline policy. Do NOT run Stage B for TTA (TTA adapts the policy around the frozen backbone).)*
+
+The method: at inference, for EACH input graph, a copy of the policy takes K policy-gradient steps against a **label-free** reward (MC-dropout uncertainty reduction + sparsity + connectivity + virial), then emits the final mask. Labels are used ONLY for the final evaluation RMSE — never in the reward. FROZEN mode (K=0) is the ablation.
+
+```python
+# CELL D1: Label-free TTA reward + MC-dropout std helper
+def mc_std(model, g, edge_index=None, edge_attr=None, n_samples=15):
+    d = pg.Data(x=g["x"],
+                edge_index=edge_index if edge_index is not None else g["edge_index"],
+                edge_attr=edge_attr if edge_attr is not None else g["edge_attr"])
+    d.batch = torch.zeros(d.x.shape[0], dtype=torch.long, device=device)
+    out = model.predict_with_uncertainty(d, n_samples=n_samples)  # handles train/eval mode
+    return out["std"].view(-1)
+
+def label_free_reward(std_pruned, std_full, keep_ratio, target_sp, virial_pen, cfg, conn_ok):
+    """NO labels anywhere — that is the whole point."""
+    d_unc = (std_full - std_pruned) / (std_full + 1e-8)
+    sp = min((keep_ratio - target_sp) ** 2, 1.0)
+    cb = 1.0 if conn_ok else -1.0
+    return (cfg["w_unc"] * d_unc - cfg["w_sp"] * sp + cfg["w_conn"] * cb
+            - cfg.get("w_virial", 0.0) * virial_pen)
+```
+
+```python
+# CELL D2: adapt_at_test_time — K policy-gradient steps per graph (deep copy; offline policy untouched)
+import copy, time
+
+def adapt_at_test_time(policy, g, cfg, init="offline", target_sp=None, log=False):
+    target_sp = target_sp if target_sp is not None else cfg["tta_target_sparsity"]
+    if init == "offline":
+        pol = copy.deepcopy(policy).to(device)
+    else:  # 'fresh' ablation
+        torch.manual_seed(cfg.get("seed", 42))
+        pol = EdgePolicyNet(edge_dim=g["edge_attr"].shape[1],
+                            node_emb_dim=g["emb"].shape[1],
+                            hidden_dim=cfg.get("policy_hidden", 64)).to(device)
+    t_opt = torch.optim.Adam(pol.parameters(), lr=cfg["tta_lr"])
+    g = {k: v.to(device) for k, v in g.items() if isinstance(v, torch.Tensor)}
+    with torch.no_grad():
+        std_full = mc_std(gnn, g, n_samples=cfg["tta_mc_samples"])   # cache once
+    baseline, best_r, stall, hist = 0.0, -1e9, 0, []
+    for step in range(cfg["tta_steps"]):
+        probs = torch.sigmoid(pol(g["edge_attr"], g["emb"], g["edge_index"], g["ctx"])).squeeze(-1)
+        action = torch.bernoulli(probs)
+        logp = bernoulli_logp(probs, action).mean()
+        ent = bernoulli_entropy(probs).mean()
+        with torch.no_grad():
+            m = repair_connectivity(g["edge_index"], hard_mask(probs, cfg["min_keep_frac"]))
+            std_pr = mc_std(gnn, g, g["edge_index"][:, m], g["edge_attr"][m],
+                            n_samples=cfg["tta_mc_samples"])
+            ke, pe = graph_physics_terms(g, m)
+            vp = ((virial_ratio_pruned(ke, pe) - 1).clamp(min=0.0) ** 2) if cfg["w_virial"] > 0 else torch.zeros(1, device=device)
+            deg = torch.zeros(g["x"].shape[0], device=device)
+            deg.index_add_(0, g["edge_index"][0, m], torch.ones(m.sum(), device=device))
+            deg.index_add_(0, g["edge_index"][1, m], torch.ones(m.sum(), device=device))
+            conn_ok = bool((m.sum() > 0) and (deg >= 1).all())
+            r = label_free_reward(std_pr, std_full, m.float().mean().item(), target_sp, vp, cfg, conn_ok)
+        baseline = 0.9 * baseline + 0.1 * float(r)
+        adv = float(r) - baseline
+        loss = -(adv * logp) - cfg["entropy_coef"] * ent
+        t_opt.zero_grad(); loss.backward()
+        torch.nn.utils.clip_grad_norm_(pol.parameters(), 1.0); t_opt.step()
+        hist.append(float(r))
+        stall = 0 if float(r) > best_r else stall + 1
+        best_r = max(best_r, float(r))
+        if stall >= cfg["tta_patience"]:
+            break
+        if log:
+            print(f"  tta step {step}: r={float(r):.4f}")
+    with torch.no_grad():
+        p = torch.sigmoid(pol(g["edge_attr"], g["emb"], g["edge_index"], g["ctx"])).squeeze(-1)
+        final = repair_connectivity(g["edge_index"], hard_mask(p, cfg["min_keep_frac"]))
+    return final, {"reward_hist": hist, "steps_run": len(hist), "best_r": best_r}
+
+def mask_to_pred(g, m):
+    d = pg.Data(x=g["x"], edge_index=g["edge_index"][:, m], edge_attr=g["edge_attr"][m])
+    d.batch = torch.zeros(d.x.shape[0], dtype=torch.long, device=device)
+    with torch.no_grad():
+        pred, _ = gnn(d)
+        return pred.item()
+```
+
+```python
+# CELL D3: In-domain TTA — frozen (K=0) vs TTA (K ablation) on the TNG test set
+# Uses test_graphs (from Notebook B cell 6: dicts with x/edge_index/edge_attr/y/ctx/emb/pos/...)
+tta_rows = []
+for K in [0, 5, 10, 20]:
+    preds, fulls, ys, keeps, steps, secs, hists = [], [], [], [], [], [], []
+    for g in test_graphs:
+        gd = {k: v.to(device) for k, v in g.items() if isinstance(v, torch.Tensor)}
+        t0 = time.time()
+        if K == 0:  # FROZEN mode
+            with torch.no_grad():
+                p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"], gd["edge_index"], gd["ctx"])).squeeze(-1)
+                m = repair_connectivity(gd["edge_index"], hard_mask(p, rls["min_keep_frac"]))
+            info = {"steps_run": 0, "reward_hist": []}
+        else:
+            m, info = adapt_at_test_time(policy, g, rls, init="offline")
+        secs.append(time.time() - t0)
+        preds.append(mask_to_pred(gd, m)); ys.append(float(gd["y"].view(-1)[0]))
+        with torch.no_grad():
+            dfull = pg.Data(x=gd["x"], edge_index=gd["edge_index"], edge_attr=gd["edge_attr"])
+            dfull.batch = torch.zeros(dfull.x.shape[0], dtype=torch.long, device=device)
+            pf, _ = gnn(dfull)
+        fulls.append(pf.item())
+        keeps.append(float(m.float().mean())); steps.append(info["steps_run"]); hists.append(info["reward_hist"])
+    preds, fulls, ys = np.array(preds), np.array(fulls), np.array(ys)
+    row = {"mode": "frozen" if K == 0 else "tta", "K": K,
+           "rmse": float(np.sqrt(((preds - ys) ** 2).mean())),
+           "fidelity": float(np.corrcoef(preds, fulls)[0, 1]),
+           "keep_frac": float(np.mean(keeps)), "mean_steps": float(np.mean(steps)),
+           "mean_time_s": float(np.mean(secs))}
+    tta_rows.append(row)
+    print(row)
+tta_df = pd.DataFrame(tta_rows)
+tta_df.to_csv("outputs/rls/tta_indomain.csv", index=False)
+assert abs(tta_df.loc[tta_df.K == 0, "rmse"].iloc[0] - frozen_rmse) < 1e-6, \
+    "K=0 must reproduce the frozen policy EXACTLY (same policy, same mask, same repair)"
+```
+
+```python
+# CELL D4: OOD TTA — TNG-trained policy on CAMELS, frozen vs TTA (THE headline)
+# Requires REAL CAMELS HDF5 (synthetic fallback is NOT publishable).
+# Adaptation needs NO labels — that is why TTA works here and the frozen policy cannot.
+cfg2 = yaml.safe_load(open("config/config.yaml"))
+cfg2["data"]["source"] = "camels"
+cfg2["data"]["camels"] = {"suite": "IllustrisTNG", "simulation": "LH_0",
+                          "cache_dir": "/kaggle/working/camels_cache"}
+cfg2["data"]["num_workers"] = 0
+try:
+    loader2 = get_loader(cfg2)
+    halos2 = loader2.load()
+    assert getattr(loader2, "used_synthetic_fallback", False) is False, \
+        "synthetic CAMELS fallback is not publishable — patch camels_loader.py " \
+        "(plan Task 14 Step 6) and cache the real HDF5 first"
+    gb2 = GraphBuilder(cfg2)
+    graphs2 = gb2.build_graphs(halos2[:100])
+    from torch_geometric.data import Batch as PyGBatch
+    camels_graphs = []
+    with torch.no_grad():
+        for g in graphs2:
+            g = g.to(device)
+            gb = PyGBatch.from_data_list([g])
+            emb = gnn.get_embeddings(gb, embedding_point="pre_pooling")
+            ctx = global_mean_pool(emb, gb.batch)
+            n = g.x.shape[0]
+            camels_graphs.append({
+                "x": g.x, "edge_index": g.edge_index, "edge_attr": g.edge_attr, "y": g.y,
+                "ctx": ctx[0], "emb": emb,
+                "stellar_mass": g.stellar_mass if hasattr(g, "stellar_mass") else torch.ones(n, device=device) * 1e10,
+                "vel_disp": g.vel_disp if hasattr(g, "vel_disp") else torch.ones(n, device=device) * 100,
+                "half_mass_r": g.half_mass_r if hasattr(g, "half_mass_r") else torch.ones(n, device=device) * 0.01,
+                "pos": g.pos if hasattr(g, "pos") else torch.zeros(n, 3, device=device),
+            })
+    ood_rows = []
+    for mode in ["frozen", "tta"]:
+        preds, ys = [], []
+        for g in camels_graphs:
+            gd = {k: v for k, v in g.items() if isinstance(v, torch.Tensor)}
+            if mode == "frozen":
+                with torch.no_grad():
+                    p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"], gd["edge_index"], gd["ctx"])).squeeze(-1)
+                    m = repair_connectivity(gd["edge_index"], hard_mask(p, rls["min_keep_frac"]))
+            else:
+                m, info = adapt_at_test_time(policy, g, rls, init="offline")
+            preds.append(mask_to_pred(gd, m)); ys.append(float(gd["y"].view(-1)[0]))
+        preds, ys = np.array(preds), np.array(ys)
+        row = {"mode": mode, "rmse": float(np.sqrt(((preds - ys) ** 2).mean())),
+               "r2": float(1 - ((preds - ys) ** 2).sum() / ((ys - ys.mean()) ** 2).sum())}
+        ood_rows.append(row); print("CAMELS", row)
+    pd.DataFrame(ood_rows).to_csv("outputs/rls/tta_camels.csv", index=False)
+    print("HEADLINE: TTA recovers", round(ood_rows[0]["rmse"] - ood_rows[1]["rmse"], 4),
+          "dex of the frozen policy's OOD degradation")
+except Exception as e:
+    print("CAMELS OOD skipped/failed:", e)
+    print("If this is the synthetic fallback, do NOT put these numbers in the paper.")
+```
+
+```python
+# CELL D5: TTA plots + reward trajectories + save
+import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
+fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+axes[0].bar(tta_df.K.astype(str), tta_df.rmse, color=["gray"] + ["steelblue"] * 3)
+axes[0].set_xlabel("TTA steps K (0 = frozen)"); axes[0].set_ylabel("test RMSE (dex)")
+axes[0].set_title("In-domain: TTA vs frozen")
+axes[1].bar(tta_df.K.astype(str), tta_df.mean_time_s, color=["gray"] + ["darkorange"] * 3)
+axes[1].set_xlabel("TTA steps K"); axes[1].set_ylabel("adaptation time (s/graph)")
+axes[1].set_title("TTA cost")
+for h in hists[:5]:
+    if h: axes[2].plot(h, alpha=0.7)
+axes[2].set_xlabel("TTA step"); axes[2].set_ylabel("label-free reward")
+axes[2].set_title("Reward trajectories (5 graphs)")
+fig.tight_layout(); fig.savefig("outputs/rls/tta_results.png", dpi=200)
+shutil.make_archive("/kaggle/working/rls_outputs", "zip", "outputs/rls")
+print("saved outputs/rls/tta_*.csv + tta_results.png — download rls_outputs.zip")
+```
+
+> **TTA pitfalls (plan Part 4):** if TTA's test RMSE is WORSE than frozen while Δunc is positive, the uncertainty reward is being gamed → raise `w_virial`/`w_conn` or lower K. Tune (K, tta_lr, w_unc) on the VAL split only. K=0 must reproduce the frozen numbers exactly.

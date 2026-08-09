@@ -2,9 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Train a reinforcement-learned edge-selection policy that prunes noisy edges from halo graphs before GNN inference, producing (a) equal-or-better halo-mass predictions, (b) a physically meaningful "minimal skeleton" that serves as the model's intrinsic explanation, and (c) a publishable contribution for the **IEEE BigData 2026 conference** (submission Aug 21, notification Oct 24 — primary target, verified) and/or the NeurIPS 2026 ML4PS workshop (2026 CFP not yet published — unverified), then an ApJ/MNRAS journal paper.
+**Goal:** Train a reinforcement-learned edge-selection policy that prunes noisy edges from halo graphs, and — the core novelty — **adapt that policy at inference time, per input graph, using a label-free reward** ("RL at inference" / test-time structural adaptation). This produces (a) equal-or-better halo-mass predictions, (b) a physically meaningful "minimal skeleton" that serves as the model's intrinsic explanation, (c) OOD robustness the frozen offline policy cannot have (the reward needs no labels, so adaptation works on CAMELS), and (d) two papers: the **halo paper** → IEEE BigData 2026 (submission Aug 21, notification Oct 24 — verified, meets the Nov-1 constraint), then the **generic method paper** ("RL at inference for GNNs") → ICLR 2028 (Sep 2027 deadline; see Part 5B).
 
-**Architecture:** A lightweight per-edge policy network π_θ (MLP over edge features + frozen GNN node embeddings + graph context) outputs keep/drop probabilities. Trained with a **policy gradient (REINFORCE with a learned baseline + entropy bonus — honestly named, NOT PPO)** against a reward combining (1) relative RMSE improvement over the full-graph prediction, (2) a sparsity curriculum term, and (3) a virial-theorem consistency penalty. The GNN backbone (`best_model_augmented.pt`) stays frozen during policy training; a short Stage-B fine-tune of the GNN on policy-pruned graphs closes the train/test distribution shift. At inference: one policy forward pass → hard mask → sparsified graph → GNN prediction. The pruned graph *is* the explanation.
+**Architecture:** A lightweight per-edge policy network π_θ (MLP over edge features + frozen GNN node embeddings + graph context) outputs keep/drop probabilities. It is used in **two modes, always reported side by side**:
+1. **FROZEN (ablation):** policy trained offline by policy gradient (REINFORCE + learned baseline + entropy — honestly named, NOT PPO) against a label-based reward (relative RMSE + sparsity curriculum + connectivity + virial penalty), then applied unchanged at inference.
+2. **TTA (the method):** at inference, for *each input graph*, a copy of the policy takes K policy-gradient steps against a **label-free reward** — MC-dropout uncertainty reduction + sparsity + connectivity + virial penalty (none of which touch ground-truth labels) — then emits the final hard mask. This is "RL at inference": per-instance structural adaptation of the GNN's input graph.
+
+The GNN backbone (`best_model_augmented.pt`) stays frozen throughout; an optional Stage-B fine-tune closes train/test shift for the FROZEN mode only. Because the TTA reward is label-free, adaptation works identically on unlabeled OOD data (TNG→CAMELS) — the headline experiment is frozen-policy degradation vs TTA recovery on CAMELS. The pruned graph *is* the explanation.
 
 **Tech Stack:** PyTorch 2.1, PyTorch Geometric 2.4 (repo pins), numpy, pandas, matplotlib; new package `rls/` added to the existing cosmic-net repo. GPU optional for most tasks (Kaggle T4/P100 for policy training sweeps and final runs).
 
@@ -18,6 +22,8 @@
 |---|---|---|
 | Frozen backbone `best_model_augmented.pt` as feature extractor | ✅ KEEP | Correct RL-scope decision; prevents gradient divergence. |
 | RL edge-selection policy (REINFORCE/PPO) | ✅ KEEP (policy gradient, honestly named) | Novel vs PTDNet (WSDM'21, RL edge dropping, no physics) and GSAT (ICML'22, differentiable, no hard sparsity). Name it "policy gradient (REINFORCE + baseline)" — not PPO (see Phase 1 row). |
+| "RL at inference" = frozen gatekeeper | ⚠️ REPLACE with TTA as the core | A policy merely *applied* at inference is not novel — PTDNet/GSAT/PGExplainer all do that. The novel, defensible claim is **test-time adaptation**: the policy takes K policy-gradient steps per input graph at inference against a label-free reward. The frozen policy stays as the mandatory ablation row. This also subsumes the OOD story: the label-free reward works on unlabeled CAMELS graphs, where the frozen policy cannot adapt. |
+| TTA reward = uncertainty reduction + sparsity + connectivity + virial | ✅ ADD | All four terms are label-free (MC-dropout std needs no labels; virial uses stellar masses/velocities/positions, not the halo-mass target). This is what makes per-instance adaptation possible at all — a label-based reward cannot be computed at test time. The physics term is the domain paper's differentiator; the generic paper drops it (Part 5B). |
 | Reward = accuracy + sparsity + virial | ✅ KEEP, but REWORK | Accuracy must be *relative improvement* (per-graph RMSE is dominated by model error, giving a noisy reward); sparsity must be a *curriculum* (constant weight collapses policy); virial must be a *penalty* with a hard feasibility clamp, not a reward term (see 0.3). |
 | "Sparsified graph IS the explanation" | ✅ KEEP as the paper's core claim | Must be validated with fidelity, stability, and physics-alignment metrics (Part 3). |
 | Phase 0 baselines (random, attention top-k, Gumbel) | ✅ KEEP + add degree-drop and distance-drop | The Gumbel-softmax baseline is the single most important one — it is the "why RL?" control. |
@@ -37,6 +43,8 @@
 5. **LaSR (Grayeli et al., NeurIPS 2024)** — current SR SOTA on Feynman (72/100 exact vs PySR 59/100). Optional upgrade for the journal paper: use LaSR/LLM-SR on the *pruned-graph features* to rediscover the virial/Faber-Jackson relations. Not required for the workshop.
 6. **HaloGraphNet (Villanueva-Domingo et al., ApJ 2022)** — your benchmark baseline: ~0.2 dex scatter, R² 0.96–0.97 on CAMELS CV. Your current 0.137 dex RMSE on TNG already beats it on that metric; the paper must report both numbers and explain dataset differences honestly.
 7. **PGExplainer (Luo et al., NeurIPS 2020)** — the standard parameterized edge-mask explainer. You MUST benchmark against it: `explain/explainer.py` already names it as the repo's default method, but its implementation is gradient saliency, not the real algorithm (the real PyG `PGExplainer` import sits unused; `train_explainer` is a stub). The paper needs (a) a gradient-saliency row reusing the repo explainer as-is, and (b) ideally the true PGExplainer via `torch_geometric.explain`. This is the "why RL at all?" control — same frozen model, same metrics.
+8. **TENT (Wang et al., ICLR 2021)** — the canonical test-time adaptation method: entropy minimization at inference by tuning batch-norm statistics. It adapts **parameters**, not **structure**, and for images not graphs. Your differentiator: adaptation happens in the *input space* (edge masks) via RL, and the reward is not just prediction confidence — it includes a physics-consistency term that entropy minimization cannot express. Cite it as the TTA ancestor; reviewers will ask why not just run TENT on the GNN — add it as a baseline row if cheap (adapt the GNN's LayerNorm affine params at test time; 30 lines).
+9. **Graph TTA (e.g., GraphCTA; ADC/GraphACL family, 2023–24)** — test-time adaptation for GNNs exists but adapts node embeddings or model weights, typically for node classification. Per-instance *edge-structure* adaptation with an RL reward is, to our knowledge, unclaimed — that is the paper's novelty sentence. Verify with a final lit search before writing (the field moves fast).
 
 ### 0.3 Reworked reward design (the "improve it further" part)
 
@@ -56,6 +64,44 @@ r_t = α · ΔRMSE_rel + β · curriculum_sparsity + γ · connectivity_bonus �
   2. Report **both** ratios on the full graph in a calibration note (they should agree to ~10% on virialized halos; if they don't, say so).
   3. **CRITICAL confound:** `PE_retained` shrinks mechanically as edges are dropped (and `KE_retained` via the kept-degree fraction) — both terms track the sparsity *level*, not which edges were kept. A virial ratio in [0.9, 1.1] may be an artifact of pruning to ~50% and would hold for random/degree/distance baselines too. Therefore: **report the virial ratio for EVERY baseline at matched sparsity** (Part 3 table). The RL claim is only "same virial ratio at equal or better accuracy/fidelity" — never "RL achieved virial consistency".
 
+### 0.3c Label-free TTA reward (the core novelty — "RL at inference")
+
+At test time there is no ground-truth halo mass, so the offline reward (relative RMSE) cannot be computed. The TTA reward replaces the accuracy term with **uncertainty reduction** and keeps the physics term:
+
+```
+r_tta = w_unc · Δunc − w_sp · (keep_ratio − target)² + w_conn · conn − w_virial · virial_penalty
+Δunc  = (std_full − std_pruned) / (std_full + ε)
+```
+
+- `std_full`, `std_pruned`: MC-dropout predictive std of the frozen GNN on the full / pruned graph (`predict_with_uncertainty`, n_samples=15). Label-free by construction.
+- `virial_penalty`: uses stellar masses, velocity dispersions, positions — **never** the halo-mass label. Label-free by construction.
+- `conn`: +1 if no isolated nodes, −1 otherwise.
+- Sparsity target is now **fixed** (0.5), not a curriculum — TTA runs are short (K ≤ 20 steps).
+
+**Why uncertainty reduction and not prediction agreement with the full graph:** agreement rewards keeping everything (a copy is maximally "faithful"); uncertainty reduction rewards keeping the *informative* edges that stabilize the prediction, and is the regression analogue of TENT's entropy minimization. Gaming risk (masks that make the GNN overconfident-but-wrong) is handled by the virial term, connectivity term, capped K, early stopping, and choosing hyperparameters on the val split only — see Part 4 pitfalls.
+
+### 0.3d The TTA algorithm (what the paper calls "RL at inference")
+
+```
+TTA(graph g, offline policy π, frozen GNN f, config):
+    π′ ← copy(π)                      # init='offline' (or fresh init — ablation)
+    optimizer ← Adam(π′, lr=tta_lr)   # 1e-4, small
+    std_full ← MC-dropout std of f on g (cached once)
+    baseline ← 0                      # moving-average baseline
+    for k in 1..K:                    # K ≤ 20, early-stop patience 3
+        p ← σ(π′(g)); a ~ Bernoulli(p)
+        m ← repair_connectivity(hard_mask(p, min_keep_frac))
+        r ← r_tta(f, g, m, std_full)  # label-free
+        baseline ← 0.9·baseline + 0.1·r
+        loss ← −(r − baseline)·mean(log π(a)) − ent_coef·H(π)
+        optimizer.step(loss)
+    return hard_mask(greedy(π′(g)))   # final mask → pruned graph → f → prediction
+```
+
+- The policy is **never modified in place** — TTA works on a deep copy; the offline policy is untouched (needed for the frozen ablation and reproducibility).
+- Per-instance cost: K × (policy fwd + 2×mc_samples GNN fwd) ≈ 300 tiny forwards per graph at K=10 → <1 s/graph on T4. Report wall-clock in the paper.
+- Hyperparameters (K, tta_lr, w_unc) are selected on the **val split only** (labels exist there for evaluation), then frozen before test/CAMELS. Never tune on test.
+
 ### 0.4 Benchmarks to chase (targets table)
 
 | Benchmark | Metric | Target / comparison |
@@ -69,6 +115,9 @@ r_t = α · ΔRMSE_rel + β · curriculum_sparsity + γ · connectivity_bonus �
 | Interpretability | Fidelity (corr pruned vs full preds, Pearson ≥ 0.98); stability (Jaccard of kept edges across 3 seeds ≥ 0.8); runtime speedup | Report all |
 | Uncertainty | 95% MC-dropout coverage before/after pruning | Coverage change ≤ 2 pts |
 | Generality (ICLR stretch) | ogbg-molhiv / ZINC | Same framework, short sweep |
+| **TTA in-domain (TNG test)** | RMSE, fidelity, keep-frac | TTA ≥ frozen policy on all metrics; RMSE_TTA ≤ RMSE_frozen |
+| **TTA OOD (TNG→CAMELS) — headline** | RMSE_frozen vs RMSE_TTA | TTA recovers a meaningful fraction of the frozen policy's OOD degradation; the label-free reward is why adaptation is possible at all on unlabeled CAMELS. REQUIRES the real CAMELS HDF5 (synthetic fallback is NOT publishable). |
+| **TTA ablations** | K ∈ {0,5,10,20}; init ∈ {offline, fresh}; reward terms (−unc, −virial, −sparsity) | K=0 must equal frozen policy (sanity); offline init must beat fresh init; each reward term contributes |
 
 ---
 
@@ -86,14 +135,16 @@ rls/
 ├── baselines.py           # random, degree-drop, distance-drop, mass-ratio-drop, gradient-saliency, attention-topk, gumbel-mask
 ├── metrics.py             # fidelity, stability, sparsity_stats, physics_alignment (U_ij Spearman, MW test), calibration
 ├── evaluate.py            # full eval suite → CSV + PNG plots (paper-ready)
-├── stageb.py              # GNN fine-tune on policy-pruned graphs (distribution-shift fix; OPTIONAL under triage)
-├── cross_sim.py           # TNG→CAMELS OOD (only with real cached CAMELS data; synthetic fallback is NOT publishable)
+├── stageb.py              # GNN fine-tune on policy-pruned graphs (distribution-shift fix; OPTIONAL under triage; FROZEN mode only)
+├── tta.py                 # RL at inference: adapt_at_test_time (label-free reward), mc_std helper, TTA eval
+├── cross_sim.py           # TNG→CAMELS OOD, BOTH modes (frozen vs TTA) — only with real cached CAMELS data; synthetic fallback is NOT publishable
 └── run_experiment.py      # end-to-end driver
 tests/
 ├── test_policy.py
 ├── test_rewards.py
 ├── test_policy_gradient.py
-└── test_metrics.py
+├── test_metrics.py
+└── test_tta.py
 ```
 
 Modify: `config/config.yaml` (add `rls:` section), `requirements.txt` (add nothing new — pure PyTorch). No changes to existing model/graph/data code (frozen backbone means we reuse `CosmicNetGNN.forward(batch_data)` and `GraphBuilder` as-is).
@@ -109,6 +160,17 @@ Existing interfaces this plan relies on (from REPOWISE.md / repo):
 ---
 
 ## PART 2 — TASKS (TDD, bite-sized)
+
+**Phases overview:**
+
+| Phase | Tasks | Output | Deadline gate |
+|---|---|---|---|
+| **Phase 0 — Reproducibility** | Task 0 | Committed baseline config + metrics | Aug 5 (do FIRST) |
+| **Phase 1 — Offline policy** | Tasks 1–5 | Trained offline policy (FROZEN mode) | Aug 8 |
+| **Phase 2 — Baselines & metrics** | Tasks 6–9 | Baseline masks, eval suite | Aug 12 |
+| **Phase 3 — Pipeline & cross-sim** | Tasks 10–12 | End-to-end driver, CAMELS OOD | Aug 16 |
+| **Phase 4 — RL at inference (TTA)** | Tasks 13–15 | Label-free reward, TTA loop, TTA eval (the core novelty) | Aug 19 |
+| **Phase 5 — Paper** | Part 3 numbers + Part 5 venues | IEEE BigData submission | Aug 20 freeze, Aug 21 submit |
 
 ### Task 0: Commit the reproducible baseline (fix the divergence FIRST)
 
@@ -269,9 +331,16 @@ rls:
   w_sp: 0.5
   w_conn: 1.0
   w_virial: 1.0
+  w_unc: 0.5
   virial_anneal_start_epoch: 10
   min_keep_frac: 0.1
   seed: 42
+  # TTA ("RL at inference") — chosen on VAL split only, then frozen
+  tta_lr: 0.0001
+  tta_steps: 10
+  tta_mc_samples: 15
+  tta_patience: 3
+  tta_target_sparsity: 0.5
 ```
 
 - [ ] **Step 4: Run tests, verify they pass**
@@ -668,7 +737,10 @@ def test_end_to_end_policy_train_smoke():
     # tiny graphs via random tensors (policy + pg only; no GNN needed)
     graphs = [{"x": torch.randn(5, 4), "edge_index": torch.randint(0, 5, (2, 12)),
                "edge_attr": torch.randn(12, 5), "y": torch.randn(1),
-               "ctx": torch.randn(128)} for _ in range(8)]
+               "ctx": torch.randn(128),
+               "stellar_mass": torch.rand(5) * 1e10, "vel_disp": torch.rand(5) * 200,
+               "half_mass_r": torch.rand(5) * 0.01, "pos": torch.randn(5, 3)}
+              for _ in range(8)]
     policy = build_policy(cfg)
     value_net = ValueNet(128)
     opt = torch.optim.Adam(policy.parameters(), lr=1e-3)
@@ -711,10 +783,13 @@ def test_prepare_graphs_real_pyg_data():
     gnn = build_model(cfg)
     graphs = prepare_graphs(loader, gnn, "cpu")
     assert len(graphs) == 4
-    assert all(set(g.keys()) >= {"x", "edge_index", "edge_attr", "y", "ctx",
+    assert all(set(g.keys()) >= {"x", "edge_index", "edge_attr", "y", "ctx", "emb",
                                  "stellar_mass", "vel_disp", "half_mass_r", "pos"}
                for g in graphs)
     assert all(g["ctx"].shape[0] == cfg["model"]["output_dim"] for g in graphs)
+    assert all(g["emb"].shape[0] == g["x"].shape[0] for g in graphs)
+    assert all(g["emb"].shape[1] == cfg["model"]["output_dim"] for g in graphs)
+    assert all(g["emb"].device == g["x"].device for g in graphs)
     assert all(g["edge_attr"].shape[0] == g["edge_index"].shape[1] for g in graphs)
 ```
 
@@ -745,7 +820,7 @@ def _graph_physics_terms(graph, edge_index, mask, G=4.302e-9):
     stellar = graph["stellar_mass"]  # [N]
     vel_disp = graph["vel_disp"]     # [N]
     pos = graph["pos"]               # [N,3]
-    deg = torch.zeros(stellar.numel())
+    deg = torch.zeros(stellar.numel(), device=stellar.device)
     deg.index_add_(0, edge_index[0], torch.ones(edge_index.shape[1]))
     deg.index_add_(0, edge_index[1], torch.ones(edge_index.shape[1]))
     deg_ret = torch.zeros_like(deg)
@@ -759,13 +834,18 @@ def _graph_physics_terms(graph, edge_index, mask, G=4.302e-9):
     return ke, pe
 
 
-def prepare_graphs(loader, gnn, device):
+def prepare_graphs(loader, gnn, device=None):
     """Adapter: PyG loader -> list of per-graph dicts for policy training.
 
     Uses batch.get_example(i) (the same pattern as explain/explainer.py's
     explain_batch) so per-graph tensors keep their original indices — NO
     fragile boolean-mask remapping. Precomputes frozen node embeddings and
-    the graph context once (GNN stays frozen and in eval mode)."""
+    the graph context once (GNN stays frozen and in eval mode).
+
+    device defaults to the GNN's own device — never trust a caller-passed
+    device that mismatches the GNN (that mixes cpu graphs with cuda emb)."""
+    if device is None:
+        device = next(gnn.parameters()).device
     graphs = []
     gnn.eval()
     with torch.no_grad():
@@ -782,6 +862,8 @@ def prepare_graphs(loader, gnn, device):
                     "edge_attr": g.edge_attr,
                     "y": g.y.view(1),
                     "ctx": ctx[0],
+                    "emb": emb,                     # per-node [N, out] — the
+                                                    # policy's node_emb input
                     "stellar_mass": getattr(g, "stellar_mass", None),
                     "vel_disp": getattr(g, "vel_disp", None),
                     "half_mass_r": getattr(g, "half_mass_r", None),
@@ -829,7 +911,7 @@ def _update_batch(trainer, batch_graphs, gnns, cfg, target_sp, device):
 
     for g in batch_graphs:
         g = {k: v.to(device) for k, v in g.items() if isinstance(v, torch.Tensor)}
-        probs = torch.sigmoid(policy(g["edge_attr"], g["ctx"],
+        probs = torch.sigmoid(policy(g["edge_attr"], g["emb"],
                                      g["edge_index"], g["ctx"])).squeeze(-1)
         action = sample_actions(probs)
         logp = bernoulli_logp(probs, action)
@@ -1499,7 +1581,7 @@ def main(cfg=None, checkpoint=None):
     masks_tr = []
     for g in graphs:
         with torch.no_grad():
-            p = torch.sigmoid(policy(g["edge_attr"], g["ctx"].to(device),
+            p = torch.sigmoid(policy(g["edge_attr"], g["emb"].to(device),
                                      g["edge_index"], g["ctx"].to(device))).squeeze(-1)
         m = hard_mask(p, rls_cfg.get("min_keep_frac", 0.1))
         m = repair_connectivity(g["edge_index"], m)
@@ -1652,6 +1734,343 @@ train/test distribution shift. See `rl-implementation-plan.md`.
 
 ---
 
+### Task 13: Label-free TTA reward (uncertainty reduction + physics)
+
+**Files:**
+- Modify: `rls/rewards.py` (add `label_free_reward`)
+- Test: `tests/test_rewards.py` (extend)
+
+- [ ] **Step 1: Write the failing test**
+
+```python
+def test_label_free_reward_prefers_uncertainty_reduction():
+    from rls.rewards import label_free_reward
+    cfg = {"w_unc": 1.0, "w_sp": 0.5, "w_conn": 0.0, "w_virial": 0.0}
+    r_better = label_free_reward(std_pruned=0.05, std_full=0.10, keep_ratio=0.5,
+                                 target_sparsity=0.5, virial_penalty=0.0,
+                                 cfg=cfg, connectivity_ok=True)
+    r_worse = label_free_reward(std_pruned=0.15, std_full=0.10, keep_ratio=0.5,
+                                target_sparsity=0.5, virial_penalty=0.0,
+                                cfg=cfg, connectivity_ok=True)
+    assert r_better > 0 > r_worse
+
+def test_label_free_reward_never_touches_labels():
+    """The signature takes NO y/targets argument — that is the whole point."""
+    from rls.rewards import label_free_reward
+    import inspect
+    params = inspect.signature(label_free_reward).parameters
+    assert "y" not in params and "targets" not in params and "pred_full" not in params
+```
+
+- [ ] **Step 2: Run, verify FAIL** (`ImportError`)
+
+- [ ] **Step 3: Implement (append to `rls/rewards.py`)**
+
+```python
+def label_free_reward(std_pruned, std_full, keep_ratio, target_sparsity,
+                      virial_penalty, cfg, connectivity_ok=True):
+    """Test-time adaptation reward — LABEL-FREE by design.
+
+    r = w_unc * (std_full - std_pruned)/(std_full + eps)   # uncertainty reduction
+        - w_sp  * (keep_ratio - target_sparsity)^2          # sparsity (fixed target)
+        + w_conn * (+1/-1 connectivity)                     # no isolated nodes
+        - w_virial * virial_penalty                         # physics (label-free)
+
+    std_* are MC-dropout predictive stds of the frozen GNN on the full/pruned
+    graph. Never pass ground-truth labels into this function — the signature
+    above deliberately has no targets argument.
+    """
+    eps = 1e-8
+    d_unc = (std_full - std_pruned) / (std_full + eps)
+    sparsity_term = min((keep_ratio - target_sparsity) ** 2, 1.0)
+    conn = 1.0 if connectivity_ok else -1.0
+    return (cfg["w_unc"] * d_unc
+            - cfg["w_sp"] * sparsity_term
+            + cfg["w_conn"] * conn
+            - cfg.get("w_virial", 0.0) * virial_penalty)
+```
+
+- [ ] **Step 4: Run, verify PASS**
+- [ ] **Step 5: Commit** — `git add rls/rewards.py tests/test_rewards.py && git commit -m "feat(rls): label-free TTA reward (uncertainty + physics)"`
+
+---
+
+### Task 14: TTA loop — `adapt_at_test_time` (the "RL at inference" engine)
+
+**Files:**
+- Create: `rls/tta.py`
+- Test: `tests/test_tta.py`
+
+- [ ] **Step 1: Write the failing tests**
+
+```python
+import sys, os, copy
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import torch
+from rls.tta import adapt_at_test_time
+from rls.policy import EdgePolicyNet
+
+
+class MockGNN(torch.nn.Module):
+    """Frozen stand-in with predict_with_uncertainty: std shrinks when the
+    graph keeps only its shortest edges (encodes the expected direction)."""
+    def predict_with_uncertainty(self, batch, n_samples=15):
+        E = batch.edge_index.shape[1]
+        std = torch.tensor([1.0 / max(1, E)])   # more edges -> lower std
+        return {"mean": torch.zeros(1), "std": std}
+
+
+def _graph():
+    torch.manual_seed(0)
+    n, e = 6, 12
+    return {"x": torch.randn(n, 4), "edge_index": torch.randint(0, n, (2, e)),
+            "edge_attr": torch.randn(e, 5), "y": torch.randn(1),
+            "ctx": torch.randn(128), "emb": torch.randn(n, 128),
+            "stellar_mass": torch.rand(n) * 1e10,
+            "vel_disp": torch.rand(n) * 200, "half_mass_r": torch.rand(n) * 0.01,
+            "pos": torch.randn(n, 3)}
+
+
+def test_tta_returns_valid_mask_and_history():
+    cfg = {"tta_lr": 1e-3, "tta_steps": 5, "tta_mc_samples": 5, "tta_patience": 5,
+           "min_keep_frac": 0.1, "entropy_coef": 0.01,
+           "w_unc": 1.0, "w_sp": 0.5, "w_conn": 1.0, "w_virial": 0.0}
+    policy = EdgePolicyNet(edge_dim=5, node_emb_dim=128, hidden_dim=32)
+    g = _graph()
+    mask, info = adapt_at_test_time(policy, g, MockGNN(), cfg, device="cpu")
+    assert mask.shape[0] == g["edge_index"].shape[1]
+    assert mask.sum() >= 1
+    assert len(info["reward_hist"]) >= 1
+
+
+def test_tta_does_not_modify_input_policy():
+    cfg = {"tta_lr": 1e-2, "tta_steps": 5, "tta_mc_samples": 5, "tta_patience": 5,
+           "min_keep_frac": 0.1, "entropy_coef": 0.01,
+           "w_unc": 1.0, "w_sp": 0.5, "w_conn": 1.0, "w_virial": 0.0}
+    policy = EdgePolicyNet(edge_dim=5, node_emb_dim=128, hidden_dim=32)
+    before = copy.deepcopy(policy.state_dict())
+    adapt_at_test_time(policy, _graph(), MockGNN(), cfg, device="cpu")
+    for k, v in policy.state_dict().items():
+        assert torch.allclose(v, before[k]), "TTA mutated the offline policy!"
+```
+
+- [ ] **Step 2: Run, verify FAIL** (`ModuleNotFoundError: No module named 'rls.tta'`)
+
+- [ ] **Step 3: Implement `rls/tta.py`**
+
+```python
+"""RL at inference: per-instance test-time adaptation (TTA) of the edge policy.
+
+THE core novelty of the paper. At inference, for each input graph, a COPY of
+the policy takes K policy-gradient steps against the label-free reward
+(rls.rewards.label_free_reward), then emits the final hard mask. Because the
+reward never touches ground-truth labels, TTA works on unlabeled OOD graphs
+(CAMELS) — exactly where the frozen offline policy degrades.
+
+Always report BOTH modes side by side:
+  - FROZEN: offline policy applied directly (ablation; K=0)
+  - TTA:    policy adapted per-instance at inference (the method)
+"""
+import copy
+import torch
+from torch_geometric.data import Data, Batch
+from rls.policy_gradient import bernoulli_logp, bernoulli_entropy, sample_actions
+from rls.sparsify import hard_mask, repair_connectivity
+from rls.rewards import label_free_reward, virial_penalty
+from rls.train_policy import _graph_physics_terms, _no_isolated
+
+
+def mc_std(gnn, graph, edge_index=None, edge_attr=None, n_samples=15, device="cpu"):
+    """MC-dropout predictive std of the frozen GNN on a (sub)graph."""
+    d = Data(x=graph["x"],
+             edge_index=edge_index if edge_index is not None else graph["edge_index"],
+             edge_attr=edge_attr if edge_attr is not None else graph["edge_attr"])
+    b = Batch.from_data_list([d]).to(device)
+    out = gnn.predict_with_uncertainty(b, n_samples=n_samples)
+    return out["std"].view(-1)
+
+
+def adapt_at_test_time(policy, graph, gnn, cfg, device="cpu", init="offline",
+                       target_sparsity=0.5, log_fn=None):
+    """Adapt the policy to ONE graph via K policy-gradient steps on the
+    label-free reward. Returns (final_mask, info). NEVER mutates `policy`."""
+    if init == "offline":
+        pol = copy.deepcopy(policy).to(device)
+    else:  # fresh init (ablation)
+        torch.manual_seed(cfg.get("seed", 42))
+        pol = type(policy)(edge_dim=graph["edge_attr"].shape[1],
+                           node_emb_dim=graph["emb"].shape[1]).to(device)
+    opt = torch.optim.Adam(pol.parameters(), lr=cfg["tta_lr"])
+    g = {k: v.to(device) for k, v in graph.items() if isinstance(v, torch.Tensor)}
+
+    with torch.no_grad():
+        std_full = mc_std(gnn, g, n_samples=cfg["tta_mc_samples"], device=device)
+
+    baseline, best_r, stall = 0.0, -1e9, 0
+    hist = []
+    for step in range(cfg["tta_steps"]):
+        probs = torch.sigmoid(pol(g["edge_attr"], g["emb"],
+                                  g["edge_index"], g["ctx"])).squeeze(-1)
+        action = sample_actions(probs)
+        logp = bernoulli_logp(probs, action).mean()
+        ent = bernoulli_entropy(probs).mean()
+        with torch.no_grad():
+            mask = repair_connectivity(g["edge_index"],
+                                       hard_mask(probs, cfg.get("min_keep_frac", 0.1)))
+            std_pr = mc_std(gnn, g, g["edge_index"][:, mask], g["edge_attr"][mask],
+                            n_samples=cfg["tta_mc_samples"], device=device)
+            ke, pe = _graph_physics_terms(g, g["edge_index"], mask)
+            vp = (virial_penalty(ke, pe) if cfg.get("w_virial", 0) > 0
+                  else torch.zeros(1).to(device))
+            conn_ok = bool((mask.sum() > 0) and _no_isolated(g["edge_index"], mask))
+            r = label_free_reward(std_pr, std_full, float(mask.float().mean()),
+                                  target_sparsity, vp, cfg, conn_ok)
+        baseline = 0.9 * baseline + 0.1 * float(r)
+        adv = float(r) - baseline
+        loss = -(adv * logp) - cfg.get("entropy_coef", 0.01) * ent
+        opt.zero_grad(); loss.backward()
+        torch.nn.utils.clip_grad_norm_(pol.parameters(), 1.0); opt.step()
+        hist.append(float(r))
+        stall = 0 if float(r) > best_r else stall + 1
+        best_r = max(best_r, float(r))
+        if stall >= cfg.get("tta_patience", 3):
+            break
+        if log_fn:
+            log_fn(step, float(r))
+    with torch.no_grad():
+        p = torch.sigmoid(pol(g["edge_attr"], g["emb"],
+                              g["edge_index"], g["ctx"])).squeeze(-1)
+        final = repair_connectivity(g["edge_index"],
+                                    hard_mask(p, cfg.get("min_keep_frac", 0.1)))
+    return final, {"reward_hist": hist, "steps_run": len(hist), "best_r": best_r}
+```
+
+- [ ] **Step 4: Run, verify PASS**
+- [ ] **Step 5: Commit** — `git add rls/tta.py tests/test_tta.py && git commit -m "feat(rls): RL at inference — per-instance test-time adaptation"`
+
+- [ ] **Step 6: Patch `data/loaders/camels_loader.py`** — in `_generate_synthetic_camels` (line ~148) add `self.used_synthetic_fallback = True` right after the warning log; the real-HDF5 path leaves it False. The OOD benchmark (Notebook D4) asserts `loader.used_synthetic_fallback is False` before producing the headline number — a silent synthetic run must be impossible to publish by accident.
+
+---
+
+### Task 15: TTA evaluation — frozen vs TTA, K ablation, init ablation
+
+**Files:**
+- Modify: `rls/evaluate.py` (add `evaluate_tta`)
+- Test: `tests/test_evaluate.py` (extend)
+
+- [ ] **Step 1: Write the failing test**
+
+```python
+def test_evaluate_tta_rows():
+    """evaluate_tta returns one row per (mode, K); K=0 runs the FROZEN path
+    (no adaptation) and must not touch the label-free TTA machinery."""
+    import sys, os, torch
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from rls.policy import EdgePolicyNet
+    from rls.evaluate import evaluate_tta
+
+    torch.manual_seed(0)
+
+    class MockGNN(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.register_buffer("w", torch.tensor(0.1))
+        def predict_with_uncertainty(self, batch, n_samples=15):
+            E = batch.edge_index.shape[1]
+            return {"std": torch.tensor([1.0 / max(1, E)])}
+        def forward(self, batch):
+            n = batch.x.shape[0]
+            return torch.rand(n, 1).sum(dim=0, keepdim=True), torch.randn(n, 4)
+
+    def graph():
+        n, e = 6, 12
+        return {"x": torch.randn(n, 4), "edge_index": torch.randint(0, n, (2, e)),
+                "edge_attr": torch.randn(e, 5), "y": torch.randn(1),
+                "ctx": torch.randn(4), "emb": torch.randn(n, 4),
+                "stellar_mass": torch.rand(n) * 1e10,
+                "vel_disp": torch.rand(n) * 200,
+                "half_mass_r": torch.rand(n) * 0.01, "pos": torch.randn(n, 3)}
+
+    graphs = [graph() for _ in range(3)]
+    policy = EdgePolicyNet(edge_dim=5, node_emb_dim=4, hidden_dim=8)
+    cfg = {"tta_lr": 1e-3, "tta_steps": 3, "tta_mc_samples": 5, "tta_patience": 2,
+           "min_keep_frac": 0.1, "entropy_coef": 0.01,
+           "w_unc": 1.0, "w_sp": 0.5, "w_conn": 1.0, "w_virial": 0.0, "seed": 0}
+    rows = evaluate_tta(policy, graphs, MockGNN(), cfg, "cpu", ks=(0, 2))
+    assert len(rows) == 2
+    assert {r["mode"] for r in rows} == {"frozen", "tta"}
+    for r in rows:
+        assert {"mode", "K", "init", "rmse", "fidelity", "keep_frac",
+                "mean_steps", "mean_time_s"} <= set(r)
+    frozen_row = [r for r in rows if r["K"] == 0][0]
+    assert frozen_row["mode"] == "frozen" and frozen_row["mean_steps"] == 0.0
+```
+
+- [ ] **Step 2: Run, verify FAIL**
+
+- [ ] **Step 3: Implement (append to `rls/evaluate.py`)**
+
+```python
+from rls.sparsify import hard_mask, repair_connectivity
+
+
+def evaluate_tta(policy, graphs, gnn, cfg, device, ks=(0, 5, 10, 20),
+                 inits=("offline",), target_sparsity=0.5):
+    """Run TTA at several K values on every graph; labels used ONLY for the
+    final RMSE (never in the reward). Returns rows for the paper table:
+    {mode, K, init, rmse, fidelity, keep_frac, mean_steps, mean_time_s}."""
+    import time
+    from rls.tta import adapt_at_test_time
+    rows = []
+    for init in inits:
+        for k in ks:
+            preds, fulls, ys, keeps, steps, secs = [], [], [], [], [], []
+            for g in graphs:
+                gd = {kk: v.to(device) for kk, v in g.items()
+                      if isinstance(v, torch.Tensor)}
+                t0 = time.time()
+                if k == 0 or init == "frozen":  # FROZEN mode: no adaptation
+                    with torch.no_grad():
+                        p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"],
+                                                 gd["edge_index"], gd["ctx"])).squeeze(-1)
+                        mask = repair_connectivity(
+                            gd["edge_index"],
+                            hard_mask(p, cfg.get("min_keep_frac", 0.1)))
+                else:
+                    mask, info = adapt_at_test_time(policy, gd, gnn, cfg, device,
+                                                    init=init,
+                                                    target_sparsity=target_sparsity)
+                    steps.append(info["steps_run"])
+                # predict with frozen GNN on adapted mask
+                from torch_geometric.data import Data, Batch
+                d = Data(x=gd["x"], edge_index=gd["edge_index"][:, mask],
+                         edge_attr=gd["edge_attr"][mask])
+                with torch.no_grad():
+                    pred, _ = gnn(Batch.from_data_list([d]))
+                    dfull = Data(x=gd["x"], edge_index=gd["edge_index"],
+                                 edge_attr=gd["edge_attr"])
+                    pred_full, _ = gnn(Batch.from_data_list([dfull]))
+                secs.append(time.time() - t0)
+                preds.append(float(pred.view(-1)[0])); fulls.append(float(pred_full.view(-1)[0]))
+                ys.append(float(gd["y"].view(-1)[0])); keeps.append(float(mask.float().mean()))
+            import numpy as np
+            preds, fulls, ys = np.array(preds), np.array(fulls), np.array(ys)
+            rows.append({
+                "mode": "frozen" if k == 0 else "tta", "K": k, "init": init,
+                "rmse": float(np.sqrt(((preds - ys) ** 2).mean())),
+                "fidelity": float(np.corrcoef(preds, fulls)[0, 1]) if len(preds) > 1 else float("nan"),
+                "keep_frac": float(np.mean(keeps)),
+                "mean_steps": float(np.mean(steps)) if steps else 0.0,
+                "mean_time_s": float(np.mean(secs)),
+            })
+    return rows
+```
+
+- [ ] **Step 4: Run, verify PASS**
+- [ ] **Step 5: Commit** — `git add rls/evaluate.py tests/test_evaluate.py && git commit -m "feat(rls): TTA evaluation (frozen vs TTA, K ablation)"`
+
+---
+
 ## PART 3 — EVALUATION & BENCHMARKS (paper table template)
 
 | Method | RMSE (dex) | R² | Scatter (dex) | Keep frac | Fidelity | Spearman ρ vs U_ij | Virial ratio (med) | 95% CI coverage |
@@ -1666,8 +2085,14 @@ train/test distribution shift. See `rl-implementation-plan.md`.
 | Gumbel-softmax (joint) | ~0.14 | — | — | 0.5 | — | med | report | — |
 | **RL policy (50%)** | **≤0.137** | **≥0.965** | **≤0.10** | **0.5** | **≥0.98** | **≥0.5 (and > mass-ratio row)** | **same as baselines ±0.05** | **≥0.93** |
 | RL policy + Stage B | ≤0.135 | ≥0.967 | ≤0.10 | 0.5 | ≥0.98 | ≥0.5 | same | ≥0.93 |
+| **RL policy FROZEN (ablation)** | ≤0.137 | ≥0.965 | ≤0.10 | 0.5 | ≥0.98 | ≥0.5 | same | ≥0.93 |
+| **RL-TTA (K=10, offline init)** | **≤ FROZEN** | **≥ FROZEN** | **≤0.10** | **0.5** | **≥0.98** | **≥ frozen ρ** | **same** | **≥0.93** |
+| RL-TTA (fresh init) | worse than offline init | — | — | 0.5 | — | — | — | — |
 | TNG→CAMELS (full) | ~0.2 | ~0.9 | — | 1.0 | 1.0 | — | — | — |
-| TNG→CAMELS (RL) | ≤ full | ≥ full | — | 0.5 | ≥0.95 | ≥0.4 | — | — |
+| TNG→CAMELS (RL frozen) | ≤ full | ≥ full | — | 0.5 | ≥0.95 | ≥0.4 | — | — |
+| **TNG→CAMELS (RL-TTA) — headline** | **< frozen** | **> frozen** | — | 0.5 | ≥ frozen | ≥ frozen | — | — |
+| TTA ablation: K ∈ {0,5,10,20} | K-curve on RMSE | — | — | 0.5 | — | — | — | K=0 ≡ frozen (sanity) |
+| TTA ablation: reward −unc / −virial / −sparsity | each term contributes | — | — | — | — | — | — | — |
 
 **Rules for reviewers (follow strictly):**
 1. All methods share the SAME frozen backbone weights (except Gumbel baseline, which is joint-trained — say so explicitly; that is its unfair advantage, making RL's win stronger).
@@ -1678,6 +2103,8 @@ train/test distribution shift. See `rl-implementation-plan.md`.
 6. Ablation: reward without virial term; reward without sparsity curriculum; policy with min_keep=0.5. Three rows.
 7. Runtime: policy adds <1ms/graph; report speedup at 50% sparsity (edge reduction → faster GNN message passing).
 8. **Virial definition note**: the training-time VirialLoss (monopole, model/physics_loss.py) and the reward's pairwise ratio are different formulas — state this explicitly and report both on the full graph so reviewers see they were reconciled, not conflated.
+9. **TTA rows are the headline**: "RL-TTA vs RL-frozen" on CAMELS is the claim; K=0 must reproduce the frozen policy exactly (sanity check, report it). All TTA hyperparameters chosen on val only.
+10. **Wall-clock**: report mean adaptation time per graph (target <1 s/graph on T4 at K=10, mc_samples=15).
 
 ---
 
@@ -1694,6 +2121,15 @@ train/test distribution shift. See `rl-implementation-plan.md`.
 - [ ] **Degenerate shortcut policy (U_ij confound)**: `mass_ratio` is an input edge feature, so "keep high-mass-ratio edges" trivially produces non-zero Spearman ρ vs U_ij (M_i·M_j/r ∝ mass_ratio). The mass-ratio top-k baseline row must be reported at every sparsity, and the RL headline must be "beats the trivial shortcut", not just "ρ ≥ 0.5".
 - [ ] **Two virial definitions**: training-time `VirialLoss` (monopole with predicted mass, model/physics_loss.py) vs the reward's pairwise ratio. Reconcile in one paragraph, report both on the full graph, and report the reward ratio for ALL baselines at matched sparsity — otherwise a reviewer who knows the virial theorem will shred the physics claim.
 - [ ] **Baseline reproducibility (Task 0)**: 541 halos cannot come from `n_halos: 500` + `min_subhalos_per_halo: 3` (loader drops halos). Commit the exact config + `baseline_metrics.json` before any RL run, or the numbers you claim to beat are indefensible.
+
+**TTA-specific ("RL at inference")**
+- [ ] **Label leakage into the reward**: `label_free_reward` must never see `y`. The function signature has no targets argument (enforced by a test). Evaluation labels are used ONLY in the final RMSE computation, after the mask is fixed.
+- [ ] **Uncertainty-reward gaming**: a mask can make the frozen GNN overconfident-but-wrong (Δunc positive, accuracy worse). Guards: virial term (physics), connectivity term, K ≤ 20 with early-stop patience 3, small `tta_lr` (1e-4). Detect by reporting TTA's test RMSE — if RMSE_TTA > RMSE_frozen while Δunc is positive, the reward is being gamed; raise `w_virial`/`w_conn` or lower K.
+- [ ] **MC-dropout noise dominates Δunc**: with n_samples=15 the std estimate is noisy; a per-step Δunc near zero is pure noise. Cache `std_full` once per graph (never recompute), keep `tta_mc_samples` fixed, and report the reward's noise floor. If Δunc variance across steps >> its mean trend, increase mc_samples to 30 for the final run only.
+- [ ] **Per-graph overfitting**: K gradient steps on ONE graph can drift the policy arbitrarily. Choose (K, tta_lr, w_unc) on the **val split only**, then freeze for test/CAMELS. Optional proximal guard: add `λ‖θ−θ₀‖²` (λ=1e-3) to the TTA loss if drift is observed (log ‖θ−θ₀‖ in `info`).
+- [ ] **Never mutate the offline policy in place**: `adapt_at_test_time` deep-copies. A test asserts the offline policy's weights are unchanged after TTA — if this fails, the frozen ablation numbers are contaminated.
+- [ ] **`predict_with_uncertainty` mode side effects**: it sets `train()` then restores `eval()` (repo behavior) — do NOT interleave TTA reward computation with anything that requires deterministic mode, and never call it inside a gradient-carrying context.
+- [ ] **K=0 sanity check**: `evaluate_tta` with K=0 must reproduce the frozen-policy numbers exactly. If not, the TTA loop has a bug — do not ship results.
 
 **Repo/environment-specific**
 - [ ] `num_workers > 0` in PyG DataLoader on **Windows** → multiprocessing spawn errors. Use `num_workers=0` in all local runs and Kaggle notebooks.
@@ -1717,10 +2153,10 @@ train/test distribution shift. See `rl-implementation-plan.md`.
 | Date (2026) | Milestone | Notes |
 |---|---|---|
 | Aug 5 (today) | Baseline frozen: GNN 0.137 dex | Already done |
-| Aug 5–8 | Tasks 0–4 (baseline commit, policy/reward/policy-gradient/sparsify) | 4 days |
-| Aug 9–12 | Task 5–8 (training, baselines, metrics, stage B) | 4 days |
-| Aug 13–16 | Task 10 run on Kaggle T4 (3 sessions) | First numbers |
-| Aug 17–19 | Task 11 cross-sim; fix; rerun | Headline OOD result |
+| Aug 5–8 | Phase 0–1: Tasks 0–5 (baseline commit, policy/reward/policy-gradient/sparsify/train) | 4 days |
+| Aug 9–12 | Phase 2: Tasks 6–9 (baselines incl. mass-ratio + gradient-saliency, metrics, eval, stage B) | 4 days |
+| Aug 13–16 | Phase 3: Task 10 Kaggle T4 (3 sessions); Task 11 CAMELS OOD | First numbers + OOD |
+| Aug 17–19 | Phase 4: Tasks 13–15 (label-free reward, TTA loop, TTA eval incl. CAMELS-TTA) | The headline result |
 | Aug 20 | **IEEE BigData submission freeze** (paper + numbers locked) | Submit Aug 21 |
 | **Aug 21** | **IEEE BigData 2026 submission** (VERIFIED: bigdataieee.org/BigData2026/important-dates/) | 10 pages IEEE 2-column incl. refs; notification Oct 24 |
 | Aug 22–24 | IEEE version → 4-page NeurIPS template version (90% content reuse) | Only if ML4PS 2026 CFP has appeared; else skip |
@@ -1746,7 +2182,26 @@ train/test distribution shift. See `rl-implementation-plan.md`.
 3. **Drop CAMELS cross-sim** unless the real HDF5 is already cached locally — the loader's synthetic fallback is for plumbing tests only and is NOT publishable as "OOD validation".
 4. **Gradient-saliency baseline stays** (cheap — reuses `explain/explainer.py`); real PGExplainer is the first thing to cut if short on time.
 5. **Mass-ratio top-k baseline stays** (10 lines, bounds the degenerate policy — required for the U_ij claim).
-6. OGB/ZINC already cut. What survives is still a legitimate contribution: policy gradient vs gradient-saliency/PGExplainer vs simple baselines on TNG sparsity/fidelity/physics-alignment.
+6. OGB/ZINC already cut. What survives is still a legitimate contribution: policy gradient vs gradient-saliency/PGExplainer vs simple baselines on TNG sparsity/fidelity/physics-alignment. **Under triage, TTA itself is the LAST thing to cut** — it is the paper's title claim. If TTA on CAMELS cannot be run (no real HDF5), the halo paper falls back to in-domain TTA only and the OOD claim moves to the journal version.
+
+---
+
+## PART 5B — GENERIC METHOD PAPER ("RL at inference for GNNs") — ICLR 2028
+
+The halo paper is the domain instantiation; this is the high-impact method paper. Target: **ICLR 2028** (abstract/full ~Sep 2027, decisions Dec 2027/Jan 2028). NOT ICLR 2027 (Sep 18/25 2026): 6 weeks out, the benchmark suite below is infeasible on Kaggle in that window, and its Dec 16 decisions miss the Nov-1 constraint anyway.
+
+**Title claim (draft):** "RL at inference: per-instance test-time structural adaptation of graph neural networks via label-free rewards."
+
+**What changes vs the halo paper:**
+1. **Drop the virial term** (`w_virial=0` — already a config flag; the code is domain-agnostic except `graph_physics_terms`). TTA reward = uncertainty reduction + sparsity + connectivity only.
+2. **Benchmarks** (standard graph ML): `ogbg-molhiv` (graph classification, scaffold split), `ZINC` (graph regression), TU datasets (MUTAG, PROTEINS, ENZYMES) for interpretability. All are small enough for Kaggle.
+3. **Baselines** (the generic-paper set): GSAT, GIB, PTDNet, PGExplainer, gradient saliency, plus **TENT-style adaptation** (adapt LayerNorm affine params at test time by entropy minimization — the closest method family) and a **feature-space graph-TTA** baseline (adapt node embeddings, no structure). Your differentiator: adaptation in *input structure space* via RL.
+4. **Protocol**: OOD splits (scaffold for molhiv), 5 seeds, standard metrics, runtime table, TTA ablations (K, init, reward terms) — same as halo paper, minus physics.
+5. **Reuse**: `rls/policy.py`, `policy_gradient.py`, `sparsify.py`, `tta.py`, `metrics.py`, `evaluate.py` carry over unchanged; only data loading and the reward config change.
+
+**Timeline:** halo paper submitted Aug 2026 → journal version (ApJ/MNRAS) Q1 2027 → generic paper experiments Q1–Q2 2027 (benchmarks + baselines on Kaggle) → write summer 2027 → ICLR 2028 submission Sep 2027.
+
+**Honesty note:** a final lit search before writing must confirm no one has claimed "per-instance RL structural TTA for GNNs" in the meantime (field moves fast; closest known: TENT, GraphCTA, GSAT, PTDNet — all offline or parameter-adaptive). If scooped, the physics-reward instantiation and the OOD-recovery result remain independently publishable in the astro venue.
 
 ---
 
@@ -1773,5 +2228,10 @@ train/test distribution shift. See `rl-implementation-plan.md`.
 |---|---|
 | `rl-implementation-plan.md` | This file — full DeepSeek-executable plan |
 | `rl-lit-review.md` | 20 papers (top 10 priority + 10 lower) in your requested format |
-| `rl-kaggle-notebooks.md` | 3 complete Kaggle notebooks (copy-paste cells): A) setup+baselines, B) policy training, C) evaluation+cross-sim+plots. **NOTE: notebook titles/sections still say "PPO" — align naming to policy gradient (Task 3) when implementing; the `get_example(i)` adapter patterns in them are the verified working versions** |
+| `rl-kaggle-notebooks.md` | 4 complete Kaggle notebooks (copy-paste cells): A) setup+baselines (incl. mass-ratio + gradient-saliency), B) offline policy training, C) evaluation+physics+cross-sim, D) **RL at inference (TTA) — frozen vs TTA in-domain and OOD**. All notebook bugs from the review are fixed (tuple unpacking, Batch wrapping, gradient flow to the policy, honest policy-gradient loop). |
 | `REPOWISE.md` | Repo map (previous work) |
+
+**Plan change log (most recent first):**
+- **TTA upgrade:** "RL at inference" is now the core novelty (per-instance test-time adaptation with a label-free reward). Offline policy = initialization; frozen mode = ablation. Added Part 0.3c/0.3d (reward + algorithm), Tasks 13–15, TTA rows in benchmarks/results tables, TTA pitfalls, Part 5B (generic paper → ICLR 2028), Notebook D.
+- **Review fixes (Claude's 7 points):** Task 0 reproducibility; PGExplainer/gradient-saliency + mass-ratio baselines; driver/adapter/cross-sim crash fixes (Batch wrapping + tuple unpacking); honest policy-gradient naming (was PPO); virial reconciliation (two definitions, report all baselines at matched sparsity); timeline triage.
+- **Venue correction:** IEEE BigData 2026 primary (verified: Aug 21 submit / Oct 24 notify); ML4PS 2026 CFP unverified; ICLR 2027 dropped (Dec 16 decisions miss Nov-1).
