@@ -1621,6 +1621,21 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: Run, verify PASS**
 
+- [x] **Deviations (implemented, tested GREEN):**
+  - Smoke test uses `graph.method: knn` — `radius_graph`/`knn_graph` need pyg-lib
+    (no win/torch-2.12 wheel); `run_experiment._ensure_graph_builder_works()`
+    patches a pure-torch kNN builder when pyg-lib is missing (no-op on Kaggle).
+  - `main()` falls back to a freshly-built backbone when the checkpoint file
+    is absent (smoke mode).
+  - Stage B became configurable: `rls.stageb_epochs` (default 10) +
+    `rls.stageb_max_graphs` (default null) — full 10-epoch fine-tune over 350
+    graphs on CPU took ~25 min; smoke caps it (1 epoch, 32 graphs).
+  - Real bug found by this smoke test (not the unit tests): `bernoulli_entropy`
+    with eps=1e-8 → `1 - 1e-8` rounds to 1.0 in float32 → clamp is a no-op at
+    saturation → `0*log(0) = NaN` gradients. Fixed eps → 1e-6 in
+    `rls/policy_gradient.py` + regression test
+    `test_entropy_and_logp_finite_at_saturated_probs`.
+
 - [ ] **Step 5: Commit** — `git add rls/run_experiment.py tests/test_run_experiment.py && git commit -m "feat(rls): end-to-end experiment driver"`
 
 ---

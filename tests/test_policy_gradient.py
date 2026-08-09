@@ -1,7 +1,19 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
-from rls.policy_gradient import compute_advantages, compute_pg_loss
+from rls.policy_gradient import (compute_advantages, compute_pg_loss,
+                                 bernoulli_entropy, bernoulli_logp,
+                                 sample_actions)
+
+
+def test_entropy_and_logp_finite_at_saturated_probs():
+    # regression: eps=1e-8 made the clamp upper bound round to 1.0 in
+    # float32 → 0*log(0) = NaN → poisoned gradients (found by the
+    # end-to-end smoke test on real data).
+    p = torch.tensor([0.0, 1.0, 0.999999, 0.5, 1e-7])
+    assert torch.isfinite(bernoulli_entropy(p)).all()
+    a = sample_actions(p)
+    assert torch.isfinite(bernoulli_logp(p, a)).all()
 
 
 def test_advantages_are_reward_minus_baseline():

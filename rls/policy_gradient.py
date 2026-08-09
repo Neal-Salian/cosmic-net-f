@@ -77,8 +77,13 @@ def bernoulli_logp(p, action):
 
 
 def bernoulli_entropy(p):
-    """H(Bernoulli(p)) per edge: -(p log p + (1-p) log(1-p)). [E]."""
-    eps = 1e-8
+    """H(Bernoulli(p)) per edge: -(p log p + (1-p) log(1-p)). [E].
+
+    eps must be float32-representable: 1 - 1e-8 rounds to exactly 1.0 in
+    float32, making the upper clamp a no-op and producing 0*log(0) = NaN for
+    saturated probs (found by the end-to-end smoke test on real data).
+    """
+    eps = 1e-6
     p = torch.clamp(p, eps, 1.0 - eps)
     return -(p * torch.log(p) + (1 - p) * torch.log(1 - p))
 

@@ -127,3 +127,5 @@ rls:
   tta_mc_samples: 15
   tta_patience: 3
   tta_target_sparsity: 0.5
+  stageb_epochs: 10
+  stageb_max_graphs: null
