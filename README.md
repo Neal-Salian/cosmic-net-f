@@ -18,6 +18,16 @@ Cosmic-Net is a research-grade GNN that predicts dark matter halo masses from ga
 - **Dimensional Analysis**: Post-filter discovered equations for physical consistency
 - **Ablation-Ready**: Every architectural choice is a config flag
 
+## RL Edge Sparsification (RL-Cosmic-Net)
+
+A frozen-backbone, physics-informed policy-gradient policy (`rls/`) prunes
+task-irrelevant edges before GNN inference — the pruned graph *is* the
+explanation. REINFORCE with a learned baseline + entropy bonus (one-step MDP;
+honestly NOT PPO) and a relative-RMSE + sparsity-curriculum + virial-consistency
+reward; baselines: random/degree/distance/mass-ratio/gradient-saliency/
+PGExplainer/attention-topk/Gumbel-softmax. Stage-B GNN fine-tune closes the
+train/test distribution shift. See `rl-implementation-plan.md`.
+
 ## Installation
 
 ### Prerequisites

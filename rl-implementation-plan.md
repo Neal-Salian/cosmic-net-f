@@ -1,5 +1,18 @@
 # RL-Cosmic-Net: Physics-Informed RL Graph Sparsification — Implementation Plan
 
+> **EXECUTION STATUS (Aug 9 2026):** Tasks 0–15 implemented locally on Windows,
+> TDD RED→GREEN per task, all rls tests passing, committed on `main`:
+> 4ea33ed (T1 policy+config), bc8dc4c (T2 rewards), 8258768 (T3 policy-gradient),
+> 6c1fb2c (T4 sparsify), 511476c (test infra), 8a2a841 (T5 train loop),
+> c77d51d (T6-9 baselines/metrics/stageb/evaluate), 5f298f1 (T10 driver,
+> + saturated-entropy float32 NaN fix), a6b3830 (T11 cross-sim + camels
+> offline fallback), then T12-15 docs/label-free-reward/tta/evaluate_tta.
+> Per-task deviations are recorded inline under each task's "Deviations" note.
+> Remaining: fill RESULTS_TEMPLATE with real numbers from Kaggle runs; the 17
+> pre-existing `test_graph_builder.py` failures are env-only (pyg-lib has no
+> win/torch-2.12 wheel → radius/knn_graph unavailable; pure-torch kNN fallback
+> lives in `rls/run_experiment.py:_ensure_graph_builder_works`).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Train a reinforcement-learned edge-selection policy that prunes noisy edges from halo graphs, and — the core novelty — **adapt that policy at inference time, per input graph, using a label-free reward** ("RL at inference" / test-time structural adaptation). This produces (a) equal-or-better halo-mass predictions, (b) a physically meaningful "minimal skeleton" that serves as the model's intrinsic explanation, (c) OOD robustness the frozen offline policy cannot have (the reward needs no labels, so adaptation works on CAMELS), and (d) two papers: the **halo paper** → IEEE BigData 2026 (submission Aug 21, notification Oct 24 — verified, meets the Nov-1 constraint), then the **generic method paper** ("RL at inference for GNNs") → ICLR 2028 (Sep 2027 deadline; see Part 5B).
