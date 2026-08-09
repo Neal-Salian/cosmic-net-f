@@ -1730,6 +1730,18 @@ def evaluate_cross_sim(cfg, checkpoint, max_halos=200, out_dir="outputs/rls"):
 
 - [ ] **Step 4: Run, verify PASS**
 
+- [x] **Deviations (implemented, tested GREEN):**
+  - `CAMELSLoader` gains `camels.offline: true` (test/CI): when the HDF5 is
+    missing, skip the network download and go straight to
+    `_generate_synthetic_camels`; the fallback now sets
+    `self.used_synthetic_fallback = True` (Task 14 Step 6 dependency).
+  - `cross_sim` context must be `.squeeze(0)` (global_mean_pool over a
+    single-graph batch returns [1, out]; the policy expects [out]).
+  - `evaluate_cross_sim` makes `out_dir` (makedirs) and tolerates a missing
+    policy.pt / checkpoint (random init + warning) so the smoke test runs
+    without a prior Task 10 run.
+  - Environment: `pip install h5py` (was missing).
+
 - [ ] **Step 5: Commit** — `git add rls/cross_sim.py tests/test_cross_sim.py && git commit -m "feat(rls): cross-simulation OOD evaluation"`
 
 ---

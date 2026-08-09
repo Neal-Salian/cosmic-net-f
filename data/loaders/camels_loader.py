@@ -93,6 +93,8 @@ class CAMELSLoader(BaseDataLoader):
         self.suite = camels_config.get('suite', 'IllustrisTNG')
         self.simulation = camels_config.get('simulation', 'LH_0')
         self.cache_dir = Path(camels_config.get('cache_dir', 'data/raw/camels_cache'))
+        self.offline = camels_config.get('offline', False)
+        self.used_synthetic_fallback = False
 
         # Create cache directory
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -125,6 +127,12 @@ class CAMELSLoader(BaseDataLoader):
             logger.info(f"Using cached HDF5: {cache_path}")
             return cache_path
 
+        if self.offline:
+            # No network access (tests/CI): go straight to the synthetic
+            # fallback instead of attempting a real download.
+            logger.warning("offline mode: generating synthetic CAMELS-like data")
+            return self._generate_synthetic_camels(cache_path)
+
         url = self._get_hdf5_url()
         logger.info(f"Downloading CAMELS data from: {url}")
 
@@ -155,6 +163,7 @@ class CAMELSLoader(BaseDataLoader):
         Returns:
             Path to generated file
         """
+        self.used_synthetic_fallback = True
         np.random.seed(self.seed)
 
         num_groups = 200
