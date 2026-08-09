@@ -19,3 +19,6 @@ frontend/.vite/
 
 # Mac
 .DS_Store
+
+# Large model weights (pushed via LFS or excluded)
+outputs/rls/finetuned_gnn.pt
