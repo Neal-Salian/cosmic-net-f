@@ -102,3 +102,28 @@ training:
   weight_decay: 5.0e-05
 wandb:
   enabled: false
+
+rls:
+  policy_hidden: 64
+  lr: 0.001
+  entropy_coef: 0.01
+  value_coef: 0.5
+  epochs: 60
+  batch_size: 32
+  target_sparsity_start: 0.9
+  target_sparsity_end: 0.4
+  sparsity_anneal_epochs: 40
+  w_acc: 1.0
+  w_sp: 0.5
+  w_conn: 1.0
+  w_virial: 1.0
+  w_unc: 0.5
+  virial_anneal_start_epoch: 10
+  min_keep_frac: 0.1
+  seed: 42
+  # TTA ('RL at inference') - chosen on VAL split only, then frozen
+  tta_lr: 0.0001
+  tta_steps: 10
+  tta_mc_samples: 15
+  tta_patience: 3
+  tta_target_sparsity: 0.5
