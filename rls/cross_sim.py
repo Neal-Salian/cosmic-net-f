@@ -30,7 +30,7 @@ def evaluate_cross_sim(cfg, checkpoint, max_halos=200, out_dir="outputs/rls"):
               "(smoke mode)")
         gnn = build_model(cfg).to(device)
     gnn.eval()
-    policy = build_policy(cfg).to(device)
+    policy = build_policy(cfg, node_emb_dim=gnn.output_dim).to(device)
     policy_path = os.path.join(out_dir, "policy.pt")
     if os.path.exists(policy_path):
         policy.load_state_dict(torch.load(policy_path, map_location=device))

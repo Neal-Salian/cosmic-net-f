@@ -16,15 +16,16 @@ def test_end_to_end_policy_train_smoke():
         cfg = yaml.safe_load(f)
     cfg["rls"]["epochs"] = 2
     cfg["rls"]["batch_size"] = 8
+    out_dim = cfg["model"]["output_dim"]
     # tiny graphs via random tensors (policy + pg only; no GNN needed)
     graphs = [{"x": torch.randn(5, 4), "edge_index": torch.randint(0, 5, (2, 12)),
                "edge_attr": torch.randn(12, 5), "y": torch.randn(1),
-               "ctx": torch.randn(128), "emb": torch.randn(5, 128),
+               "ctx": torch.randn(out_dim), "emb": torch.randn(5, out_dim),
                "stellar_mass": torch.rand(5) * 1e10, "vel_disp": torch.rand(5) * 200,
                "half_mass_r": torch.rand(5) * 0.01, "pos": torch.randn(5, 3)}
               for _ in range(8)]
     policy = build_policy(cfg)
-    value_net = ValueNet(128)
+    value_net = ValueNet(out_dim)
     opt = torch.optim.Adam(policy.parameters(), lr=1e-3)
     vopt = torch.optim.Adam(value_net.parameters(), lr=1e-3)
     trainer = PolicyGradientTrainer(policy, value_net, opt, vopt, cfg["rls"])

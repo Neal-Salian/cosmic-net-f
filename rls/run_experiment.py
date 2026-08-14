@@ -87,8 +87,8 @@ def main(cfg=None, checkpoint=None):
     # 4. Policy + value net + policy-gradient trainer
     from rls.policy import build_policy
     from rls.policy_gradient import PolicyGradientTrainer, ValueNet
-    policy = build_policy(cfg, node_emb_dim=cfg["model"]["output_dim"]).to(device)
-    value_net = ValueNet(cfg["model"]["output_dim"]).to(device)
+    policy = build_policy(cfg, node_emb_dim=gnn.output_dim).to(device)
+    value_net = ValueNet(gnn.output_dim).to(device)
     opt = torch.optim.Adam(policy.parameters(), lr=rls_cfg["lr"])
     vopt = torch.optim.Adam(value_net.parameters(), lr=rls_cfg["lr"])
     trainer = PolicyGradientTrainer(policy, value_net, opt, vopt, rls_cfg)

@@ -11,7 +11,7 @@ data:
     cache_dir: data/raw/tng_cache
     clustered_file: data/raw/tng100_clustered.csv
     min_subhalos_per_halo: 3
-    n_halos: 500
+    n_halos: 600
     snapshot: 99
   train_ratio: 0.7
   val_ratio: 0.15
@@ -44,14 +44,14 @@ logging:
   log_file: outputs/logs/cosmic_net.log
 model:
   activation: leaky_relu
-  dropout: 0.04
+  dropout: 0.05
   edge_features: 5
-  hidden_dim: 256
+  hidden_dim: 64
   mc_dropout: true
   mc_samples: 30
   node_features: 4
   num_layers: 3
-  output_dim: 128
+  output_dim: 64
   pooling: mean
   residual: true
 physics:

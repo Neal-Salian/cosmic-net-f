@@ -48,17 +48,20 @@ def mass_ratio_mask(edge_index, edge_attr, pos, frac, mass_ratio_idx=3):
     return m
 
 
-def gradient_saliency_mask(edge_index, edge_attr, pos, frac, model=None):
+def gradient_saliency_mask(edge_index, edge_attr, pos, frac, model=None, x=None):
     """Top-k edges by gradient-saliency importance (the repo's existing
     'pgexplainer' pathway: explain/explainer.py `_explain_pgexplainer`).
     model: callable(data) -> (pred, _) used for the backward pass; falls
-    back to distance when model is None (used by tests). This is the
+    back to distance when model is None (used by tests). x: real node
+    features [N,4]; if omitted, ones are used (tests only). This is the
     mandatory 'why RL?' control — same frozen model, same metrics."""
     if model is None:
         return distance_mask(edge_index, edge_attr, pos, frac)
     n = edge_index.shape[1]
-    # gradient w.r.t. node features, edge importance = (|g_src| + |g_dst|) / 2
-    x = edge_attr.new_ones(edge_index.max().item() + 1, 4, requires_grad=True)
+    num_nodes = int(edge_index.max().item()) + 1
+    if x is None:
+        x = edge_attr.new_ones(num_nodes, 4)
+    x = x.detach().clone().requires_grad_(True)
     from torch_geometric.data import Data, Batch
     pred, _ = model(Batch.from_data_list([Data(x=x, edge_index=edge_index,
                                                edge_attr=edge_attr)]))
@@ -66,7 +69,7 @@ def gradient_saliency_mask(edge_index, edge_attr, pos, frac, model=None):
     g = x.grad.abs().sum(dim=1)
     scores = (g[edge_index[0]] + g[edge_index[1]]) / 2
     k = int(frac * n)
-    m = torch.zeros(n, dtype=torch.bool)
+    m = torch.zeros(n, dtype=torch.bool, device=edge_index.device)
     m[torch.topk(scores, k).indices] = True
     return m
 

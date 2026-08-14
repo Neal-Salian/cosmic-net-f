@@ -34,10 +34,15 @@ def _graph_physics_terms(graph, edge_index, mask, G=4.302e-9):
 
 
 def _no_isolated(edge_index, mask):
-    """True iff every node keeps >= 1 incident edge under `mask`."""
-    deg = torch.zeros(edge_index.max().item() + 1)
-    deg.index_add_(0, edge_index[0, mask], torch.ones(mask.sum()))
-    deg.index_add_(0, edge_index[1, mask], torch.ones(mask.sum()))
+    """True iff every node keeps >= 1 incident edge under `mask`.
+    Device-safe: the degree accumulator lives on edge_index's device."""
+    device = edge_index.device
+    deg = torch.zeros(int(edge_index.max().item()) + 1, dtype=torch.long, device=device)
+    kept = mask.nonzero(as_tuple=False).squeeze(-1)
+    if kept.numel() > 0:
+        ones = torch.ones(kept.numel(), dtype=torch.long, device=device)
+        deg.index_add_(0, edge_index[0, kept], ones)
+        deg.index_add_(0, edge_index[1, kept], ones)
     return bool((deg >= 1).all())
 
 

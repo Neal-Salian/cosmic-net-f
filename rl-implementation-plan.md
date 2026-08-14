@@ -166,9 +166,9 @@ Existing interfaces this plan relies on (from REPOWISE.md / repo):
 - `CosmicNetGNN(config)`; `forward(batch_data, return_embeddings=False) -> preds [B]`; `get_embeddings(batch_data, embedding_point='pre_pooling') -> (N, out_dim)`; `predict_with_uncertainty(batch_data, n_samples)`.
 - `batch_data` fields: `.x [N,4]`, `.edge_index [2,E]`, `.edge_attr [E,5]`, `.batch [N]`, `.y [B]`, `.stellar_mass`, `.vel_disp`, `.half_mass_r`.
 - `load_model(checkpoint_path, config, device)` handles both dict-key and raw state-dict checkpoints.
-- Config keys: `model.hidden_dim=256`, `model.output_dim=128`, `graph.edge_features` (5), `model.mc_samples=30`.
+- Config keys: `model.hidden_dim=64`, `model.output_dim=64`, `graph.edge_features` (5), `model.mc_samples=30`. **The frozen checkpoints were trained at 64/64 (verified from the checkpoint's embedded config + state-dict shapes: `input_proj.0.weight (64,4)`, `pred_head.0.weight (64,64)`) — do NOT use 256/128. `load_model` now prefers the checkpoint's own embedded config, so any stale `config.yaml` model section cannot silently build a mismatched architecture.**
 
-**Kaggle note (IMPORTANT):** `data/raw/tng100_clustered.csv` and `kaggle/best_model_augmented.pt` are gitignored — they exist locally but are NOT on GitHub. For Kaggle runs: upload both as a private Kaggle dataset and mount with `/kaggle/input/<ds>/`. The `rl-kaggle-notebooks.md` file contains the three ready-to-paste notebooks.
+**Kaggle note (IMPORTANT):** `data/raw/tng100_clustered.csv`, `kaggle/best_model_augmented.pt`, and `kaggle/best_model (2).pt` are **committed to the (private) git repo** (they are NOT gitignored). Since the repo is private, the Kaggle notebook must clone it with a **Personal Access Token** stored in a Kaggle Secret (see `rl-kaggle-notebooks.md`). No separate dataset upload is needed — the committed `data/raw/tng100_clustered.csv` (541 halos, 5378 subhalos) is checked in. Only `outputs/checkpoints/best_model.pt` is git-LFS (511 MB, not needed for RL).
 
 ---
 

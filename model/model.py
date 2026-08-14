@@ -548,16 +548,26 @@ def load_model(
     Returns:
         Loaded model
     """
-    model = build_model(config)
     checkpoint = torch.load(checkpoint_path, map_location=device)
 
-    if 'model_state_dict' in checkpoint:
+    # Prefer the checkpoint's own embedded config for the model architecture.
+    # This makes loading robust to config.yaml drift: the checkpoint knows the
+    # exact hidden_dim/output_dim/num_layers it was trained with, and a stale
+    # config.yaml must not silently build a mismatched architecture.
+    ckpt_config = checkpoint.get('config') if isinstance(checkpoint, dict) else None
+    if ckpt_config and 'model' in ckpt_config:
+        model = build_model(ckpt_config)
+    else:
+        model = build_model(config)
+
+    if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
         model.load_state_dict(checkpoint['model_state_dict'])
     else:
         model.load_state_dict(checkpoint)
 
     model.to(device)
     model.eval()
-    logger.info(f"Loaded model from {checkpoint_path}")
+    logger.info(f"Loaded model from {checkpoint_path} "
+                f"(hidden_dim={model.hidden_dim}, output_dim={model.output_dim})")
 
     return model

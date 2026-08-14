@@ -12,7 +12,7 @@ from rls.policy_gradient import (PolicyGradientTrainer, ValueNet,
                                  bernoulli_logp, bernoulli_entropy,
                                  sample_actions)
 from rls.sparsify import hard_mask, repair_connectivity
-from rls.rewards import compute_rewards, virial_penalty, label_free_reward
+from rls.rewards import compute_rewards, virial_penalty, label_free_reward, virial_ratio_pruned
 from rls.train_policy import prepare_graphs, train_policy
 from rls.tta import adapt_at_test_time, mc_std
 from rls.evaluate import build_results_table, save_paper_plots, evaluate_tta
@@ -26,7 +26,7 @@ __all__ = [
     "PolicyGradientTrainer", "ValueNet", "compute_advantages", "compute_pg_loss",
     "bernoulli_logp", "bernoulli_entropy", "sample_actions",
     "hard_mask", "repair_connectivity",
-    "compute_rewards", "virial_penalty", "label_free_reward",
+    "compute_rewards", "virial_penalty", "label_free_reward", "virial_ratio_pruned",
     "prepare_graphs", "train_policy",
     "adapt_at_test_time", "mc_std",
     "build_results_table", "save_paper_plots", "evaluate_tta",

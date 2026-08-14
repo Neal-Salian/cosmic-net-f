@@ -18,20 +18,24 @@ def hard_mask(probs, min_keep_frac=0.1):
 def repair_connectivity(edge_index, mask):
     """Guarantee every node has >= 1 incident kept edge.
 
-    For each isolated node, force-keep its nearest-neighbor edge (first in
-    edge_index order among its incident edges is a deterministic fallback;
-    nearest by distance is handled by the caller via edge reordering)."""
+    For each isolated node, force-keep its first incident edge (in edge_index
+    order). Device-safe: the degree accumulator lives on edge_index's device,
+    so this works identically on CPU and CUDA (a CPU-only accumulator crashed
+    every GPU run).
+    """
     mask = mask.clone()
-    kept = mask.bool()
-    incident = torch.zeros(edge_index.max().item() + 1, dtype=torch.long)
-    for i in range(edge_index.shape[1]):
-        if kept[i]:
-            incident[edge_index[0, i]] += 1
-            incident[edge_index[1, i]] += 1
-    isolated = (incident == 0).nonzero(as_tuple=True)[0]
+    device = edge_index.device
+    num_nodes = int(edge_index.max().item()) + 1
+    incident = torch.zeros(num_nodes, dtype=torch.long, device=device)
+    kept_idx = mask.nonzero(as_tuple=False).squeeze(-1)
+    if kept_idx.numel() > 0:
+        ones = torch.ones(kept_idx.numel(), dtype=torch.long, device=device)
+        incident.index_add_(0, edge_index[0, kept_idx], ones)
+        incident.index_add_(0, edge_index[1, kept_idx], ones)
+    isolated = (incident == 0).nonzero(as_tuple=False).squeeze(-1)
     for node in isolated.tolist():
         cand = (edge_index == node).sum(dim=0).bool()
         if cand.any():
-            first = cand.nonzero(as_tuple=True)[0][0]
+            first = int(cand.nonzero(as_tuple=False)[0].item())
             mask[first] = 1
     return mask
