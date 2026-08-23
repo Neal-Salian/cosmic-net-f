@@ -3,9 +3,12 @@ Here is a comprehensive summary block that you can copy and paste directly into 
 ### Handoff Context & Project State: Cosmic-Net to RL-Cosmic-Net
 We are advancing **Cosmic-Net**—our graph neural network (GNN) framework for inferring dark matter halo masses from cosmological subhalo catalogs—into a top-tier machine learning research project targeting **NeurIPS AI4Science Workshop** and **ICLR Main Track**.
 #### 1. Current Foundation & Baseline
- * **Dataset:** IllustrisTNG-100-1 (Snapshot 99, z=0) subhalo catalog subset comprising **541 graph-structured halo samples** (432 train / 109 test).
- * **Current Performance:** Achieves an RMSE of **0.137 dex** and successfully distills Faber-Jackson-like physical equations via Symbolic Regression (R^2 = 0.965).
+ * **Dataset:** IllustrisTNG-100-1 (Snapshot 99, z=0) subhalo catalog subset comprising **541 graph-structured halo samples** (378 train / 81 val / 82 test).
+ * **GNN baseline (full graph):** RMSE of **0.1167 dex**, R^2 = **0.9075**.
+ * **Symbolic-regression/distillation result (separate from the GNN baseline):** successfully distills Faber-Jackson-like physical equations via Symbolic Regression (R^2 ≈ 0.965).
  * **Frozen Backbone:** best_model_augmented.pt will serve as the fixed feature extractor during RL policy training to avoid gradient divergence.
+
+> **Correction (Aug 23 2026):** the earlier figures in this handoff (RMSE 0.137 dex; 432 train / 109 test) were superseded by the verified baseline — GNN full-graph RMSE **0.1167 dex**, R^2 **0.9075**, split 378/81/82 on the same 541 halos. R^2 ≈ 0.965 is the separate symbolic-regression/distillation result (PySR), not the GNN baseline.
 #### 2. The Core Methodological Pivot: Physics-Informed RL Graph Sparsification
 Instead of relying on standard dense k-NN graphs and slow, post-hoc explainers (like GNNExplainer/PGExplainer), we are introducing a novel **Reinforcement-Learned (RL) Edge-Selection Policy**:
  * **Mechanism:** A lightweight policy network (\pi_\theta) that takes edge features and frozen GNN node embeddings, outputting discrete keep/drop binary decisions for graph edges *before* final prediction.
