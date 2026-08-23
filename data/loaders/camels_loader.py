@@ -463,6 +463,11 @@ class CAMELSHuggingFaceLoader(BaseDataLoader):
         # Grouping method
         self.grouping_method = self.data_config.get('grouping', 'fof')
 
+        # Mirrors CAMELSLoader: set True by _generate_synthetic_hf_data when
+        # the synthetic fallback is used, so downstream guards (Notebooks C/D,
+        # rls/cross_sim.py) can refuse to publish synthetic-data results.
+        self.used_synthetic_fallback = False
+
         logger.info(f"CAMELSHuggingFaceLoader initialized: dataset={self.dataset_name}")
 
     def load_raw(self) -> Any:
@@ -495,6 +500,7 @@ class CAMELSHuggingFaceLoader(BaseDataLoader):
         Returns:
             List of dictionaries with simulated data
         """
+        self.used_synthetic_fallback = True
         np.random.seed(self.seed)
 
         data = []
