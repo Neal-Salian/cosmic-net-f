@@ -16,6 +16,7 @@ from rls.rewards import compute_rewards, virial_penalty
 
 def _graph_physics_terms(graph, edge_index, mask, G=4.302e-9):
     """ke_retained, pe_retained per graph (see rewards.py docstring)."""
+    assert mask.dtype == torch.bool, f"expected bool mask, got {mask.dtype}"
     stellar = graph["stellar_mass"]  # [N]
     vel_disp = graph["vel_disp"]     # [N]
     pos = graph["pos"]               # [N,3]

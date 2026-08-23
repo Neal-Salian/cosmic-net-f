@@ -26,6 +26,7 @@ def fine_tune_gnn(gnn, graphs, masks, epochs=10, lr=1e-4, device="cpu",
         for g, mask in zip(graphs, masks):
             g = {k: v.to(device) for k, v in g.items() if isinstance(v, torch.Tensor)}
             m = mask.to(device)
+            assert m.dtype == torch.bool, f"expected bool mask, got {m.dtype}"
             x = g["x"]
             ei = g["edge_index"][:, m]
             ea = g["edge_attr"][m]

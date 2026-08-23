@@ -100,10 +100,11 @@ def main(cfg=None, checkpoint=None):
 
     def gnns(graph, mask, use_gnn=gnn):
         with torch.no_grad():
+            m = mask.to(device)
+            assert m.dtype == torch.bool, f"expected bool mask, got {m.dtype}"
             d_full = Data(x=graph["x"], edge_index=graph["edge_index"],
                           edge_attr=graph["edge_attr"])
             pred_full, _ = gnn(Batch.from_data_list([d_full]))
-            m = mask.to(device)
             d_pr = Data(x=graph["x"], edge_index=graph["edge_index"][:, m],
                         edge_attr=graph["edge_attr"][m])
             pred_pruned, _ = gnn(Batch.from_data_list([d_pr]))

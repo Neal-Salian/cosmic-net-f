@@ -21,8 +21,10 @@ def repair_connectivity(edge_index, mask):
     For each isolated node, force-keep its first incident edge (in edge_index
     order). Device-safe: the degree accumulator lives on edge_index's device,
     so this works identically on CPU and CUDA (a CPU-only accumulator crashed
-    every GPU run).
+    every GPU run). Requires a BOOL mask: downstream edge_index[:, mask] /
+    edge_attr[mask] silently positional-index with an int 0/1 mask.
     """
+    assert mask.dtype == torch.bool, f"expected bool mask, got {mask.dtype}"
     mask = mask.clone()
     device = edge_index.device
     num_nodes = int(edge_index.max().item()) + 1
@@ -37,5 +39,5 @@ def repair_connectivity(edge_index, mask):
         cand = (edge_index == node).sum(dim=0).bool()
         if cand.any():
             first = int(cand.nonzero(as_tuple=False)[0].item())
-            mask[first] = 1
+            mask[first] = True
     return mask
