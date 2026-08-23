@@ -54,6 +54,12 @@ class SyntheticLoader(BaseDataLoader):
         # Grouping method
         self.grouping_method = self.data_config.get('grouping', 'fof')
 
+        # Provenance contract (read by rls/cross_sim.py's real-data guard):
+        # True from init because this loader's data is ALWAYS synthetic —
+        # either read from synthetic files or internally generated — so
+        # synthetic OOD results can never pass as real ones.
+        self.used_synthetic_fallback = True
+
         logger.info(f"SyntheticLoader initialized with features={self.features_path}, csv={self.csv_path}")
 
     def load_raw(self) -> Tuple[Optional[torch.Tensor], pd.DataFrame]:
