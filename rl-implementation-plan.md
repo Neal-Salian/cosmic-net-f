@@ -13,6 +13,10 @@
 > win/torch-2.12 wheel → radius/knn_graph unavailable; pure-torch kNN fallback
 > lives in `rls/run_experiment.py:_ensure_graph_builder_works`).
 
+> **RESULTS INVALIDATION (Aug 23 2026):** any Notebook B/C/D results generated
+> before this fix series are invalid and must be regenerated once the upcoming
+> bug-fix phases (boolean mask fix, RL action/reward fix, etc.) land.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Train a reinforcement-learned edge-selection policy that prunes noisy edges from halo graphs, and — the core novelty — **adapt that policy at inference time, per input graph, using a label-free reward** ("RL at inference" / test-time structural adaptation). This produces (a) equal-or-better halo-mass predictions, (b) a physically meaningful "minimal skeleton" that serves as the model's intrinsic explanation, (c) OOD robustness the frozen offline policy cannot have (the reward needs no labels, so adaptation works on CAMELS), and (d) two papers: the **halo paper** → IEEE BigData 2026 (submission Aug 21, notification Oct 24 — verified, meets the Nov-1 constraint), then the **generic method paper** ("RL at inference for GNNs") → ICLR 2028 (Sep 2027 deadline; see Part 5B).
@@ -41,7 +45,7 @@ The GNN backbone (`best_model_augmented.pt`) stays frozen throughout; an optiona
 | "Sparsified graph IS the explanation" | ✅ KEEP as the paper's core claim | Must be validated with fidelity, stability, and physics-alignment metrics (Part 3). |
 | Phase 0 baselines (random, attention top-k, Gumbel) | ✅ KEEP + add degree-drop and distance-drop | The Gumbel-softmax baseline is the single most important one — it is the "why RL?" control. |
 | Phase 1 REINFORCE w/ moving baseline | ✅ KEEP, HONESTLY NAMED | Drop the "PPO" label. Each graph is a one-step MDP, so GAE degenerates to `reward − value` and the clipped-importance ratio can never fire (old/new log-probs come from the same forward pass → ratio ≡ 1). REINFORCE with a learned baseline + entropy bonus is the statistically equivalent, defensible choice — and a reviewer who catches "PPO" in the paper against this code will not trust anything else. |
-| Baseline numbers (0.137 dex, R² 0.965, 541 halos 432/109) | ⚠️ NOT REPRODUCIBLE FROM GIT | `config.yaml` has `n_halos: 500` and the loader drops halos below `min_subhalos_per_halo: 3` (tng_loader.py:600) → strictly <500 halos, cannot yield 541; the 0.7/0.15/0.15 split of 541 = 379/81/81, not 432/109. No results artifact is committed and wandb is disabled. **Task 0 must commit the exact config + a baseline_metrics.json before any RL work.** |
+| Baseline numbers (0.1167 dex, R² 0.9075, 541 halos split 378/81/82 — corrected Aug 23 2026; previously misreported as 0.137 dex / R² 0.965 / 432/109) | ⚠️ STALE NUMBERS CORRECTED | Real executed run: 541 halos, 0.7/0.15/0.15 split = 378 train / 81 val / 82 test (the earlier 379/81/81 arithmetic guess was also wrong); full-graph RMSE 0.1167 dex, R² 0.9075. No `baseline_metrics.json` is committed and wandb is disabled. **Task 0 must commit the exact config + a baseline_metrics.json before any RL work.** |
 | Existing explainer pathway (`explain/explainer.py`, default method `pgexplainer`) | ⚠️ ADD BASELINE ROW | The repo already ships an edge-importance pipeline against this same frozen model. It is gradient saliency *mislabeled* PGExplainer (real PyG PGExplainer is imported but unused; `train_explainer` is a no-op stub). The paper needs a **gradient-saliency baseline row** (cheap — reuse `explain/explainer.py`) and, if time permits, the real `torch_geometric.explain.PGExplainer`. If the RL policy does not beat both, that IS the finding ("RL wins over the standard explainer baseline, here's why") — a better paper than the one currently planned. |
 | Phase 2 CAMELS OOD + U_ij binding-energy validation | ✅ KEEP | This is the physics novelty that reviewers at ML4PS and ApJ will care about. |
 | Phase 3 MUTAG/OGB standard benchmarks | ⚠️ CUT for workshop; keep as ICLR stretch | Not required for ML4PS; a small ZINC/ogbg-molhiv sweep is enough if ICLR main track is attempted. |
@@ -54,7 +58,7 @@ The GNN backbone (`best_model_augmented.pt`) stays frozen throughout; an optiona
 3. **GIB / DIR / CIGA** — the invariant-rationale family. Relevant for the OOD claim: your cross-simulation (TNG→CAMELS) test is where these methods would shine; cite them as the motivation that "pruned structure → generalization".
 4. **Cranmer et al. (NeurIPS 2020) "Discovering Symbolic Models from Deep Learning with Inductive Biases"** — the direct precursor of your symbolic-regression distillation step; cite as prior art for GNN→equation distillation.
 5. **LaSR (Grayeli et al., NeurIPS 2024)** — current SR SOTA on Feynman (72/100 exact vs PySR 59/100). Optional upgrade for the journal paper: use LaSR/LLM-SR on the *pruned-graph features* to rediscover the virial/Faber-Jackson relations. Not required for the workshop.
-6. **HaloGraphNet (Villanueva-Domingo et al., ApJ 2022)** — your benchmark baseline: ~0.2 dex scatter, R² 0.96–0.97 on CAMELS CV. Your current 0.137 dex RMSE on TNG already beats it on that metric; the paper must report both numbers and explain dataset differences honestly.
+6. **HaloGraphNet (Villanueva-Domingo et al., ApJ 2022)** — your benchmark baseline: ~0.2 dex scatter, R² 0.96–0.97 on CAMELS CV. Your current 0.1167 dex RMSE on TNG already beats it on that metric; the paper must report both numbers and explain dataset differences honestly.
 7. **PGExplainer (Luo et al., NeurIPS 2020)** — the standard parameterized edge-mask explainer. You MUST benchmark against it: `explain/explainer.py` already names it as the repo's default method, but its implementation is gradient saliency, not the real algorithm (the real PyG `PGExplainer` import sits unused; `train_explainer` is a stub). The paper needs (a) a gradient-saliency row reusing the repo explainer as-is, and (b) ideally the true PGExplainer via `torch_geometric.explain`. This is the "why RL at all?" control — same frozen model, same metrics.
 8. **TENT (Wang et al., ICLR 2021)** — the canonical test-time adaptation method: entropy minimization at inference by tuning batch-norm statistics. It adapts **parameters**, not **structure**, and for images not graphs. Your differentiator: adaptation happens in the *input space* (edge masks) via RL, and the reward is not just prediction confidence — it includes a physics-consistency term that entropy minimization cannot express. Cite it as the TTA ancestor; reviewers will ask why not just run TENT on the GNN — add it as a baseline row if cheap (adapt the GNN's LayerNorm affine params at test time; 30 lines).
 9. **Graph TTA (e.g., GraphCTA; ADC/GraphACL family, 2023–24)** — test-time adaptation for GNNs exists but adapts node embeddings or model weights, typically for node classification. Per-instance *edge-structure* adaptation with an RL reward is, to our knowledge, unclaimed — that is the paper's novelty sentence. Verify with a final lit search before writing (the field moves fast).
@@ -187,7 +191,7 @@ Existing interfaces this plan relies on (from REPOWISE.md / repo):
 
 ### Task 0: Commit the reproducible baseline (fix the divergence FIRST)
 
-**Why:** the reported baseline (0.137 dex, R² 0.965, 541 halos split 432/109) is **not reproducible from git**. `config.yaml` has `n_halos: 500` with `min_subhalos_per_halo: 3` (loader drops halos, tng_loader.py:600) → strictly <500 halos; the 0.7/0.15/0.15 split of 541 is 379/81/81, not 432/109; no results artifact is committed; wandb is disabled. Do this before ANY RL work — otherwise you can't defend the numbers you're claiming to beat.
+**Why:** the previously reported baseline (0.137 dex, R² 0.965, 541 halos split 432/109) was misreported — corrected Aug 23 2026 with the real executed run's verified numbers: 541 halos, split 378 train / 81 val / 82 test (the 0.7/0.15/0.15 split; the earlier 379/81/81 arithmetic guess was also wrong), full-graph RMSE 0.1167 dex, R² 0.9075. No `baseline_metrics.json` is committed; wandb is disabled. Do this before ANY RL work — otherwise you can't defend the numbers you're claiming to beat.
 
 - [ ] **Step 1:** Re-run the baseline evaluation with the committed config on the current test split. Write `outputs/rls/baseline_metrics.json`:
 ```json
@@ -195,8 +199,8 @@ Existing interfaces this plan relies on (from REPOWISE.md / repo):
   "config": "config/config.yaml",
   "n_halos_configured": 500,
   "n_halos_actual": 541,
-  "split": {"train": 432, "val": 81, "test": 109},
-  "rmse_dex": 0.137, "r2": 0.965, "scatter_dex": 0.10,
+  "split": {"train": 378, "val": 81, "test": 82},
+  "rmse_dex": 0.1167, "r2": 0.9075, "scatter_dex": 0.10,
   "checkpoint": "kaggle/best_model_augmented.pt"
 }
 ```
@@ -2126,7 +2130,7 @@ def evaluate_tta(policy, graphs, gnn, cfg, device, ks=(0, 5, 10, 20),
 
 | Method | RMSE (dex) | R² | Scatter (dex) | Keep frac | Fidelity | Spearman ρ vs U_ij | Virial ratio (med) | 95% CI coverage |
 |---|---|---|---|---|---|---|---|---|
-| Full graph (frozen) | 0.137 | 0.965 | ~0.10 | 1.0 | 1.0 | — | ~1.0 (both defs) | ~0.95 |
+| Full graph (frozen) | 0.1167 | 0.9075 | ~0.10 | 1.0 | 1.0 | — | ~1.0 (both defs) | ~0.95 |
 | Random drop (50%) | ~0.20 | — | — | 0.5 | — | ~0 | report | — |
 | Degree drop (50%) | ~0.17 | — | — | 0.5 | — | low | report | — |
 | Distance drop (50%) | ~0.15 | — | — | 0.5 | — | high | report | — |
@@ -2144,6 +2148,8 @@ def evaluate_tta(policy, graphs, gnn, cfg, device, ks=(0, 5, 10, 20),
 | **TNG→CAMELS (RL-TTA) — headline** | **< frozen** | **> frozen** | — | 0.5 | ≥ frozen | ≥ frozen | — | — |
 | TTA ablation: K ∈ {0,5,10,20} | K-curve on RMSE | — | — | 0.5 | — | — | — | K=0 ≡ frozen (sanity) |
 | TTA ablation: reward −unc / −virial / −sparsity | each term contributes | — | — | — | — | — | — | — |
+
+> **Baseline correction (Aug 23 2026):** the "Full graph (frozen)" row now shows the real verified baseline (RMSE 0.1167 dex, R² 0.9075, 541 halos, split 378/81/82). The derived RL-policy target thresholds in this table (≤0.137 dex, ≥0.965 R², etc.) still reference the OLD baseline and must be reviewed and recalculated against the new baseline before the paper is finalized.
 
 **Rules for reviewers (follow strictly):**
 1. All methods share the SAME frozen backbone weights (except Gumbel baseline, which is joint-trained — say so explicitly; that is its unfair advantage, making RL's win stronger).
@@ -2203,7 +2209,7 @@ def evaluate_tta(policy, graphs, gnn, cfg, device, ks=(0, 5, 10, 20),
 
 | Date (2026) | Milestone | Notes |
 |---|---|---|
-| Aug 5 (today) | Baseline frozen: GNN 0.137 dex | Already done |
+| Aug 5 (today) | Baseline frozen: GNN 0.1167 dex | Already done |
 | Aug 5–8 | Phase 0–1: Tasks 0–5 (baseline commit, policy/reward/policy-gradient/sparsify/train) | 4 days |
 | Aug 9–12 | Phase 2: Tasks 6–9 (baselines incl. mass-ratio + gradient-saliency, metrics, eval, stage B) | 4 days |
 | Aug 13–16 | Phase 3: Task 10 Kaggle T4 (3 sessions); Task 11 CAMELS OOD | First numbers + OOD |
