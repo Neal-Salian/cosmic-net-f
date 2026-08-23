@@ -15,7 +15,7 @@ import torch
 from torch_geometric.data import Data, Batch
 from rls.policy_gradient import bernoulli_logp, bernoulli_entropy, sample_actions
 from rls.sparsify import hard_mask, repair_connectivity, apply_min_keep_floor
-from rls.rewards import label_free_reward, virial_penalty
+from rls.rewards import label_free_reward, relative_virial_penalty
 from rls.train_policy import _graph_physics_terms, _no_isolated
 
 
@@ -44,6 +44,11 @@ def adapt_at_test_time(policy, graph, gnn, cfg, device="cpu", init="offline",
 
     with torch.no_grad():
         std_full = mc_std(gnn, g, n_samples=cfg["tta_mc_samples"], device=device)
+        # Relative virial (approved Aug 2026): loop-free full-graph reference,
+        # computed ONCE per graph — constant with respect to the TTA actions.
+        ke_full, pe_full = _graph_physics_terms(
+            g, g["edge_index"],
+            torch.ones(g["edge_index"].shape[1], dtype=torch.bool, device=device))
 
     baseline, best_r, stall = 0.0, -1e9, 0
     hist = []
@@ -60,7 +65,8 @@ def adapt_at_test_time(policy, graph, gnn, cfg, device="cpu", init="offline",
             std_pr = mc_std(gnn, g, g["edge_index"][:, mask], g["edge_attr"][mask],
                             n_samples=cfg["tta_mc_samples"], device=device)
             ke, pe = _graph_physics_terms(g, g["edge_index"], mask)
-            vp = (virial_penalty(ke, pe) if cfg.get("w_virial", 0) > 0
+            vp = (relative_virial_penalty(ke, pe, ke_full, pe_full)
+                  if cfg.get("w_virial", 0) > 0
                   else torch.zeros(1).to(device))
             conn_ok = bool((mask.sum() > 0) and _no_isolated(g["edge_index"], mask))
             r = label_free_reward(std_pr, std_full, float(mask.float().mean()),

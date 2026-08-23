@@ -11,12 +11,22 @@ from torch_geometric.nn import global_mean_pool
 from rls.policy_gradient import (compute_advantages, compute_pg_loss,
                                  bernoulli_logp, bernoulli_entropy, sample_actions)
 from rls.sparsify import apply_min_keep_floor, repair_connectivity
-from rls.rewards import compute_rewards, virial_penalty
+from rls.rewards import compute_rewards, relative_virial_penalty
 
 
 def _graph_physics_terms(graph, edge_index, mask, G=4.302e-9):
-    """ke_retained, pe_retained per graph (see rewards.py docstring)."""
+    """ke_retained, pe_retained per graph (see rewards.py docstring).
+
+    PHYSICS EDGES EXCLUDE SELF-LOOPS (u == v): a self-pair is not a pairwise
+    interaction, and its r == 0 would clamp to 1e-6 and dominate PE by orders
+    of magnitude (the dead-virial-term bug found by the Aug 2026 audit —
+    measured: self-loops carried ~100% of PE and the resulting ratio ~4e-5 made
+    the old one-sided penalty identically zero). GNN message-passing keeps its
+    self-loops; this filter is physics-only."""
     assert mask.dtype == torch.bool, f"expected bool mask, got {mask.dtype}"
+    real = edge_index[0] != edge_index[1]
+    edge_index = edge_index[:, real]
+    mask = mask[real]
     stellar = graph["stellar_mass"]  # [N]
     vel_disp = graph["vel_disp"]     # [N]
     pos = graph["pos"]               # [N,3]
@@ -127,8 +137,16 @@ def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=Non
                                             min_keep_frac=cfg.get("min_keep_frac", 0.1))
                 mask = repair_connectivity(g["edge_index"], mask)
                 pred_full, pred_pruned = gnns(g, mask) if gnns else (torch.randn(1), torch.randn(1))
+                # Relative virial (approved Aug 2026): loop-free full-graph
+                # reference (action-independent, constant per graph) vs the
+                # action-selected edges. _graph_physics_terms filters
+                # self-loops internally, so passing the full edge_index with an
+                # all-true mask yields the loop-free full-graph reference.
+                ke_full, pe_full = _graph_physics_terms(
+                    g, g["edge_index"], torch.ones_like(mask))
                 ke, pe = _graph_physics_terms(g, g["edge_index"], mask)
-                vp = virial_penalty(ke, pe) if cfg.get("w_virial", 0) > 0 else torch.zeros(1).to(device)
+                vp = (relative_virial_penalty(ke, pe, ke_full, pe_full)
+                      if cfg.get("w_virial", 0) > 0 else torch.zeros(1).to(device))
                 conn_ok = bool((mask.sum() > 0) and _no_isolated(g["edge_index"], mask))
                 keep_ratio = mask.float().mean().item()
                 rew = compute_rewards(pred_pruned, pred_full, g["y"], keep_ratio,

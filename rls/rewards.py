@@ -26,6 +26,40 @@ def virial_penalty(ke_retained, pe_retained):
     return torch.clamp(ratio - 1.0, min=0.0) ** 2
 
 
+def relative_virial_penalty(ke_pruned, pe_pruned, ke_full, pe_full,
+                            eps_ratio=1e-12):
+    """Relative virial penalty (approved formulation, Aug 2026):
+
+        penalty = (log r_pruned - log r_full)^2
+
+    Both ratios are computed over LOOP-FREE physics edges (self-loops are
+    excluded upstream in _graph_physics_terms); r_full is the same graph's
+    full-graph reference and is independent of the action mask. This replaces
+    the absolute one-sided penalty max(r-1,0)^2, which was identically zero on
+    the real pipeline (self-loop r=0 clamp dominated PE, measured ratio ~4e-5)
+    and, without loops, would be dominated by the stellar-only mass systematic
+    (measured median ratio 4.4-8.8 with IQR spanning decades).
+
+    Properties: mask-sensitive, label-free, non-circular (no predictions),
+    TTA-compatible, and exactly invariant to a global stellar-mass rescaling
+    (mass factors cancel in the ratio of ratios).
+
+    eps_ratio: a kept mask with zero real physics edges gives ke = pe = 0 and
+    an undefined ratio; the ratio is clamped into [eps_ratio, 1/eps_ratio] so
+    the penalty stays finite in a maximal band instead of NaN/inf. Stage-3
+    sensitivity: eps in [1e-12, 1e-6] moves the zero-edge penalty only within
+    ~[4e2, 1.3e3]; ordinary masks never reach the clamp (measured max |log r|
+    ~8.7). This is the single documented numeric choice of the formulation.
+    """
+    def _ratio(ke, pe):
+        ke = torch.as_tensor(ke, dtype=torch.float32)
+        pe = torch.clamp(torch.abs(torch.as_tensor(pe, dtype=torch.float32)),
+                         min=1e-30)
+        return torch.clamp(2.0 * ke / pe, eps_ratio, 1.0 / eps_ratio)
+    return (torch.log(_ratio(ke_pruned, pe_pruned))
+            - torch.log(_ratio(ke_full, pe_full))) ** 2
+
+
 def _rmse(a, b):
     return torch.sqrt(torch.mean((a - b) ** 2))
 
