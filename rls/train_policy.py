@@ -10,7 +10,7 @@ from torch_geometric.data import Batch
 from torch_geometric.nn import global_mean_pool
 from rls.policy_gradient import (compute_advantages, compute_pg_loss,
                                  bernoulli_logp, bernoulli_entropy, sample_actions)
-from rls.sparsify import hard_mask, repair_connectivity
+from rls.sparsify import apply_min_keep_floor, repair_connectivity
 from rls.rewards import compute_rewards, virial_penalty
 
 
@@ -114,13 +114,17 @@ def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=Non
             probs = torch.sigmoid(policy(g["edge_attr"], g["emb"],
                                          g["edge_index"], g["ctx"])).squeeze(-1)
             action = sample_actions(probs)
+            # logp is computed on the RAW sampled action, not the floored/repaired
+            # mask — same convention as action-clipping in continuous control:
+            # log-prob on the sample, the environment executes the repaired version.
             logp = bernoulli_logp(probs, action)
             ent = bernoulli_entropy(probs).mean()
             # value-net forward must stay OUTSIDE no_grad so vf_loss.backward()
             # has a graph to flow through (the baseline is learnable).
             val = value_net(g["ctx"])
             with torch.no_grad():
-                mask = hard_mask(probs, min_keep_frac=cfg.get("min_keep_frac", 0.1))
+                mask = apply_min_keep_floor(action.bool(), probs,
+                                            min_keep_frac=cfg.get("min_keep_frac", 0.1))
                 mask = repair_connectivity(g["edge_index"], mask)
                 pred_full, pred_pruned = gnns(g, mask) if gnns else (torch.randn(1), torch.randn(1))
                 ke, pe = _graph_physics_terms(g, g["edge_index"], mask)

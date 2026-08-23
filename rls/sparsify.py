@@ -15,6 +15,21 @@ def hard_mask(probs, min_keep_frac=0.1):
     return mask
 
 
+def apply_min_keep_floor(mask, probs, min_keep_frac=0.1):
+    """Same floor-enforcement as hard_mask, but the candidate mask need
+    not be a thresholded-probs mask — e.g. a sampled Bernoulli action.
+    If the candidate keeps fewer than min_keep_frac of edges, replace it
+    with the top-(min_keep_frac) highest-probability edges instead."""
+    assert mask.dtype == torch.bool, f"expected bool mask, got {mask.dtype}"
+    mask = mask.clone()
+    k_min = int(torch.ceil(torch.tensor(min_keep_frac) * probs.numel()))
+    if mask.sum() < k_min:
+        top = torch.topk(probs, k_min).indices
+        mask = torch.zeros_like(mask, dtype=torch.bool)
+        mask[top] = True
+    return mask
+
+
 def repair_connectivity(edge_index, mask):
     """Guarantee every node has >= 1 incident kept edge.
 

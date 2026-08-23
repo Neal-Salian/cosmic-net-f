@@ -11,7 +11,7 @@ from rls.policy_gradient import (PolicyGradientTrainer, ValueNet,
                                  compute_advantages, compute_pg_loss,
                                  bernoulli_logp, bernoulli_entropy,
                                  sample_actions)
-from rls.sparsify import hard_mask, repair_connectivity
+from rls.sparsify import hard_mask, repair_connectivity, apply_min_keep_floor
 from rls.rewards import compute_rewards, virial_penalty, label_free_reward, virial_ratio_pruned
 from rls.train_policy import prepare_graphs, train_policy
 from rls.tta import adapt_at_test_time, mc_std
@@ -25,7 +25,7 @@ __all__ = [
     "EdgePolicyNet", "build_policy",
     "PolicyGradientTrainer", "ValueNet", "compute_advantages", "compute_pg_loss",
     "bernoulli_logp", "bernoulli_entropy", "sample_actions",
-    "hard_mask", "repair_connectivity",
+    "hard_mask", "repair_connectivity", "apply_min_keep_floor",
     "compute_rewards", "virial_penalty", "label_free_reward", "virial_ratio_pruned",
     "prepare_graphs", "train_policy",
     "adapt_at_test_time", "mc_std",
