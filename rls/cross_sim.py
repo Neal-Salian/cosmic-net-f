@@ -6,7 +6,8 @@ import os
 import torch
 import pandas as pd
 
-def evaluate_cross_sim(cfg, checkpoint, max_halos=200, out_dir="outputs/rls"):
+def evaluate_cross_sim(cfg, checkpoint, max_halos=200, out_dir="outputs/rls",
+                       require_real_data=True):
     from data.loaders.base_loader import get_loader
     from graph.graph_builder import GraphBuilder
     from model.model import load_model, build_model
@@ -18,6 +19,14 @@ def evaluate_cross_sim(cfg, checkpoint, max_halos=200, out_dir="outputs/rls"):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     loader = get_loader(cfg)
     halos = loader.load()[:max_halos]
+    if require_real_data:
+        # The CAMELS loader silently generates synthetic data when the HDF5 is
+        # missing; synthetic OOD results must never be reported as real ones.
+        # require_real_data=False is the explicit opt-out for plumbing tests.
+        assert getattr(loader, "used_synthetic_fallback", False) is False, (
+            "CAMELS loader used its synthetic fallback - synthetic OOD results "
+            "are not publishable. Cache the real HDF5 first (or pass "
+            "require_real_data=False for plumbing tests only).")
     gb = GraphBuilder(cfg)
     graphs = gb.build_graphs(halos)
 
