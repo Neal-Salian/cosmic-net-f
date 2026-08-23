@@ -53,6 +53,14 @@ class TNGLoader(BaseDataLoader):
     - SubhaloVel -> velocity
     - SubhaloGrNr -> halo group assignment (FoF)
     - Group_M_Crit200 -> halo mass (target)
+
+    NOTE (schema discrepancy, verified Aug 2026 against raw_hdf5/groupcat_99_*.hdf5):
+    the mapping above describes the API path. The clustered CSV's
+    `half_mass_radius` column actually contains the TOTAL SubhaloHalfmassRad
+    (ckpc/h), NOT the stellar type-4 radius (e.g. 682.5 total vs 88.3 stellar
+    for the matched reference subhalo). Consumers that assume stellar radii
+    (e.g. model/physics_loss.py's R_half scale) get the total radius when fed
+    from the CSV path.
     """
 
     # TNG unit conversions
