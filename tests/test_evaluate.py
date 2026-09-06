@@ -75,3 +75,31 @@ def test_evaluate_tta_rows():
                 "mean_steps", "mean_time_s"} <= set(r)
     frozen_row = [r for r in rows if r["K"] == 0][0]
     assert frozen_row["mode"] == "frozen" and frozen_row["mean_steps"] == 0.0
+
+
+def test_summarize_multiseed_reports_cis_and_provenance():
+    """P2 rigor (audit Sep 2026): per-method mean +/- std + bootstrap CI over
+    seeds, with backbone provenance agreement surfaced per method."""
+    from rls.evaluate import summarize_multiseed
+    seeds = []
+    for s in range(5):
+        seeds.append([
+            {"method": "rl_policy", "rmse": 0.20 + 0.01 * s, "r2": 0.85,
+             "mean_keep_frac": 0.40, "backbone_stage": "frozen",
+             "backbone_sha256": "abc"},
+            {"method": "random", "rmse": 0.19, "r2": 0.86,
+             "mean_keep_frac": 0.80, "backbone_stage": "frozen",
+             "backbone_sha256": "abc"},
+        ])
+    out = summarize_multiseed(seeds, n_bootstrap=200, seed=0)
+    rl = [r for r in out if r["method"] == "rl_policy"][0]
+    assert rl["n_seeds"] == 5
+    assert abs(rl["rmse_mean"] - 0.22) < 1e-9
+    assert rl["rmse_std"] > 0
+    assert rl["rmse_ci95_lo"] <= rl["rmse_mean"] <= rl["rmse_ci95_hi"]
+    assert rl["backbone_stages"] == ["frozen"] and rl["backbone_shas"] == ["abc"]
+    # mixed provenance across seeds is surfaced, not silently merged
+    seeds[0][0]["backbone_sha256"] = "DIFFERENT"
+    out2 = summarize_multiseed(seeds, n_bootstrap=50, seed=0)
+    rl2 = [r for r in out2 if r["method"] == "rl_policy"][0]
+    assert sorted(rl2["backbone_shas"]) == ["DIFFERENT", "abc"]
