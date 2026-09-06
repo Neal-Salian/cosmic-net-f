@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from rls.sparsify import hard_mask, repair_connectivity
+from rls.sparsify import final_symmetric_mask  # symmetric eval masks (P0-2)
 
 
 def _r2(a, b):
@@ -104,9 +104,9 @@ def evaluate_tta(policy, graphs, gnn, cfg, device, ks=(0, 5, 10, 20),
                     with torch.no_grad():
                         p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"],
                                                  gd["edge_index"], gd["ctx"])).squeeze(-1)
-                        mask = repair_connectivity(
-                            gd["edge_index"],
-                            hard_mask(p, cfg.get("min_keep_frac", 0.1)))
+                        # FIX (audit P0-2, Sep 2026): symmetric eval mask.
+                        mask = final_symmetric_mask(
+                            gd["edge_index"], p, cfg.get("min_keep_frac", 0.1))
                 else:
                     mask, info = adapt_at_test_time(policy, gd, gnn, cfg, device,
                                                     init=init,

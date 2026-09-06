@@ -38,6 +38,10 @@ def repair_connectivity(edge_index, mask):
     so this works identically on CPU and CUDA (a CPU-only accumulator crashed
     every GPU run). Requires a BOOL mask: downstream edge_index[:, mask] /
     edge_attr[mask] silently positional-index with an int 0/1 mask.
+
+    NOTE (audit Sep 2026): repair adds a SINGLE directed edge, which can break
+    pairwise (u->v == v->u) symmetry. Callers that need a symmetric final mask
+    must pass the result through mirror_repair (inside final_symmetric_mask).
     """
     assert mask.dtype == torch.bool, f"expected bool mask, got {mask.dtype}"
     mask = mask.clone()
@@ -55,4 +59,177 @@ def repair_connectivity(edge_index, mask):
         if cand.any():
             first = int(cand.nonzero(as_tuple=False)[0].item())
             mask[first] = True
+    return mask
+
+
+# ---------------------------------------------------------------------------
+# Pairwise-symmetry layer (FIX Sep 2026, audit P0-1/P0-2).
+#
+# WHAT WAS WRONG: graphs are built symmetric (each physical neighbor pair =
+# two directed rows u->v and v->u, plus self-loops), but EdgePolicyNet scores
+# concat([nu, nv, ...]) which is NOT invariant to swapping u and v, so
+# p(u->v) != p(v->u) in general (measured: 2/10 pairs differ by >0.01 at init;
+# after thresholding near 0.5, ~97/200 pairs end up asymmetric). hard_mask /
+# repair_connectivity then acted per directed edge, feeding the frozen GNN a
+# directionally-asymmetric topology it never saw in training. REINFORCE
+# responded by learning "keep everything" (keep stalled at 0.96-1.0 while the
+# curriculum annealed to 0.40).
+#
+# CHOICE: symmetrize the OUTPUT (pair-averaged probabilities), not the input.
+# Input symmetrization (nu+nv, |nu-nv|) would change the policy architecture
+# and invalidate every trained checkpoint; output symmetrization keeps
+# EdgePolicyNet untouched and enforces the invariant at the decision layer,
+# where it can be unit-tested independently of the network. Combination is the
+# pair MEAN: min would over-prune (drop if either direction is uncertain),
+# max would under-prune; mean preserves gradient flow to both directions.
+#
+# SELF-LOOPS: always retained (excluded from the action space). The GNN was
+# trained with self-loops on every node; dropping them is a separate,
+# untested distribution shift, so the final mask forces them True.
+# ---------------------------------------------------------------------------
+
+def _reverse_index(edge_index):
+    """Map each directed edge i to the index j of its reverse (v->u), or -1.
+
+    Handles odd/duplicate edges: for duplicates, maps to the first reverse
+    occurrence; edges with no reverse present (odd edges, self-loops) map
+    to -1. Self-loops map to themselves.
+    """
+    src, dst = edge_index[0], edge_index[1]
+    key_to_first = {}
+    for j in range(edge_index.shape[1]):
+        key = (int(src[j].item()), int(dst[j].item()))
+        if key not in key_to_first:
+            key_to_first[key] = j
+    rev = torch.full((edge_index.shape[1],), -1, dtype=torch.long,
+                     device=edge_index.device)
+    for i in range(edge_index.shape[1]):
+        u, v = int(src[i].item()), int(dst[i].item())
+        if u == v:
+            rev[i] = i
+        elif (v, u) in key_to_first:
+            rev[i] = key_to_first[(v, u)]
+    return rev
+
+
+def pair_asymmetry_fraction(edge_index, mask):
+    """Diagnostic (audit P0-1): fraction of undirected pairs (u,v), u != v,
+    with mask[u->v] != mask[v->u]. Self-loops and odd edges (no reverse in
+    edge_index) are excluded. Returns a float in [0, 1]."""
+    assert mask.dtype == torch.bool, f"expected bool mask, got {mask.dtype}"
+    rev = _reverse_index(edge_index)
+    src, dst = edge_index[0], edge_index[1]
+    n_asym, n_pairs = 0, 0
+    seen = set()
+    for i in range(edge_index.shape[1]):
+        u, v = int(src[i].item()), int(dst[i].item())
+        if u == v or int(rev[i].item()) < 0:
+            continue
+        key = (min(u, v), max(u, v))
+        if key in seen:
+            continue
+        seen.add(key)
+        n_pairs += 1
+        if bool(mask[i].item()) != bool(mask[int(rev[i].item())].item()):
+            n_asym += 1
+    return (n_asym / n_pairs) if n_pairs > 0 else 0.0
+
+
+def symmetrize_probs(edge_index, probs):
+    """Pair-consensus probabilities: every directed copy of an unordered pair
+    {u,v} gets the MEAN probability over ALL copies (both directions,
+    including duplicates).
+
+    Done by pair-consensus rather than pairwise averaging so duplicate
+    directed edges cannot leave the group with split values (same fixpoint
+    issue as _mirror_mask). Edges with no reverse present (odd edges) and
+    self-loops keep their own probability. Returns a new tensor."""
+    rev = _reverse_index(edge_index)
+    src, dst = edge_index[0], edge_index[1]
+    out = probs.clone()
+    seen = set()
+    for i in range(probs.numel()):
+        u, v = int(src[i].item()), int(dst[i].item())
+        if u == v or int(rev[i].item()) < 0:
+            continue
+        key = (min(u, v), max(u, v))
+        if key in seen:
+            continue
+        seen.add(key)
+        copies = ((src == u) & (dst == v)) | ((src == v) & (dst == u))
+        out[copies] = probs[copies].mean()
+    return out
+
+
+def _mirror_mask(edge_index, mask):
+    """Pair-consensus OR: for every unordered pair {u,v} (u != v) present in
+    edge_index, the pair is kept iff ANY directed copy (either direction,
+    including duplicates) is kept; then ALL copies are set to that value.
+
+    Single-pass mirroring (if i kept, keep reverse(i)) is NOT enough: with
+    duplicate directed edges, an edge set True during the pass is never
+    itself mirrored, leaving its twin asymmetric (caught by
+    test_repair_symmetric_postcondition_on_sampled_masks). The consensus form
+    reaches the fixpoint in one shot. Repair only ADDS edges, so consensus-OR
+    preserves the no-isolated-nodes guarantee while restoring pair-symmetry.
+    Self-loops are unaffected. Odd edges (no reverse present) keep their own
+    value and are excluded from the asymmetry diagnostic."""
+    rev = _reverse_index(edge_index)
+    src, dst = edge_index[0], edge_index[1]
+    out = mask.clone()
+    seen = set()
+    for i in range(edge_index.shape[1]):
+        u, v = int(src[i].item()), int(dst[i].item())
+        if u == v or int(rev[i].item()) < 0:
+            continue
+        key = (min(u, v), max(u, v))
+        if key in seen:
+            continue
+        seen.add(key)
+        copies = ((src == u) & (dst == v)) | ((src == v) & (dst == u))
+        if bool(mask[copies].any().item()):
+            out[copies] = True
+    return out
+
+
+def repair_symmetric(edge_index, mask, keep_self_loops=True):
+    """Repair path for SAMPLED (training/TTA) masks: floor/repair may break
+    pair-symmetry, so mirror repair additions and force self-loops True.
+
+    Postcondition: pair_asymmetry_fraction == 0.0 (and self-loops kept when
+    keep_self_loops=True). Use final_symmetric_mask for the deterministic
+    (eval/frozen) path; use this for the stochastic training path where the
+    candidate mask is a Bernoulli sample rather than a thresholded mask."""
+    assert mask.dtype == torch.bool, f"expected bool mask, got {mask.dtype}"
+    mask = repair_connectivity(edge_index, mask)
+    mask = _mirror_mask(edge_index, mask)
+    if keep_self_loops:
+        self_loop = edge_index[0] == edge_index[1]
+        if bool(self_loop.any().item()):
+            mask = mask.clone()
+            mask[self_loop] = True
+    return mask
+
+
+def final_symmetric_mask(edge_index, probs, min_keep_frac=0.1,
+                         keep_self_loops=True):
+    """End-to-end decision layer with a PROVABLE pair-symmetry invariant.
+
+    symmetrize probs -> threshold/floor (hard_mask) -> repair_connectivity
+    -> OR-mirror repair additions -> force self-loops True.
+
+    Postcondition (asserted in tests): pair_asymmetry_fraction == 0.0 and,
+    when keep_self_loops=True, every self-loop edge is kept.
+    """
+    assert probs.dtype in (torch.float32, torch.float64), \
+        f"expected float probs, got {probs.dtype}"
+    sym = symmetrize_probs(edge_index, probs)
+    mask = hard_mask(sym, min_keep_frac=min_keep_frac)
+    mask = repair_connectivity(edge_index, mask)
+    mask = _mirror_mask(edge_index, mask)
+    if keep_self_loops:
+        self_loop = edge_index[0] == edge_index[1]
+        if bool(self_loop.any().item()):
+            mask = mask.clone()
+            mask[self_loop] = True
     return mask

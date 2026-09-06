@@ -10,7 +10,8 @@ from torch_geometric.data import Batch
 from torch_geometric.nn import global_mean_pool
 from rls.policy_gradient import (compute_advantages, compute_pg_loss,
                                  bernoulli_logp, bernoulli_entropy, sample_actions)
-from rls.sparsify import apply_min_keep_floor, repair_connectivity
+from rls.sparsify import (apply_min_keep_floor, repair_connectivity,
+                          symmetrize_probs, repair_symmetric)
 from rls.rewards import compute_rewards, relative_virial_penalty
 
 
@@ -123,6 +124,13 @@ def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=Non
             g = {k: v.to(device) for k, v in g.items() if isinstance(v, torch.Tensor)}
             probs = torch.sigmoid(policy(g["edge_attr"], g["emb"],
                                          g["edge_index"], g["ctx"])).squeeze(-1)
+            # FIX (audit P0-2, Sep 2026): symmetrize probs BEFORE sampling so
+            # both directions of a physical edge share one keep-probability.
+            # The Bernoulli sample itself is still per-directed-edge (logp
+            # stays on the raw sample per the convention below); the executed
+            # mask is re-symmetrized by repair_symmetric so the frozen GNN
+            # never sees a directionally-asymmetric topology.
+            probs = symmetrize_probs(g["edge_index"], probs)
             action = sample_actions(probs)
             # logp is computed on the RAW sampled action, not the floored/repaired
             # mask — same convention as action-clipping in continuous control:
@@ -135,7 +143,7 @@ def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=Non
             with torch.no_grad():
                 mask = apply_min_keep_floor(action.bool(), probs,
                                             min_keep_frac=cfg.get("min_keep_frac", 0.1))
-                mask = repair_connectivity(g["edge_index"], mask)
+                mask = repair_symmetric(g["edge_index"], mask)
                 pred_full, pred_pruned = gnns(g, mask) if gnns else (torch.randn(1), torch.randn(1))
                 # Relative virial (approved Aug 2026): loop-free full-graph
                 # reference (action-independent, constant per graph) vs the

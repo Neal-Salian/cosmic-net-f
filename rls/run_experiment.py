@@ -125,14 +125,16 @@ def main(cfg=None, checkpoint=None):
         w.writerows(log_rows)
 
     # 7. Stage B: fine-tune GNN on policy-pruned graphs
-    from rls.sparsify import hard_mask, repair_connectivity
+    # FIX (audit P0-2, Sep 2026): Stage-B masks use the symmetric decision
+    # layer so fine-tuning sees the same topology family as inference.
+    from rls.sparsify import final_symmetric_mask
     masks_tr = []
     for g in graphs:
         with torch.no_grad():
             p = torch.sigmoid(policy(g["edge_attr"], g["emb"].to(device),
                                      g["edge_index"], g["ctx"].to(device))).squeeze(-1)
-        m = hard_mask(p, rls_cfg.get("min_keep_frac", 0.1))
-        m = repair_connectivity(g["edge_index"], m)
+        m = final_symmetric_mask(g["edge_index"], p,
+                                 rls_cfg.get("min_keep_frac", 0.1))
         masks_tr.append(m)
     from rls.stageb import fine_tune_gnn
     stageb_epochs = int(rls_cfg.get("stageb_epochs", 10))

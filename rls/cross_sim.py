@@ -12,7 +12,6 @@ def evaluate_cross_sim(cfg, checkpoint, max_halos=200, out_dir="outputs/rls",
     from graph.graph_builder import GraphBuilder
     from model.model import load_model, build_model
     from rls.policy import build_policy
-    from rls.sparsify import hard_mask, repair_connectivity
     from rls.run_experiment import _ensure_graph_builder_works
 
     _ensure_graph_builder_works()
@@ -62,8 +61,9 @@ def evaluate_cross_sim(cfg, checkpoint, max_halos=200, out_dir="outputs/rls",
             from torch_geometric.nn import global_mean_pool
             ctx = global_mean_pool(emb, b.batch).squeeze(0)  # [out]
             p = torch.sigmoid(policy(g.edge_attr, emb, g.edge_index, ctx)).squeeze(-1)
-            m = hard_mask(p, 0.1)
-            m = repair_connectivity(g.edge_index, m)
+            # FIX (audit P0-2, Sep 2026): symmetric eval mask (see sparsify).
+            from rls.sparsify import final_symmetric_mask
+            m = final_symmetric_mask(g.edge_index, p, 0.1)
             pred_full, _ = gnn(b)
             g_pr = g.clone()
             g_pr.edge_index = g.edge_index[:, m]

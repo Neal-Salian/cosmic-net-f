@@ -14,7 +14,9 @@ import copy
 import torch
 from torch_geometric.data import Data, Batch
 from rls.policy_gradient import bernoulli_logp, bernoulli_entropy, sample_actions
-from rls.sparsify import hard_mask, repair_connectivity, apply_min_keep_floor
+from rls.sparsify import (hard_mask, repair_connectivity, apply_min_keep_floor,
+                          symmetrize_probs, repair_symmetric,
+                          final_symmetric_mask)
 from rls.rewards import label_free_reward, relative_virial_penalty
 from rls.train_policy import _graph_physics_terms, _no_isolated
 
@@ -55,13 +57,17 @@ def adapt_at_test_time(policy, graph, gnn, cfg, device="cpu", init="offline",
     for step in range(cfg["tta_steps"]):
         probs = torch.sigmoid(pol(g["edge_attr"], g["emb"],
                                   g["edge_index"], g["ctx"])).squeeze(-1)
+        # FIX (audit P0-2, Sep 2026): same symmetrization as offline training
+        # — pair-averaged probs, symmetric executed mask (see train_policy).
+        probs = symmetrize_probs(g["edge_index"], probs)
         action = sample_actions(probs)
         logp = bernoulli_logp(probs, action).mean()
         ent = bernoulli_entropy(probs).mean()
         with torch.no_grad():
-            mask = repair_connectivity(g["edge_index"],
-                                       apply_min_keep_floor(action.bool(), probs,
-                                                            cfg.get("min_keep_frac", 0.1)))
+            mask = repair_symmetric(
+                g["edge_index"],
+                apply_min_keep_floor(action.bool(), probs,
+                                     cfg.get("min_keep_frac", 0.1)))
             std_pr = mc_std(gnn, g, g["edge_index"][:, mask], g["edge_attr"][mask],
                             n_samples=cfg["tta_mc_samples"], device=device)
             ke, pe = _graph_physics_terms(g, g["edge_index"], mask)
@@ -86,6 +92,9 @@ def adapt_at_test_time(policy, graph, gnn, cfg, device="cpu", init="offline",
     with torch.no_grad():
         p = torch.sigmoid(pol(g["edge_attr"], g["emb"],
                               g["edge_index"], g["ctx"])).squeeze(-1)
-        final = repair_connectivity(g["edge_index"],
-                                    hard_mask(p, cfg.get("min_keep_frac", 0.1)))
+        # FIX (audit P0-2, Sep 2026): deterministic eval path uses the
+        # symmetric decision layer — provably pair-symmetric final mask with
+        # self-loops retained.
+        final = final_symmetric_mask(g["edge_index"], p,
+                                     cfg.get("min_keep_frac", 0.1))
     return final, {"reward_hist": hist, "steps_run": len(hist), "best_r": best_r}
