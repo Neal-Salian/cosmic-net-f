@@ -14,9 +14,8 @@ import copy
 import torch
 from torch_geometric.data import Data, Batch
 from rls.policy_gradient import bernoulli_logp, bernoulli_entropy, sample_actions
-from rls.sparsify import (hard_mask, repair_connectivity, apply_min_keep_floor,
-                          symmetrize_probs, repair_symmetric,
-                          final_symmetric_mask)
+from rls.sparsify import (apply_min_keep_floor, symmetrize_probs,
+                          repair_symmetric, final_symmetric_mask)
 from rls.rewards import label_free_reward, relative_virial_penalty
 from rls.train_policy import _graph_physics_terms, _no_isolated
 

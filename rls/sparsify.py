@@ -192,6 +192,66 @@ def _mirror_mask(edge_index, mask):
     return out
 
 
+def topk_scheduled_mask(edge_index, probs, target_keep_frac,
+                        keep_self_loops=True):
+    """Structural-sparsity decision layer (FIX Sep 2026, audit P0-reward).
+
+    WHAT WAS WRONG: the soft w_sp*(keep-target)^2 penalty let the policy eat
+    a fixed sparsity penalty and keep ~everything (keep 0.96-1.0 vs target
+    0.40) instead of learning to prune.
+
+    WHAT THIS DOES: the sparsity level becomes a SCHEDULED CONSTRAINT — keep
+    exactly the top-k non-self-loop edges by learned probability at the
+    current curriculum target (k = ceil(target * n_prunable)), so the
+    probabilities only decide WHICH edges to drop, not how many. Self-loops
+    are always retained on top (excluded from the k budget, matching the
+    action-space decision). Pair-consensus restores symmetry afterwards, so
+    the postcondition pair_asymmetry_fraction == 0.0 still holds (consensus
+    can only add edges, so keep >= target afterwards — the constraint binds
+    from below, which is the safe direction for the curriculum).
+
+    Returns a BOOL mask. Switchable via rls.sparsity_mode:
+    "penalty" (old behavior) | "topk_scheduled" (this).
+    """
+    assert probs.dtype in (torch.float32, torch.float64), \
+        f"expected float probs, got {probs.dtype}"
+    n = probs.numel()
+    is_loop = edge_index[0] == edge_index[1]
+    src, dst = edge_index[0], edge_index[1]
+    mask = torch.zeros(n, dtype=torch.bool, device=probs.device)
+    # Select over UNDIRECTED pairs, not directed edges: probs are pair-equal
+    # after symmetrize_probs, but top-k over directed rows can still cut
+    # inside a pair (keep u->v, drop v->u) and consensus-OR then inflates keep
+    # far above target (measured 0.60 vs target 0.40 on 10 pairs). Pair-level
+    # selection keeps exactly ceil(target * n_pairs) pairs.
+    rev = _reverse_index(edge_index)
+    seen, pair_idx, pair_prob = set(), [], []
+    for i in range(n):
+        u, v = int(src[i].item()), int(dst[i].item())
+        if u == v or int(rev[i].item()) < 0:
+            continue
+        key = (min(u, v), max(u, v))
+        if key in seen:
+            continue
+        seen.add(key)
+        pair_idx.append(i)
+        pair_prob.append(float(probs[i].item()))
+    n_pairs = len(pair_idx)
+    if n_pairs > 0:
+        k = min(n_pairs, int(torch.ceil(
+            torch.tensor(target_keep_frac * n_pairs)).item()))
+        k = max(k, 1)
+        order = torch.argsort(torch.tensor(pair_prob), descending=True)[:k]
+        for j in order.tolist():
+            i = pair_idx[int(j)]
+            u, v = int(src[i].item()), int(dst[i].item())
+            mask[((src == u) & (dst == v)) | ((src == v) & (dst == u))] = True
+    mask = _mirror_mask(edge_index, mask)
+    if keep_self_loops and bool(is_loop.any().item()):
+        mask[is_loop] = True
+    return mask
+
+
 def repair_symmetric(edge_index, mask, keep_self_loops=True):
     """Repair path for SAMPLED (training/TTA) masks: floor/repair may break
     pair-symmetry, so mirror repair additions and force self-loops True.

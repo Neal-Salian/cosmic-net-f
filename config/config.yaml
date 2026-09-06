@@ -110,6 +110,11 @@ rls:
   value_coef: 0.5
   epochs: 60
   batch_size: 32
+  # FIX (audit P0-reward, Sep 2026): "penalty" = legacy soft w_sp nudge
+  # (preserved for comparison); "topk_scheduled" = structural constraint that
+  # keeps top-k probs at the curriculum target so keep tracks the schedule
+  # by construction. Compare both in the results table.
+  sparsity_mode: penalty
   target_sparsity_start: 0.9
   target_sparsity_end: 0.4
   sparsity_anneal_epochs: 40
