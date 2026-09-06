@@ -15,7 +15,7 @@ import torch
 from torch_geometric.data import Data, Batch
 from rls.policy_gradient import bernoulli_logp, bernoulli_entropy, sample_actions
 from rls.sparsify import (apply_min_keep_floor, symmetrize_probs,
-                          repair_symmetric, final_symmetric_mask)
+                          repair_symmetric, final_symmetric_mask, eval_mask)
 from rls.rewards import label_free_reward, relative_virial_penalty
 from rls.train_policy import _graph_physics_terms, _no_isolated
 
@@ -157,10 +157,10 @@ def adapt_at_test_time(policy, graph, gnn, cfg, device="cpu", init="offline",
     with torch.no_grad():
         p = torch.sigmoid(pol(g["edge_attr"], g["emb"],
                               g["edge_index"], g["ctx"])).squeeze(-1)
-        # FIX (audit P0-2, Sep 2026): deterministic eval path uses the
-        # symmetric decision layer — provably pair-symmetric final mask with
-        # self-loops retained.
-        final = final_symmetric_mask(g["edge_index"], p,
-                                     cfg.get("min_keep_frac", 0.1))
+        # FIX (audit P0-2, Sep 2026): mode-aware symmetric final mask —
+        # threshold in penalty mode, top-k at the TTA target in topk mode
+        # (same train/inference decoder rule as offline training).
+        final = eval_mask(g["edge_index"], p, cfg,
+                          target_sparsity=target_sparsity)
     return final, {"reward_hist": hist, "steps_run": len(hist), "best_r": best_r,
                    "step_diag": diag}

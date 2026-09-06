@@ -252,6 +252,27 @@ def topk_scheduled_mask(edge_index, probs, target_keep_frac,
     return mask
 
 
+def eval_mask(edge_index, probs, cfg, target_sparsity=None):
+    """Mode-aware INFERENCE mask (FIX Sep 2026, audit P0-reward follow-up).
+
+    A real-data mechanism check showed the mismatch: a policy trained under
+    topk_scheduled learns probs whose 0.5-threshold keeps 0.106 while training
+    executed keep 0.40 — because thresholding is the wrong decoder for a
+    top-k-trained policy. Inference must use the same decision rule as
+    training: penalty mode -> final_symmetric_mask (threshold); topk_scheduled
+    mode -> top-k at `target_sparsity` (default cfg target_sparsity_end) +
+    repair_symmetric. Both paths guarantee pair-symmetry + self-loops.
+    """
+    mode = cfg.get("sparsity_mode", "penalty")
+    if mode == "topk_scheduled":
+        tgt = (target_sparsity if target_sparsity is not None
+               else cfg.get("target_sparsity_end", 0.4))
+        return repair_symmetric(
+            edge_index, topk_scheduled_mask(edge_index, probs, tgt))
+    return final_symmetric_mask(edge_index, probs,
+                                cfg.get("min_keep_frac", 0.1))
+
+
 def repair_symmetric(edge_index, mask, keep_self_loops=True):
     """Repair path for SAMPLED (training/TTA) masks: floor/repair may break
     pair-symmetry, so mirror repair additions and force self-loops True.

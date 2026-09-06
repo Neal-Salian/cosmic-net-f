@@ -127,14 +127,13 @@ def main(cfg=None, checkpoint=None):
     # 7. Stage B: fine-tune GNN on policy-pruned graphs
     # FIX (audit P0-2, Sep 2026): Stage-B masks use the symmetric decision
     # layer so fine-tuning sees the same topology family as inference.
-    from rls.sparsify import final_symmetric_mask
+    from rls.sparsify import eval_mask
     masks_tr = []
     for g in graphs:
         with torch.no_grad():
             p = torch.sigmoid(policy(g["edge_attr"], g["emb"].to(device),
                                      g["edge_index"], g["ctx"].to(device))).squeeze(-1)
-        m = final_symmetric_mask(g["edge_index"], p,
-                                 rls_cfg.get("min_keep_frac", 0.1))
+        m = eval_mask(g["edge_index"], p, rls_cfg)
         masks_tr.append(m)
     from rls.stageb import fine_tune_gnn, edge_dropout_masks
     from rls.provenance import record_backbone
@@ -159,13 +158,13 @@ def main(cfg=None, checkpoint=None):
     # Val guard (audit P1-StageB): early-stop on val pruned RMSE without
     # regressing val full RMSE beyond full_tol; restores best weights.
     val_stageb = val_graphs if stageb_max is None else val_graphs[:int(stageb_max)]
-    from rls.sparsify import final_symmetric_mask as _fsm
+    from rls.sparsify import eval_mask as _eval_mask
     val_masks = []
     for g in val_stageb:
         with torch.no_grad():
             pv = torch.sigmoid(policy(g["edge_attr"], g["emb"].to(device),
                                       g["edge_index"], g["ctx"].to(device))).squeeze(-1)
-        val_masks.append(_fsm(g["edge_index"], pv, rls_cfg.get("min_keep_frac", 0.1)))
+        val_masks.append(_eval_mask(g["edge_index"], pv, rls_cfg))
     history, stageb_info = fine_tune_gnn(
         gnn, stageb_graphs, stageb_masks, epochs=stageb_epochs, lr=stageb_lr,
         device=device, val_graphs=val_stageb, val_masks=val_masks,

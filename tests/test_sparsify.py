@@ -3,7 +3,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 from rls.sparsify import (hard_mask, repair_connectivity, symmetrize_probs,
                           repair_symmetric, final_symmetric_mask,
-                          pair_asymmetry_fraction)
+                          pair_asymmetry_fraction, topk_scheduled_mask,
+                          eval_mask)
 
 
 def test_hard_mask_respects_min_keep():
@@ -170,3 +171,24 @@ def test_symmetrize_probs_pair_equal_and_self_loops_untouched():
             continue
         # ALL copies (both directions + duplicates) share the group mean
         assert bool((sym[copies] == probs[copies].mean()).all().item())
+
+
+def test_eval_mask_uses_same_decoder_as_training():
+    """Train/inference decoder match (audit P0-reward follow-up): penalty
+    mode thresholds (keep varies with probs); topk mode keeps top-k pairs at
+    the eval target regardless of absolute prob level — both symmetric with
+    self-loops kept."""
+    torch.manual_seed(0)
+    ei = _symmetric_graph(with_self_loops=True)
+    probs = torch.rand(ei.shape[1]) * 0.4  # ALL below 0.5: threshold keeps ~floor
+    m_pen = eval_mask(ei, probs, {"sparsity_mode": "penalty", "min_keep_frac": 0.1})
+    assert pair_asymmetry_fraction(ei, m_pen) == 0.0
+    assert m_pen.float().mean() < 0.5
+    m_topk = eval_mask(ei, probs, {"sparsity_mode": "topk_scheduled",
+                                   "target_sparsity_end": 0.4})
+    assert pair_asymmetry_fraction(ei, m_topk) == 0.0
+    assert bool(m_topk[ei[0] == ei[1]].all().item())
+    n_pairs = (ei.shape[1] - int((ei[0] == ei[1]).sum().item())) // 2
+    import math
+    prunable = m_topk[ei[0] != ei[1]].float().mean().item()
+    assert abs(prunable - math.ceil(0.4 * n_pairs) / n_pairs) < 1e-6

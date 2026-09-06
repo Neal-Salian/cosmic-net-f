@@ -61,9 +61,9 @@ def evaluate_cross_sim(cfg, checkpoint, max_halos=200, out_dir="outputs/rls",
             from torch_geometric.nn import global_mean_pool
             ctx = global_mean_pool(emb, b.batch).squeeze(0)  # [out]
             p = torch.sigmoid(policy(g.edge_attr, emb, g.edge_index, ctx)).squeeze(-1)
-            # FIX (audit P0-2, Sep 2026): symmetric eval mask (see sparsify).
-            from rls.sparsify import final_symmetric_mask
-            m = final_symmetric_mask(g.edge_index, p, 0.1)
+            # FIX (audit P0-2, Sep 2026): mode-aware symmetric mask.
+            from rls.sparsify import eval_mask
+            m = eval_mask(g.edge_index, p, cfg)
             pred_full, _ = gnn(b)
             g_pr = g.clone()
             g_pr.edge_index = g.edge_index[:, m]
