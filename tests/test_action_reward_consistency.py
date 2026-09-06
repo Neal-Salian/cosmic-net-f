@@ -10,7 +10,8 @@ import torch
 from rls.policy import EdgePolicyNet
 from rls.policy_gradient import (PolicyGradientTrainer, ValueNet,
                                  bernoulli_logp, sample_actions)
-from rls.sparsify import apply_min_keep_floor, repair_connectivity, hard_mask
+from rls.sparsify import (apply_min_keep_floor, repair_connectivity, hard_mask,
+                          repair_symmetric, pair_asymmetry_fraction)
 
 # cfg keys actually consumed by train_policy/_update_batch + compute_rewards
 CFG = {"batch_size": 2, "min_keep_frac": 0.1, "entropy_coef": 0.01,
@@ -106,10 +107,15 @@ def test_train_loop_mask_derives_from_the_sampled_action():
         fa, fp = rec["floor_args"]
         assert fa.equal(rec["action"].bool()), "floor did not receive the sampled action"
         assert fp.equal(rec["probs"])
-        expected = repair_connectivity(
+        # FIX (audit P0-2, Sep 2026): the executed mask is repair_SYMMETRIC of
+        # floor(action) — mirror only ADDS reverse twins + self-loops, never
+        # removes a sampled edge, so the mask still derives from the sample
+        # (credit assignment intact) while guaranteeing pair-symmetry.
+        expected = repair_symmetric(
             rec["edge_index"],
             apply_min_keep_floor(rec["action"].bool(), rec["probs"], 0.1))
-        assert rec["reward_mask"].equal(expected), "reward mask is not repair(floor(action))"
+        assert rec["reward_mask"].equal(expected), "reward mask is not repair_symmetric(floor(action))"
+        assert pair_asymmetry_fraction(rec["edge_index"], rec["reward_mask"]) == 0.0
     # at least one rollout's reward mask must differ from the deterministic
     # probs-threshold (the old buggy behavior gave the same mask every time)
     assert any(not rec["reward_mask"].equal(hard_mask(rec["probs"], 0.1))
@@ -202,8 +208,10 @@ def test_policy_learns_to_drop_the_irrelevant_edge():
 
 def test_tta_reward_mask_derives_from_sampled_action():
     """Same guarantee inside the TTA adaptation loop: per-step reward masks come
-    from the sampled action; only the FINAL mask (after the loop) stays a
-    deterministic threshold (hard_mask called exactly once)."""
+    from the sampled action; the FINAL mask is the symmetric decision layer
+    (FIX Sep 2026: final_symmetric_mask, provably pair-symmetric with
+    self-loops retained — it calls sparsify.hard_mask internally, not the
+    tta-module global, so this test asserts the postcondition, not call counts)."""
     import rls.tta as tta_mod
     from rls.tta import adapt_at_test_time
 
@@ -218,10 +226,9 @@ def test_tta_reward_mask_derives_from_sampled_action():
     policy = EdgePolicyNet(edge_dim=5, node_emb_dim=64, hidden_dim=16)
     g = _tiny_graph()
 
-    real_sample, real_floor, real_hard = (tta_mod.sample_actions,
-                                          tta_mod.apply_min_keep_floor,
-                                          tta_mod.hard_mask)
-    calls = {"sample": [], "floor": [], "hard": 0}
+    real_sample, real_floor = (tta_mod.sample_actions,
+                                 tta_mod.apply_min_keep_floor)
+    calls = {"sample": [], "floor": []}
 
     def spy_sample(p):
         a = real_sample(p); calls["sample"].append(a.detach().clone()); return a
@@ -230,22 +237,20 @@ def test_tta_reward_mask_derives_from_sampled_action():
         calls["floor"].append(mask.detach().clone())
         return real_floor(mask, probs, min_keep_frac)
 
-    def spy_hard(probs, min_keep_frac=0.1):
-        calls["hard"] += 1
-        return real_hard(probs, min_keep_frac)
-
-    tta_mod.sample_actions, tta_mod.apply_min_keep_floor, tta_mod.hard_mask = (
-        spy_sample, spy_floor, spy_hard)
+    tta_mod.sample_actions, tta_mod.apply_min_keep_floor = (
+        spy_sample, spy_floor)
     try:
         mask, info = adapt_at_test_time(policy, g, MockGNN(), cfg, device="cpu")
     finally:
         tta_mod.sample_actions = real_sample
         tta_mod.apply_min_keep_floor = real_floor
-        tta_mod.hard_mask = real_hard
 
     assert calls["floor"], "TTA loop never called apply_min_keep_floor"
     assert len(calls["floor"]) == len(calls["sample"])
     for f, s in zip(calls["floor"], calls["sample"]):
         assert f.equal(s.bool()), "TTA reward mask did not come from the sampled action"
-    assert calls["hard"] == 1, "final mask must be the single deterministic hard_mask(p)"
     assert mask.dtype == torch.bool and mask.shape[0] == g["edge_index"].shape[1]
+    # FIX (audit P0-2, Sep 2026): final TTA mask postcondition.
+    assert pair_asymmetry_fraction(g["edge_index"], mask) == 0.0
+    loops = g["edge_index"][0] == g["edge_index"][1]
+    assert bool(mask[loops].all().item())

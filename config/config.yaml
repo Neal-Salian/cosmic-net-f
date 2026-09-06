@@ -110,6 +110,11 @@ rls:
   value_coef: 0.5
   epochs: 60
   batch_size: 32
+  # FIX (audit P0-reward, Sep 2026): "penalty" = legacy soft w_sp nudge
+  # (preserved for comparison); "topk_scheduled" = structural constraint that
+  # keeps top-k probs at the curriculum target so keep tracks the schedule
+  # by construction. Compare both in the results table.
+  sparsity_mode: penalty
   target_sparsity_start: 0.9
   target_sparsity_end: 0.4
   sparsity_anneal_epochs: 40
@@ -127,5 +132,16 @@ rls:
   tta_mc_samples: 15
   tta_patience: 3
   tta_target_sparsity: 0.5
+  # FIX (audit P1-TTA, Sep 2026): trust region vs offline policy + fail-closed.
+  tta_kl_coef: 0.0
+  tta_lr_decay: 1.0
+  tta_val_tol: 0.02
   stageb_epochs: 10
+  # FIX (audit P1-StageB, Sep 2026): Stage B is swept + val-guarded, not fixed.
+  stageb_lr: 0.0001
+  stageb_patience: 3
+  stageb_full_tol: 0.02
+  # policy | dropout (edge-dropout augmentation) | both
+  stageb_augment: policy
+  stageb_dropout_frac: 0.2
   stageb_max_graphs: null

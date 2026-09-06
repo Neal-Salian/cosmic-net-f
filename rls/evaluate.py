@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from rls.sparsify import hard_mask, repair_connectivity
+from rls.sparsify import eval_mask  # mode-aware symmetric eval masks (P0-2)
 
 
 def _r2(a, b):
@@ -57,6 +57,37 @@ def build_results_table(preds_full, preds_policy, preds_gumbel, preds_random,
     return rows
 
 
+def summarize_multiseed(rows_per_seed, n_bootstrap=1000, seed=42):
+    """Multi-seed summary (audit P2, Sep 2026): rows_per_seed = list (one per
+    seed) of results-row lists as produced by build_results_table (each row a
+    dict with method/rmse/r2/mean_keep_frac + backbone provenance columns).
+    Returns one dict per method with mean +/- std over seeds plus bootstrap
+    95% CI over the pooled seed-means for rmse/r2/keep. N=82 test halos is
+    small and high-variance — never report a point estimate without these."""
+    import math
+    rng = np.random.default_rng(seed)
+    by_method = {}
+    for rows in rows_per_seed:
+        for r in rows:
+            by_method.setdefault(r["method"], []).append(r)
+    out = []
+    for method, rs in sorted(by_method.items()):
+        rec = {"method": method, "n_seeds": len(rs)}
+        for key in ("rmse", "r2", "mean_keep_frac"):
+            vals = np.array([r[key] for r in rs], dtype=float)
+            rec[f"{key}_mean"] = float(vals.mean())
+            rec[f"{key}_std"] = float(vals.std(ddof=1)) if len(vals) > 1 else 0.0
+            boots = rng.choice(vals, size=(n_bootstrap, len(vals)),
+                               replace=True).mean(axis=1)
+            rec[f"{key}_ci95_lo"] = float(np.percentile(boots, 2.5))
+            rec[f"{key}_ci95_hi"] = float(np.percentile(boots, 97.5))
+        # provenance: every seed's row must agree on backbone + policy artifact
+        rec["backbone_stages"] = sorted({r.get("backbone_stage", "?") for r in rs})
+        rec["backbone_shas"] = sorted({r.get("backbone_sha256", "?") for r in rs})
+        out.append(rec)
+    return out
+
+
 def save_paper_plots(rows, out_dir="outputs/rls"):
     """Sparsity-accuracy Pareto plot (RMSE vs keep-fraction) + fidelity bar."""
     os.makedirs(out_dir, exist_ok=True)
@@ -104,9 +135,9 @@ def evaluate_tta(policy, graphs, gnn, cfg, device, ks=(0, 5, 10, 20),
                     with torch.no_grad():
                         p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"],
                                                  gd["edge_index"], gd["ctx"])).squeeze(-1)
-                        mask = repair_connectivity(
-                            gd["edge_index"],
-                            hard_mask(p, cfg.get("min_keep_frac", 0.1)))
+                        # FIX (audit P0-2, Sep 2026): mode-aware symmetric mask
+                        # (threshold in penalty mode, top-k in topk mode).
+                        mask = eval_mask(gd["edge_index"], p, cfg)
                 else:
                     mask, info = adapt_at_test_time(policy, gd, gnn, cfg, device,
                                                     init=init,

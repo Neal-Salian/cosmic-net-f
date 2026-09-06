@@ -10,7 +10,32 @@ from torch_geometric.data import Batch
 from torch_geometric.nn import global_mean_pool
 from rls.policy_gradient import (compute_advantages, compute_pg_loss,
                                  bernoulli_logp, bernoulli_entropy, sample_actions)
-from rls.sparsify import apply_min_keep_floor, repair_connectivity
+from rls.sparsify import (apply_min_keep_floor, repair_connectivity,
+                          symmetrize_probs, repair_symmetric,
+                          topk_scheduled_mask)
+
+
+def check_curriculum_divergence(keep_hist, target_hist, tol=0.1,
+                                patience=5, anneal_epochs=40):
+    """Pure helper (audit P0-reward, Sep 2026): True iff |keep - target| > tol
+    for `patience` consecutive epochs strictly after anneal_epochs / 2.
+
+    This check would have caught the diagnosed failure automatically (keep
+    stalled at 0.96-1.0 while the target annealed to 0.40). Unit-tested in
+    tests/test_train_policy.py; the training loop calls it every epoch.
+    """
+    start = anneal_epochs / 2
+    run = 0
+    for epoch, (keep, target) in enumerate(zip(keep_hist, target_hist)):
+        if epoch <= start:
+            continue
+        if abs(keep - target) > tol:
+            run += 1
+            if run >= patience:
+                return True
+        else:
+            run = 0
+    return False
 from rls.rewards import compute_rewards, relative_virial_penalty
 
 
@@ -95,12 +120,20 @@ def prepare_graphs(loader, gnn, device=None):
     return graphs
 
 
-def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=None):
+def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=None,
+                 warn_fn=None):
     """One epoch = one pass over the graphs; batch = cfg['batch_size'] graphs.
 
     gnns: callable (graph_dict, mask) -> (pred_full, pred_pruned) or None
     (smoke mode: random placeholder predictions).
-    Returns the per-epoch mean loss list."""
+    Returns the per-epoch mean loss list.
+
+    cfg['sparsity_mode'] (FIX Sep 2026, audit P0-reward): "penalty" (default,
+    legacy soft w_sp penalty — preserved for comparison) or "topk_scheduled"
+    (structural constraint: executed mask keeps top-k probs at the current
+    curriculum target; probs learn WHICH edges to drop). warn_fn(epoch, keep,
+    target) is called on curriculum divergence (default: print).
+    """
     policy, value_net = trainer.policy, trainer.value_net
     policy = policy.to(device)
     value_net = value_net.to(device)
@@ -118,11 +151,20 @@ def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=Non
         total_ent = []
         total_values = []
         total_rewards = []
+        total_keep = []
+        mode = cfg.get("sparsity_mode", "penalty")
 
         for g in batch_graphs:
             g = {k: v.to(device) for k, v in g.items() if isinstance(v, torch.Tensor)}
             probs = torch.sigmoid(policy(g["edge_attr"], g["emb"],
                                          g["edge_index"], g["ctx"])).squeeze(-1)
+            # FIX (audit P0-2, Sep 2026): symmetrize probs BEFORE sampling so
+            # both directions of a physical edge share one keep-probability.
+            # The Bernoulli sample itself is still per-directed-edge (logp
+            # stays on the raw sample per the convention below); the executed
+            # mask is re-symmetrized by repair_symmetric so the frozen GNN
+            # never sees a directionally-asymmetric topology.
+            probs = symmetrize_probs(g["edge_index"], probs)
             action = sample_actions(probs)
             # logp is computed on the RAW sampled action, not the floored/repaired
             # mask — same convention as action-clipping in continuous control:
@@ -133,9 +175,16 @@ def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=Non
             # has a graph to flow through (the baseline is learnable).
             val = value_net(g["ctx"])
             with torch.no_grad():
-                mask = apply_min_keep_floor(action.bool(), probs,
-                                            min_keep_frac=cfg.get("min_keep_frac", 0.1))
-                mask = repair_connectivity(g["edge_index"], mask)
+                if mode == "topk_scheduled":
+                    # Structural constraint: executed mask keeps top-k probs
+                    # at the curriculum target (see topk_scheduled_mask).
+                    mask = repair_symmetric(
+                        g["edge_index"],
+                        topk_scheduled_mask(g["edge_index"], probs, target_sp))
+                else:
+                    mask = apply_min_keep_floor(action.bool(), probs,
+                                                min_keep_frac=cfg.get("min_keep_frac", 0.1))
+                    mask = repair_symmetric(g["edge_index"], mask)
                 pred_full, pred_pruned = gnns(g, mask) if gnns else (torch.randn(1), torch.randn(1))
                 # Relative virial (approved Aug 2026): loop-free full-graph
                 # reference (action-independent, constant per graph) vs the
@@ -151,10 +200,20 @@ def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=Non
                 keep_ratio = mask.float().mean().item()
                 rew = compute_rewards(pred_pruned, pred_full, g["y"], keep_ratio,
                                       target_sp, vp, cfg, connectivity_ok=conn_ok)
+            if mode == "topk_scheduled":
+                # Re-point logp at the EXECUTED mask OUTSIDE no_grad (inside,
+                # the tensor would carry no grad and the policy would learn
+                # nothing). Hard-attention-style REINFORCE: mask is a constant
+                # action, gradient flows through logp's probs terms. Biased
+                # (no sampling stochasticity in the executed mask; the entropy
+                # bonus is the remaining explorer) but makes keep track the
+                # curriculum by construction.
+                logp = bernoulli_logp(probs, mask.float())
             total_logp.append(logp.mean())
             total_ent.append(ent)
             total_values.append(val)
             total_rewards.append(rew)
+            total_keep.append(keep_ratio)
 
         logp = torch.stack(total_logp)
         entropy = torch.stack(total_ent).mean()
@@ -180,15 +239,37 @@ def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=Non
         if trainer.value_optimizer is not None:
             trainer.value_optimizer.step()
 
-        return float(loss.item())
+        mean_keep = float(torch.tensor(total_keep).mean().item())
+        return float(loss.item()), mean_keep
 
+    keep_hist, target_hist = [], []
     for epoch in range(epochs):
         target_sp = trainer.target_sparsity(epoch)
         epoch_losses = []
+        epoch_keeps = []
         for i in range(0, n, batch_size):
-            epoch_losses.append(_update_batch(graphs[i:i + batch_size], target_sp))
+            l, k = _update_batch(graphs[i:i + batch_size], target_sp)
+            epoch_losses.append(l)
+            epoch_keeps.append(k)
         mean = torch.tensor(epoch_losses).mean()
         losses.append(mean)
+        keep_hist.append(float(torch.tensor(epoch_keeps).mean().item()))
+        target_hist.append(target_sp)
+        # FIX (audit P0-reward, Sep 2026): curriculum-divergence guard. The
+        # diagnosed run stalled at keep 0.96-1.0 vs target 0.40 with no alarm;
+        # now |keep - target| > 0.1 persisting past half the anneal schedule
+        # emits an explicit warning instead of failing silently.
+        if check_curriculum_divergence(
+                keep_hist, target_hist, tol=0.1, patience=5,
+                anneal_epochs=cfg.get("sparsity_anneal_epochs", 40)):
+            msg = (f"[rls] CURRICULUM DIVERGENCE at epoch {epoch}: "
+                   f"mean keep {keep_hist[-1]:.3f} vs target {target_sp:.3f} " 
+                   f"(|keep-target| > 0.1 for 5+ epochs past half anneal). "
+                   f"See sparsity_mode={cfg.get('sparsity_mode', 'penalty')}.")
+            if warn_fn is not None:
+                warn_fn(epoch, keep_hist[-1], target_sp)
+            else:
+                print(msg)
         if log_fn:
             log_fn(epoch, target_sp, float(mean))
     return losses

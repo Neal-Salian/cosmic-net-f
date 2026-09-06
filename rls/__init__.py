@@ -11,12 +11,18 @@ from rls.policy_gradient import (PolicyGradientTrainer, ValueNet,
                                  compute_advantages, compute_pg_loss,
                                  bernoulli_logp, bernoulli_entropy,
                                  sample_actions)
-from rls.sparsify import hard_mask, repair_connectivity, apply_min_keep_floor
+from rls.sparsify import (hard_mask, repair_connectivity, apply_min_keep_floor,
+                          symmetrize_probs, repair_symmetric,
+                          final_symmetric_mask, pair_asymmetry_fraction,
+                          topk_scheduled_mask, eval_mask)
 from rls.rewards import compute_rewards, virial_penalty, label_free_reward, virial_ratio_pruned
 from rls.train_policy import prepare_graphs, train_policy
-from rls.tta import adapt_at_test_time, mc_std
-from rls.evaluate import build_results_table, save_paper_plots, evaluate_tta
-from rls.stageb import fine_tune_gnn
+from rls.tta import adapt_at_test_time, mc_std, edge_kl, tta_should_enable
+from rls.evaluate import (build_results_table, save_paper_plots, evaluate_tta,
+                          summarize_multiseed)
+from rls.stageb import fine_tune_gnn, edge_dropout_masks
+from rls.provenance import (record_backbone, backbone_checksum,
+                            format_backbone_label, require_backbone_label)
 from rls.baselines import (random_mask, degree_mask, distance_mask,
                            mass_ratio_mask, gradient_saliency_mask,
                            attention_topk_mask, GumbelEdgeMask)
@@ -26,11 +32,16 @@ __all__ = [
     "PolicyGradientTrainer", "ValueNet", "compute_advantages", "compute_pg_loss",
     "bernoulli_logp", "bernoulli_entropy", "sample_actions",
     "hard_mask", "repair_connectivity", "apply_min_keep_floor",
+    "symmetrize_probs", "repair_symmetric", "final_symmetric_mask",
+    "pair_asymmetry_fraction", "topk_scheduled_mask", "eval_mask",
     "compute_rewards", "virial_penalty", "label_free_reward", "virial_ratio_pruned",
     "prepare_graphs", "train_policy",
-    "adapt_at_test_time", "mc_std",
+    "adapt_at_test_time", "mc_std", "edge_kl", "tta_should_enable",
     "build_results_table", "save_paper_plots", "evaluate_tta",
-    "fine_tune_gnn",
+    "summarize_multiseed",
+    "fine_tune_gnn", "edge_dropout_masks",
+    "record_backbone", "backbone_checksum", "format_backbone_label",
+    "require_backbone_label",
     "random_mask", "degree_mask", "distance_mask", "mass_ratio_mask",
     "gradient_saliency_mask", "attention_topk_mask", "GumbelEdgeMask",
 ]
