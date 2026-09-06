@@ -133,4 +133,11 @@ rls:
   tta_patience: 3
   tta_target_sparsity: 0.5
   stageb_epochs: 10
+  # FIX (audit P1-StageB, Sep 2026): Stage B is swept + val-guarded, not fixed.
+  stageb_lr: 0.0001
+  stageb_patience: 3
+  stageb_full_tol: 0.02
+  # policy | dropout (edge-dropout augmentation) | both
+  stageb_augment: policy
+  stageb_dropout_frac: 0.2
   stageb_max_graphs: null

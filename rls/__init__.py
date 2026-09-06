@@ -19,7 +19,9 @@ from rls.rewards import compute_rewards, virial_penalty, label_free_reward, viri
 from rls.train_policy import prepare_graphs, train_policy
 from rls.tta import adapt_at_test_time, mc_std
 from rls.evaluate import build_results_table, save_paper_plots, evaluate_tta
-from rls.stageb import fine_tune_gnn
+from rls.stageb import fine_tune_gnn, edge_dropout_masks
+from rls.provenance import (record_backbone, backbone_checksum,
+                            format_backbone_label, require_backbone_label)
 from rls.baselines import (random_mask, degree_mask, distance_mask,
                            mass_ratio_mask, gradient_saliency_mask,
                            attention_topk_mask, GumbelEdgeMask)
@@ -35,7 +37,9 @@ __all__ = [
     "prepare_graphs", "train_policy",
     "adapt_at_test_time", "mc_std",
     "build_results_table", "save_paper_plots", "evaluate_tta",
-    "fine_tune_gnn",
+    "fine_tune_gnn", "edge_dropout_masks",
+    "record_backbone", "backbone_checksum", "format_backbone_label",
+    "require_backbone_label",
     "random_mask", "degree_mask", "distance_mask", "mass_ratio_mask",
     "gradient_saliency_mask", "attention_topk_mask", "GumbelEdgeMask",
 ]
