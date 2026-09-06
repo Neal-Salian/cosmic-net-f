@@ -132,6 +132,10 @@ rls:
   tta_mc_samples: 15
   tta_patience: 3
   tta_target_sparsity: 0.5
+  # FIX (audit P1-TTA, Sep 2026): trust region vs offline policy + fail-closed.
+  tta_kl_coef: 0.0
+  tta_lr_decay: 1.0
+  tta_val_tol: 0.02
   stageb_epochs: 10
   # FIX (audit P1-StageB, Sep 2026): Stage B is swept + val-guarded, not fixed.
   stageb_lr: 0.0001

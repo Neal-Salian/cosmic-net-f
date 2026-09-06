@@ -9,7 +9,8 @@ import sys, os, math
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
 
-from rls.rewards import relative_virial_penalty, label_free_reward
+from rls.rewards import (relative_virial_penalty, label_free_reward,
+                         virial_ratio_pruned)
 from rls.train_policy import _graph_physics_terms
 from rls.sparsify import apply_min_keep_floor, repair_connectivity, hard_mask
 
@@ -176,3 +177,51 @@ def test_directed_pair_bookkeeping_is_documented_not_canonicalized():
     # ratio halves under consistent doubling -> exact ln(2)^2 penalty:
     pen = relative_virial_penalty(ke2, pe2, ke1, pe1).item()
     assert abs(pen - math.log(2.0) ** 2) < 1e-4
+
+
+def test_11_synthetic_virialized_cluster_validates_G_units():
+    """P1-physics sanity (audit Sep 2026): a synthetic two-body cluster tuned
+    to exact virial equilibrium must yield ratio == 1 through the PIPELINE
+    path (_graph_physics_terms + virial_ratio_pruned), validating the KE/PE
+    computation and G units/dimensions end to end before trusting real-data
+    Spearman/virial diagnostics.
+
+    Setup: m1 = m2 = m, separation r, isotropic dispersion sigma with
+    sigma^2 = G*m/r. Hand computation (BOTH directed edges kept, loops
+    filtered): KE = m*sigma^2, |PE| = 2*G*m^2/r, so
+    ratio = 2*m*sigma^2 / (2*G*m^2/r) = sigma^2*r/(G*m) = 1 exactly.
+    NOTE the directed double-count is the documented pipeline convention
+    (see test above); the assertion bakes it in rather than hiding it."""
+    G = 4.302e-9  # Mpc (km/s)^2 / Msun — must match train_policy default
+    m, r = 1e10, 1.0
+    sigma = math.sqrt(G * m / r)
+    g = {"edge_index": torch.tensor([[0, 1, 0, 1], [1, 0, 0, 1]]),
+         "stellar_mass": torch.tensor([m, m]),
+         "vel_disp": torch.tensor([sigma, sigma]),
+         "pos": torch.tensor([[0.0, 0, 0], [r, 0, 0]])}
+    mask = torch.ones(4, dtype=torch.bool)
+    ke, pe = _graph_physics_terms(g, g["edge_index"], mask)
+    assert torch.isclose(ke, torch.tensor(m * sigma ** 2), rtol=1e-4)
+    assert torch.isclose(pe, torch.tensor(2 * G * m * m / r), rtol=1e-4)
+    ratio = virial_ratio_pruned(ke, pe)
+    assert torch.isclose(ratio, torch.tensor(1.0), rtol=1e-4)
+
+
+def test_12_near_full_mask_penalty_is_small_but_not_clamped():
+    """P1-physics saturation investigation (audit Sep 2026): the real-data
+    median relative penalty ~0 (IQR all zero) is EXPLAINED by keep ~= 0.976
+    (pruned ratio ~= full ratio), NOT by eps_ratio clamping making the term a
+    no-op. A near-full mask must give a penalty that is small, strictly
+    positive, finite, and computed strictly inside the clamp bounds."""
+    g = _toy_graph()
+    ke_f, pe_f = _full_reference(g)
+    # drop a single directed pair (keep ~= 0.9 here; real data keeps 0.976,
+    # which only makes the penalty smaller, same mechanism)
+    near_full = torch.tensor([1, 1, 1, 1, 1, 0, 1, 1, 1, 1], dtype=torch.bool)
+    ke_p, pe_p = _terms(g, near_full)
+    pen = relative_virial_penalty(ke_p, pe_p, ke_f, pe_f).item()
+    assert pen > 0.0                       # mask-sensitive: responds to the drop
+    assert math.isfinite(pen) and pen < 10.0  # small, not a clamp artifact
+    for ke, pe in ((ke_p, pe_p), (ke_f, pe_f)):
+        r = (2.0 * float(ke)) / max(float(pe), 1e-30)
+        assert 1e-12 < r < 1e12            # strictly inside eps_ratio bounds
