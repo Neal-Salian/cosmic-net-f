@@ -24,6 +24,18 @@ separate dataset upload is required.
 > The `rls` package is REINFORCE + learned baseline + entropy (honestly named,
 > NOT PPO), real PyG `Batch` wrapping, `(preds, embeds)` tuple unpacking, and
 > gradients that flow to the policy.
+>
+> > **Sep 2026 rewire (branch `fix/rl-pruning-symmetry`):** the `.ipynb` files
+> > now match this doc's import-only pattern for real — the inline
+> > `EdgePolicyNet`/`hard_mask`/REINFORCE-loop/TTA-loop copies were deleted and
+> > replaced with package calls (`train_policy`, `fine_tune_gnn`,
+> > `adapt_at_test_time`, `build_results_table`, `eval_mask`). Clone cells pin
+> > and check out `fix/rl-pruning-symmetry`. Headline sparsity path is
+> > `sparsity_mode="topk_scheduled"` (penalty kept as a B appendix ablation).
+> > Eval decoding everywhere goes through `eval_mask` so it matches the
+> > training mode. `tta_kl_coef`/`tta_lr_decay` are placeholder starting values
+> > — sweep on VAL on Kaggle before trusting test TTA numbers. CAMELS download
+> > URL verified live (FOF_Subfind catalog layout) — see the CAMELS note below.
 
 ---
 
@@ -50,10 +62,20 @@ from kaggle_secrets import UserSecretsClient
 PAT = UserSecretsClient().get_secret("GITHUB_PAT")
 if not PAT:
     raise RuntimeError("Missing Kaggle Secret 'GITHUB_PAT'")
+REPO_BRANCH = "fix/rl-pruning-symmetry"  # audited RL fixes live here
 if not os.path.exists("/kaggle/working/cosmic-net"):
-    subprocess.check_call(["git", "clone",
-        f"https://{PAT}@github.com/Rusheel86/cosmic-net.git",
+    subprocess.check_call(["git", "clone", "--branch", REPO_BRANCH,
+        f"https://x-access-token:{PAT}@github.com/Neal-Salian/cosmic-net-f.git",
         "/kaggle/working/cosmic-net"])
+    subprocess.check_call(["git", "-C", "/kaggle/working/cosmic-net",
+                           "remote", "set-url", "origin",
+                           "https://github.com/Neal-Salian/cosmic-net-f.git"])
+# A cached dir from an older run would silently run stale code — always re-pin:
+subprocess.check_call(["git", "-C", "/kaggle/working/cosmic-net", "fetch",
+    f"https://x-access-token:{PAT}@github.com/Neal-Salian/cosmic-net-f.git",
+    REPO_BRANCH])
+subprocess.check_call(["git", "-C", "/kaggle/working/cosmic-net", "checkout",
+                       "-B", REPO_BRANCH, "FETCH_HEAD"])
 os.chdir("/kaggle/working/cosmic-net")
 print("cloned. data:", os.listdir("data/raw"))
 print("checkpoints:", [f for f in os.listdir("kaggle") if f.endswith(".pt")])
@@ -230,39 +252,60 @@ def gnns_adapter(g, mask):
 # CELL 9: Policy-gradient training loop (Stage A) — ~20-30 min on T4
 # REINFORCE + learned baseline (one-step MDP: no GAE, no importance ratio).
 # Gradients flow to the policy: the policy forward runs OUTSIDE torch.no_grad().
+# HEADLINE: sparsity_mode="topk_scheduled" (keep tracks the curriculum by
+# construction); the penalty ablation re-runs this cell with "penalty".
 from rls.train_policy import train_policy
+rls["sparsity_mode"] = "topk_scheduled"
 log_rows = []
 def log_fn(epoch, target_sp, loss):
     log_rows.append([epoch, target_sp, loss])
     print(f"epoch {epoch}: target_sparsity={target_sp:.3f} loss={loss:.4f}")
+warn_rows = []
 losses = train_policy(trainer, train_graphs, gnns_adapter, rls, device,
-                      epochs=rls["epochs"], log_fn=log_fn)
+                      epochs=rls["epochs"], log_fn=log_fn,
+                      warn_fn=lambda e, k, t: warn_rows.append((e, k, t)))
 import os; os.makedirs("outputs/rls", exist_ok=True)
 torch.save(policy.state_dict(), "outputs/rls/policy.pt")
 torch.save(value_net.state_dict(), "outputs/rls/value_net.pt")
 pd.DataFrame(log_rows, columns=["epoch", "target_sparsity", "loss"]).to_csv(
     "outputs/rls/training_log.csv", index=False)
-print("Stage A done.")
+print("Stage A done. Divergence warnings:", warn_rows)
 ```
 
-> **PITFALL NOTE:** if the `keep` fraction stays pinned at the `min_keep_frac`
-> floor for 5+ epochs, the policy is collapsing — raise `w_conn` to 2.0 and
-> restart. If val RMSE explodes (>0.25 dex), the sparsity curriculum is too
-> aggressive — slow the anneal (`sparsity_anneal_epochs` 40 -> 50).
+> **PITFALL NOTE:** the trainer now watches the curriculum itself — if
+> `|keep - target| > 0.1` persists past half the anneal schedule,
+> `check_curriculum_divergence` fires `warn_fn` instead of failing silently
+> (this is the diagnosed keep-1.0-vs-0.40 collapse, and the mirrored
+> keep-pinned-at-floor case — both directions are guarded, not just the
+> markdown comment the old notebooks had). If val RMSE explodes (>0.25 dex),
+> the sparsity curriculum is too aggressive — slow the anneal
+> (`sparsity_anneal_epochs` 40 -> 50).
 
 ```python
 # CELL 10: Stage B (optional) — fine-tune GNN on policy-pruned graphs
-from rls.sparsify import hard_mask, repair_connectivity
+# Masks via eval_mask (decoding matches the training sparsity_mode); val-guarded
+# fine_tune_gnn restores the best epoch instead of silently regressing full-graph R2.
+from rls.sparsify import eval_mask
 from rls.stageb import fine_tune_gnn
 masks = []
 with torch.no_grad():
     for g in train_graphs:
         p = torch.sigmoid(policy(g["edge_attr"].to(device), g["emb"].to(device),
                                  g["edge_index"].to(device), g["ctx"].to(device))).squeeze(-1)
-        masks.append(repair_connectivity(g["edge_index"].to(device),
-                                         hard_mask(p, rls["min_keep_frac"])))
-history = fine_tune_gnn(gnn, train_graphs, masks,
-                        epochs=rls.get("stageb_epochs", 10), lr=1e-4, device=device)
+        masks.append(eval_mask(g["edge_index"].to(device), p, rls))
+val_masks = []
+with torch.no_grad():
+    for g in val_graphs:
+        pv = torch.sigmoid(policy(g["edge_attr"].to(device), g["emb"].to(device),
+                                  g["edge_index"].to(device), g["ctx"].to(device))).squeeze(-1)
+        val_masks.append(eval_mask(g["edge_index"].to(device), pv, rls))
+history, stageb_info = fine_tune_gnn(
+    gnn, train_graphs, masks, epochs=rls.get("stageb_epochs", 10),
+    lr=rls.get("stageb_lr", 1e-4), device=device,
+    val_graphs=val_graphs, val_masks=val_masks,
+    patience=rls.get("stageb_patience", 3),
+    full_tol=rls.get("stageb_full_tol", 0.02))
+print("Stage B:", stageb_info)
 torch.save(gnn.state_dict(), "outputs/rls/finetuned_gnn.pt")
 print("Stage B done -> outputs/rls/finetuned_gnn.pt")
 ```
@@ -270,12 +313,14 @@ print("Stage B done -> outputs/rls/finetuned_gnn.pt")
 ```python
 # CELL 11: Verify final policy (+ fine-tuned GNN) on the test set
 from model.physics_loss import MetricsComputer
-preds_pol, preds_full, targets, keeps = [], [], [], []
+from rls.sparsify import eval_mask
+preds_pol, preds_full, targets, keeps, masks_rl = [], [], [], [], []
 with torch.no_grad():
     for g in test_graphs:
         gd = {k: v.to(device) for k, v in g.items() if isinstance(v, torch.Tensor)}
         p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"], gd["edge_index"], gd["ctx"])).squeeze(-1)
-        m = repair_connectivity(gd["edge_index"], hard_mask(p, rls["min_keep_frac"]))
+        m = eval_mask(gd["edge_index"], p, rls)
+        masks_rl.append(m.cpu())  # retained for CELL 15's build_results_table
         preds_pol.append(gnns_adapter(gd, m)[1].item())
         preds_full.append(gnns_adapter(gd, torch.ones(gd["edge_index"].shape[1], dtype=torch.bool, device=device))[0].item())
         targets.append(gd["y"].view(-1)[0].item())
@@ -299,13 +344,14 @@ print(f"fidelity (Pearson): {fid:.4f}")
 from scipy.stats import spearmanr, mannwhitneyu
 from rls.rewards import virial_ratio_pruned
 from rls.train_policy import _graph_physics_terms
+from rls.sparsify import eval_mask
 G = 4.302e-9
 rhos, pvals, virial_ratios, keeps, dists_kept, dists_dropped = [], [], [], [], [], []
 with torch.no_grad():
     for g in test_graphs:
         gd = {k: v.to(device) for k, v in g.items() if isinstance(v, torch.Tensor)}
         p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"], gd["edge_index"], gd["ctx"])).squeeze(-1)
-        m = repair_connectivity(gd["edge_index"], hard_mask(p, rls["min_keep_frac"]))
+        m = eval_mask(gd["edge_index"], p, rls)
         u, v = gd["edge_index"]
         stellar = gd["stellar_mass"]; pos = gd["pos"]
         r = torch.norm(pos[u] - pos[v], dim=1).clamp(min=1e-6)
@@ -324,6 +370,7 @@ print(f"kept edges shorter than dropped? p={mw.pvalue:.2e}")
 
 ```python
 # CELL 13: Uncertainty calibration — MC-dropout coverage before/after pruning
+from rls.sparsify import eval_mask
 def coverage(model, graphs, device, n_samples=30, policy_pruned=False):
     covered, total = 0, 0
     with torch.no_grad():
@@ -331,7 +378,7 @@ def coverage(model, graphs, device, n_samples=30, policy_pruned=False):
             gd = {k: v.to(device) for k, v in g.items() if isinstance(v, torch.Tensor)}
             if policy_pruned:
                 p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"], gd["edge_index"], gd["ctx"])).squeeze(-1)
-                m = repair_connectivity(gd["edge_index"], hard_mask(p, rls["min_keep_frac"]))
+                m = eval_mask(gd["edge_index"], p, rls)
                 d = pg.Data(x=gd["x"], edge_index=gd["edge_index"][:, m], edge_attr=gd["edge_attr"][m])
             else:
                 d = pg.Data(x=gd["x"], edge_index=gd["edge_index"], edge_attr=gd["edge_attr"])
@@ -347,13 +394,20 @@ print("pruned 95% CI coverage:", round(coverage(gnn, test_graphs, device, policy
 
 ```python
 # CELL 14: Cross-simulation OOD — TNG-trained policy on CAMELS
-# NOTE: requires the REAL CAMELS HDF5 (downloads ~100 MB from Flatiron).
+# NOTE: requires the REAL CAMELS HDF5. URL verified live Sep 2026: catalogs are
+# the Arepo FOF/Subfind group files at
+# FOF_Subfind/{suite}/{set}/{sim}/groups_{snapshot}.hdf5 under
+# https://users.flatironinstitute.org/~camels/
+# (e.g. .../FOF_Subfind/IllustrisTNG/LH/LH_0/groups_090.hdf5, ~14 MB, z=0 —
+# downloaded and parsed end-to-end through the loader). Set
+# data.camels.set/snapshot to change set/snapshot (defaults LH/090).
 # The loader's synthetic fallback is NOT publishable and is guarded here.
 import yaml
 from data.loaders.base_loader import get_loader
 from graph.graph_builder import GraphBuilder
 from torch_geometric.data import Batch as PyGBatch
 from torch_geometric.nn import global_mean_pool
+from rls.sparsify import eval_mask
 
 cfg2 = yaml.safe_load(open("config/config.yaml"))
 cfg2["data"]["source"] = "camels"
@@ -375,7 +429,7 @@ try:
             emb = gnn.get_embeddings(gb, embedding_point="pre_pooling")
             ctx = global_mean_pool(emb, gb.batch).squeeze(0)
             p = torch.sigmoid(policy(g.edge_attr, emb, g.edge_index, ctx)).squeeze(-1)
-            m = repair_connectivity(g.edge_index, hard_mask(p, rls["min_keep_frac"]))
+            m = eval_mask(g.edge_index, p, rls)
             pf, _ = gnn(gb)
             dp = pg.Data(x=g.x, edge_index=g.edge_index[:, m], edge_attr=g.edge_attr[m])
             dp.batch = torch.zeros(g.x.shape[0], dtype=torch.long, device=device)
@@ -392,16 +446,22 @@ except Exception as e:
 
 ```python
 # CELL 15: Final results table + paper plots + download
-rows = []
+# Aggregation via the shared builder (same code scripts/multiseed_rl.py uses),
+# with backbone provenance on every row — the frozen-vs-finetuned silent swap
+# cannot recur. Baselines.csv rows carry no raw preds/masks, merged as before.
+from rls.evaluate import build_results_table, save_paper_plots
+from rls.provenance import record_backbone, format_backbone_label, require_backbone_label
+rows = build_results_table(preds_full, preds_pol, None, None, targets,
+                           masks_rl, None, None)
 bl = pd.read_csv("outputs/rls/baselines.csv")
 for _, r in bl.iterrows():
     rows.append({"method": r.method, "rmse": r.rmse, "r2": r.r2,
                  "scatter": r.scatter, "keep_frac": r.keep_frac, "fidelity": float("nan")})
-rows.append({"method": "rl_policy", "rmse": mp["rmse"], "r2": mp["r2"],
-             "scatter": mp["scatter"], "keep_frac": float(np.mean(keeps)),
-             "fidelity": fid})
+_bb_rec = record_backbone("frozen", gnn)  # or "stageB_finetuned" if Stage B ran
+require_backbone_label(rows, _bb_rec)
+print("[backbone]", format_backbone_label(_bb_rec))
 res = pd.DataFrame(rows)
-res.to_csv("outputs/rls/results_table.csv", index=False)
+save_paper_plots(rows, out_dir="outputs/rls")
 print(res.to_string(index=False))
 
 import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
@@ -437,9 +497,16 @@ FROZEN mode (K=0) is the ablation.
 
 ```python
 # CELL D1: Import TTA engine (committed) + label-free reward
-from rls.tta import adapt_at_test_time, mc_std
+from rls.tta import adapt_at_test_time, mc_std, edge_kl, tta_should_enable
 from rls.evaluate import evaluate_tta
+from rls.sparsify import eval_mask
 import copy, time
+
+# TTA trust-region placeholders — NOT tuned. Sweep tta_kl_coef over
+# [0.01, 0.05, 0.1] on the VAL split on Kaggle before trusting test numbers
+# (tune on val, freeze, then touch test once).
+rls["tta_kl_coef"] = 0.05
+rls["tta_lr_decay"] = 0.9
 ```
 
 ```python
@@ -455,7 +522,7 @@ for K in [0, 5, 10, 20]:
         if K == 0:  # FROZEN mode
             with torch.no_grad():
                 p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"], gd["edge_index"], gd["ctx"])).squeeze(-1)
-                m = repair_connectivity(gd["edge_index"], hard_mask(p, rls["min_keep_frac"]))
+                m = eval_mask(gd["edge_index"], p, rls)
             info = {"steps_run": 0, "reward_hist": []}
         else:
             m, info = adapt_at_test_time(policy, gd, gnn, tta_cfg, device,
@@ -519,7 +586,7 @@ try:
             if mode == "frozen":
                 with torch.no_grad():
                     p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"], gd["edge_index"], gd["ctx"])).squeeze(-1)
-                    m = repair_connectivity(gd["edge_index"], hard_mask(p, rls["min_keep_frac"]))
+                    m = eval_mask(gd["edge_index"], p, rls)
             else:
                 m, info = adapt_at_test_time(policy, gd, gnn, rls, device, init="offline",
                                              target_sparsity=rls["tta_target_sparsity"])
@@ -556,3 +623,5 @@ print("saved outputs/rls/tta_*.csv + tta_results.png — download rls_outputs.zi
 > Δunc is positive, the uncertainty reward is being gamed → raise
 > `w_virial`/`w_conn` or lower K. Tune (K, tta_lr, w_unc) on the VAL split only.
 > K=0 must reproduce the frozen numbers exactly (same policy, same mask).
+> Fail-closed gate: report TTA only if `tta_should_enable(val_frozen_rmse,
+> val_tta_rmse)` passes — otherwise report frozen.
