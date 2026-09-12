@@ -1,8 +1,32 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import torch
+import pytest
 from rls.baselines import (random_mask, degree_mask, distance_mask,
                            mass_ratio_mask, attention_topk_mask)
+
+DEVICES = ["cpu", pytest.param("cuda", marks=pytest.mark.skipif(
+    not torch.cuda.is_available(), reason="CUDA is not available"))]
+
+
+@pytest.mark.parametrize("device", DEVICES)
+@pytest.mark.parametrize("mask_fn", [random_mask, degree_mask, distance_mask,
+                                    mass_ratio_mask, attention_topk_mask])
+def test_masks_stay_on_graph_device(device, mask_fn):
+    edge_index = torch.tensor([[0, 1, 1, 2, 0, 2], [1, 0, 2, 1, 2, 0]], device=device)
+    edge_attr = torch.arange(30, dtype=torch.float32, device=device).reshape(6, 5)
+    pos = torch.arange(9, dtype=torch.float32, device=device).reshape(3, 3)
+    kwargs = {}
+    if mask_fn is attention_topk_mask:
+        kwargs["model"] = torch.nn.Linear(5, 1).to(device)
+    mask = mask_fn(edge_index, edge_attr, pos, 0.5, **kwargs)
+    assert mask.device == edge_index.device
+    assert mask.dtype == torch.bool
+    assert mask.sum().item() == 3
+    assert edge_index[:, mask].shape == (2, 3)
+    if mask_fn is random_mask:
+        expected = random_mask(edge_index.cpu(), edge_attr.cpu(), pos.cpu(), 0.5)
+        assert torch.equal(mask.cpu(), expected)
 
 def test_masks_have_correct_fraction():
     torch.manual_seed(0)

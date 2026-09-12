@@ -3,11 +3,12 @@ import torch
 
 
 def random_mask(edge_index, edge_attr, pos, frac, seed=0):
+    # Keep the seeded CPU permutation identical across CPU and GPU runs.
     g = torch.Generator().manual_seed(seed)
     n = edge_attr.shape[0]
     k = int(frac * n)
-    idx = torch.randperm(n, generator=g)[:k]
-    m = torch.zeros(n, dtype=torch.bool)
+    idx = torch.randperm(n, generator=g, device="cpu")[:k].to(edge_index.device)
+    m = torch.zeros(n, dtype=torch.bool, device=edge_index.device)
     m[idx] = True
     return m
 
@@ -15,12 +16,13 @@ def random_mask(edge_index, edge_attr, pos, frac, seed=0):
 def degree_mask(edge_index, edge_attr, pos, frac):
     """Keep the highest-degree edges (hubs are informative)."""
     n = edge_index.shape[1]
-    deg = torch.zeros(edge_index.max().item() + 1)
-    deg.index_add_(0, edge_index[0], torch.ones(n))
-    deg.index_add_(0, edge_index[1], torch.ones(n))
+    deg = torch.zeros(edge_index.max().item() + 1, device=edge_index.device)
+    counts = torch.ones(n, device=edge_index.device)
+    deg.index_add_(0, edge_index[0], counts)
+    deg.index_add_(0, edge_index[1], counts)
     edge_deg = (deg[edge_index[0]] + deg[edge_index[1]]) / 2
     k = int(frac * n)
-    m = torch.zeros(n, dtype=torch.bool)
+    m = torch.zeros(n, dtype=torch.bool, device=edge_index.device)
     m[torch.topk(edge_deg, k).indices] = True
     return m
 
@@ -30,7 +32,7 @@ def distance_mask(edge_index, edge_attr, pos, frac):
     n = edge_index.shape[1]
     dists = torch.norm(pos[edge_index[0]] - pos[edge_index[1]], dim=1)
     k = int(frac * n)
-    m = torch.zeros(n, dtype=torch.bool)
+    m = torch.zeros(n, dtype=torch.bool, device=edge_index.device)
     m[torch.topk(-dists, k).indices] = True
     return m
 
@@ -43,7 +45,7 @@ def mass_ratio_mask(edge_index, edge_attr, pos, frac, mass_ratio_idx=3):
     n = edge_index.shape[1]
     scores = edge_attr[:, mass_ratio_idx]
     k = int(frac * n)
-    m = torch.zeros(n, dtype=torch.bool)
+    m = torch.zeros(n, dtype=torch.bool, device=edge_index.device)
     m[torch.topk(scores, k).indices] = True
     return m
 
@@ -82,7 +84,7 @@ def attention_topk_mask(edge_index, edge_attr, pos, frac, model=None):
     n = edge_index.shape[1]
     scores = model(edge_attr).squeeze(-1)
     k = int(frac * n)
-    m = torch.zeros(n, dtype=torch.bool)
+    m = torch.zeros(n, dtype=torch.bool, device=edge_index.device)
     m[torch.topk(scores, k).indices] = True
     return m
 
