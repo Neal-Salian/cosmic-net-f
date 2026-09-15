@@ -211,8 +211,10 @@ def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=Non
                 logp = bernoulli_logp(probs, mask.float())
             total_logp.append(logp.mean())
             total_ent.append(ent)
-            total_values.append(val)
-            total_rewards.append(rew)
+            # Each episode has one value and reward. A [1] reward stacked
+            # against scalar values otherwise broadcasts to a [B, B] loss.
+            total_values.append(val.reshape(()))
+            total_rewards.append(rew.reshape(()))
             total_keep.append(keep_ratio)
 
         logp = torch.stack(total_logp)

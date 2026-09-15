@@ -112,7 +112,7 @@ def fine_tune_gnn(gnn, graphs, masks, epochs=10, lr=1e-4, device="cpu",
         for g, mask in zip(graphs, masks):
             g = {k: v.to(device) for k, v in g.items() if isinstance(v, torch.Tensor)}
             pred = _predict(gnn, g, mask, device)
-            target = g["y"].squeeze(-1).float()
+            target = g["y"].float().reshape_as(pred)
             if pred.numel() != target.numel():
                 pred = pred.expand_as(target)
             loss = F.mse_loss(pred, target)
