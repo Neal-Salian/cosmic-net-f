@@ -46,7 +46,7 @@ def single_thread():
 def test_full_pipeline(tmp_path, monkeypatch, small_inputs, single_thread):
     monkeypatch.chdir(tmp_path)
     a = run_notebook("A", tmp_path)
-    b = run_notebook("B", tmp_path, RUN_PENALTY_ABLATION=True)
+    b = run_notebook("B", tmp_path)
     c = run_notebook("C", tmp_path, EVALUATE_STAGE_B=True)
     calls = []
     original = workflow.adapt_at_test_time
@@ -68,7 +68,7 @@ def test_full_pipeline(tmp_path, monkeypatch, small_inputs, single_thread):
     gumbel = c["results_df"].query("method == 'gumbel'").iloc[0]
     assert gumbel.backbone_stage == "gumbel_joint"
     assert gumbel.backbone_sha256 == a["gumbel_record"]["sha256"]
-    assert len(c["results_df"]) == len(a["baseline_df"]) + 3
+    assert len(c["results_df"]) == len(a["baseline_df"]) + 1 + (2 if b["stageb_info"].get("accepted") else 0)
     assert set(c["coverage_df"].method) == {"full", "rl_policy"}
     # Exercise optional OOD cells with a tiny catalog-format fixture. These
     # are smoke-test artifacts only, never scientific CAMELS results.

@@ -51,16 +51,37 @@ the folders containing the artifact files. Otherwise discovery searches
 must be regenerated: the updated workflow verifies file checksums, backbone,
 graph configuration and split IDs, and restores B's entire policy configuration.
 
+Notebook B now uses `pair_pl`: ordered Plackett–Luce samples over physical
+pairs with their exact action likelihood and a leave-one-out rollout baseline.
+Normalization statistics and the reward error scale are fitted on training data
+only. The reward is bounded; the critic uses Huber loss and both optimizers have
+gradient clipping. Validation selects the best checkpoint at the final pair
+budget, against a fixed multi-seed random-pair reference.
+
+`policy.pt` is published only when validation RMSE beats the random reference
+and no nodes are physically isolated. Failed full runs save
+`policy_diagnostic.pt`; C/D reject them. Smoke artifacts bypass the statistical
+quality threshold only within other smoke runs. The old deterministic
+`topk_scheduled` training objective is rejected; old policies must be retrained.
+Physical connectivity means no isolated nodes, not necessarily a single
+connected component. Deterministic repair may exceed the requested pair budget;
+physical-pair and total-edge keep fractions are reported separately.
+
 Set `SMOKE_TEST=True` in **all** stages for a small pipeline check; smoke and
 full artifacts cannot be mixed. Leave it false for the full experiment. B's
 optional fine-tuning preserves the original frozen GNN used for policy
 embeddings. In C, `EVALUATE_STAGE_B=True` adds results from B's saved fine-tuned
-model. A's jointly trained Gumbel backbone retains its own labels in C's table.
+model. Stage B trains with both pruned and full-graph losses and requires a
+pruned-validation improvement without more than 2% full-validation regression.
+If no epoch passes, the original backbone is restored and no
+`finetuned_gnn.pt` is published. A's jointly trained Gumbel backbone retains its
+own labels in C's table.
 
 D evaluates each `TTA_KS` value on validation first. Failed settings are skipped
 on test; the selected K comes from validation alone. K=0 uses the unchanged
-offline policy. Optional penalty ablation and CAMELS evaluation are disabled by
-default. To enable CAMELS in C/D, attach a real z=0 group catalog and set
+offline policy. Pair-policy TTA uses the same sampled actions with a label-free
+reward; its validation gate still applies. The obsolete penalty ablation is
+disabled. To enable CAMELS in C/D, attach a real z=0 group catalog and set
 `CAMELS_HDF5` and `RUN_CAMELS=True`; no synthetic fallback is used.
 
 ## Installation
@@ -457,4 +478,3 @@ Contributions welcome! Please:
 ## Contact
 
 For any questions, discussions, or issues, please reach out to me at: **[rusheelhere@gmail.com](mailto:rusheelhere@gmail.com)**
-

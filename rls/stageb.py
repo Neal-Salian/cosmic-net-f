@@ -64,7 +64,7 @@ def edge_dropout_masks(graphs, drop_frac, generator=None):
 def fine_tune_gnn(gnn, graphs, masks, epochs=10, lr=1e-4, device="cpu",
                   use_virial=False, loss_fn=None, weight_decay=5e-5,
                   val_graphs=None, val_masks=None, patience=3, full_tol=0.02,
-                  restore_best=True):
+                  restore_best=True, full_loss_weight=0.5):
     """graphs: list of dicts with x/edge_index/edge_attr/y + physics attrs.
     masks: list of bool tensors (per-edge keep mask) aligned with graphs.
 
@@ -102,20 +102,27 @@ def fine_tune_gnn(gnn, graphs, masks, epochs=10, lr=1e-4, device="cpu",
         return _rmse(torch.cat(preds), torch.cat(tgts))
 
     pre_full = _val_rmse(pruned=False) if val_graphs is not None else None
-    best = {"pruned": float("inf"), "full": None, "epoch": -1, "state": None}
+    pre_pruned = _val_rmse(pruned=True) if val_graphs is not None else None
+    initial_state = copy.deepcopy(gnn.state_dict())
+    best = {"pruned": pre_pruned if pre_pruned is not None else float("inf"),
+            "full": pre_full, "epoch": -1, "state": initial_state}
     full_hist, pruned_hist = [], []
     bad_epochs = 0
     stopped_early = False
 
     for epoch in range(epochs):
         epoch_losses = []
-        for g, mask in zip(graphs, masks):
+        for index in torch.randperm(len(graphs)).tolist():
+            g, mask = graphs[index], masks[index]
             g = {k: v.to(device) for k, v in g.items() if isinstance(v, torch.Tensor)}
             pred = _predict(gnn, g, mask, device)
             target = g["y"].float().reshape_as(pred)
             if pred.numel() != target.numel():
                 pred = pred.expand_as(target)
             loss = F.mse_loss(pred, target)
+            if full_loss_weight > 0:
+                full_pred = _predict(gnn, g, torch.ones_like(mask), device)
+                loss = loss + full_loss_weight * F.mse_loss(full_pred, g["y"].float().reshape_as(full_pred))
             if use_virial and loss_fn is not None:
                 vloss = loss_fn(pred, g["y"], {"stellar_mass": g["stellar_mass"],
                                                "vel_disp": g["vel_disp"],
@@ -149,5 +156,7 @@ def fine_tune_gnn(gnn, graphs, masks, epochs=10, lr=1e-4, device="cpu",
     info = {"best_epoch": best["epoch"], "stopped_early": stopped_early,
             "full_hist": full_hist, "pruned_hist": pruned_hist,
             "best_full": best["full"], "best_pruned": best["pruned"],
-            "prefinetune_full": pre_full}
+            "prefinetune_full": pre_full, "prefinetune_pruned": pre_pruned,
+            "accepted": best["epoch"] >= 0,
+            "restored_frozen": val_graphs is not None and restore_best and best["epoch"] < 0}
     return history, info

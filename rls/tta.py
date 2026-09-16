@@ -60,6 +60,11 @@ def adapt_at_test_time(policy, graph, gnn, cfg, device="cpu", init="offline",
     adaptation cannot drift far from the offline policy that was validated.
     Tune (K, tta_lr, w_unc) on the VAL split only.
     """
+    if cfg.get("sparsity_mode") == "pair_pl":
+        if init != "offline":
+            raise ValueError("Normalized pair policies require the saved offline initialization.")
+        from rls.pair_tta import adapt_pair_policy
+        return adapt_pair_policy(policy, graph, gnn, cfg, device, target_sparsity, log_fn)
     if init == "offline":
         pol = copy.deepcopy(policy).to(device)
     else:  # fresh init (ablation)

@@ -74,7 +74,7 @@ def _no_isolated(edge_index, mask):
     Device-safe: the degree accumulator lives on edge_index's device."""
     device = edge_index.device
     deg = torch.zeros(int(edge_index.max().item()) + 1, dtype=torch.long, device=device)
-    kept = mask.nonzero(as_tuple=False).squeeze(-1)
+    kept = (mask & (edge_index[0] != edge_index[1])).nonzero(as_tuple=False).squeeze(-1)
     if kept.numel() > 0:
         ones = torch.ones(kept.numel(), dtype=torch.long, device=device)
         deg.index_add_(0, edge_index[0, kept], ones)
@@ -121,7 +121,7 @@ def prepare_graphs(loader, gnn, device=None):
 
 
 def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=None,
-                 warn_fn=None):
+                 warn_fn=None, validation_fn=None):
     """One epoch = one pass over the graphs; batch = cfg['batch_size'] graphs.
 
     gnns: callable (graph_dict, mask) -> (pred_full, pred_pruned) or None
@@ -134,6 +134,12 @@ def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=Non
     curriculum target; probs learn WHICH edges to drop). warn_fn(epoch, keep,
     target) is called on curriculum divergence (default: print).
     """
+    if cfg.get("sparsity_mode") == "pair_pl":
+        from rls.pair_training import train_pair_policy
+        return train_pair_policy(trainer, graphs, gnns, cfg, device, epochs,
+                                 log_fn, validation_fn)
+    if cfg.get("sparsity_mode") == "topk_scheduled":
+        raise ValueError("topk_scheduled used a biased action likelihood. Retrain with sparsity_mode='pair_pl'.")
     policy, value_net = trainer.policy, trainer.value_net
     policy = policy.to(device)
     value_net = value_net.to(device)

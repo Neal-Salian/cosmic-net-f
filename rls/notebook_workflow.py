@@ -19,6 +19,7 @@ from rls.provenance import record_backbone, require_backbone_label
 from rls.sparsify import eval_mask
 from rls.train_policy import prepare_graphs
 from rls.tta import adapt_at_test_time, tta_should_enable
+from rls.pair_policy import policy_action, pair_stats, pair_mask
 
 
 def file_info(path):
@@ -81,6 +82,10 @@ def source_artifacts(explicit, root, stage, filename, context):
 def load_saved_policy(folder, manifest, cfg, gnn, device):
     # Architecture AND inference decoder must match training.
     cfg["rls"] = copy.deepcopy(manifest["config_used"]["rls"])
+    quality = manifest.get("policy_validation", {})
+    if (cfg["rls"].get("sparsity_mode") != "pair_pl" or quality.get("verdict") not in ("PASS", "FAIL")
+            or (quality.get("verdict") != "PASS" and manifest.get("run_mode") != "smoke")):
+        raise ValueError("Policy is not validated under the repaired pair objective. Rerun Notebook B; diagnostic/rejected policies cannot be used downstream.")
     policy = build_policy(cfg, node_emb_dim=gnn.output_dim).to(device)
     path = checked_artifact(folder, manifest, "policy.pt")
     policy.load_state_dict(torch.load(path, map_location=device, weights_only=True), strict=True)
@@ -122,7 +127,10 @@ def predict_graph(model, graph, mask):
 
 def prediction_pair(model):
     def predict(graph, mask):
-        return predict_graph(model, graph, torch.ones_like(mask)), predict_graph(model, graph, mask)
+        full = graph.get("reference_prediction")
+        if full is None:
+            full = predict_graph(model, graph, torch.ones_like(mask))
+        return full, predict_graph(model, graph, mask)
     return predict
 
 
@@ -135,7 +143,8 @@ def policy_masks(policy, graphs, cfg):
                                          graph["edge_index"], graph["ctx"])).squeeze(-1)
             if not torch.isfinite(probs).all():
                 raise ValueError("Policy produced nonfinite probabilities.")
-            masks.append(eval_mask(graph["edge_index"], probs, cfg))
+            masks.append(policy_action(policy, graph, cfg)[0] if cfg.get("sparsity_mode") == "pair_pl"
+                         else eval_mask(graph["edge_index"], probs, cfg))
             probabilities.append(probs)
     return masks, probabilities
 
@@ -159,6 +168,42 @@ def result_rows(result, backbone, run_mode):
     for row in rows:
         row.update(run_mode=run_mode, keep_frac=row["mean_keep_frac"])
     return rows
+
+
+def policy_metrics(policy, graphs, gnn, cfg):
+    masks, _ = policy_masks(policy, graphs, cfg)
+    result = evaluate_masks(gnn, graphs, masks)
+    row = result_rows(result, record_backbone("frozen", gnn), "full")[1]
+    stats = [pair_stats(g["edge_index"], m.to(g["edge_index"].device), len(g["x"])) for g,m in zip(graphs,masks)]
+    row.update(physical_pair_keep=float(np.mean([s["physical_pair_keep"] for s in stats])),
+               total_edge_keep=row["mean_keep_frac"], physical_isolates=sum(s["physical_isolates"] for s in stats))
+    return row
+
+
+def random_pair_reference(graphs, gnn, cfg, seeds=range(10)):
+    rows = []
+    for seed in seeds:
+        masks = []
+        devices = [next(gnn.parameters()).device.index or 0] if next(gnn.parameters()).device.type == "cuda" else []
+        with torch.random.fork_rng(devices=devices):
+            torch.manual_seed(seed)
+            for graph in graphs:
+                scores = torch.zeros(graph["edge_index"].shape[1], device=graph["edge_index"].device)
+                masks.append(pair_mask(graph["edge_index"], scores, cfg["target_sparsity_end"], sample=True)[0])
+        row = result_rows(evaluate_masks(gnn, graphs, masks), record_backbone("frozen", gnn), "full")[1]
+        row.update(seed=seed)
+        rows.append(row)
+    if len(rows) < 2:
+        raise ValueError("Random reference requires at least two seeds.")
+    return rows
+
+
+def policy_validation(metrics, random_rows):
+    random_mean = float(np.mean([r["rmse"] for r in random_rows]))
+    passed = np.isfinite(metrics["rmse"]) and metrics["rmse"] < random_mean and metrics["physical_isolates"] == 0
+    return dict(verdict="PASS" if passed else "FAIL", selected_metrics=metrics,
+                random_rmse_mean=random_mean, random_rmse_std=float(np.std([r["rmse"] for r in random_rows], ddof=1)),
+                criterion="Validation RMSE below random-pair mean at the same requested budget; no physical isolates.")
 
 
 def merge_baselines(rows, folder, manifest):
@@ -256,8 +301,19 @@ def complete_stage(out, stage, context, artifacts, **extra):
     provenance[stage] = dict(context, stage=stage, status="complete",
         timestamp_utc=datetime.now(timezone.utc).isoformat(),
         artifacts={name: file_info(out / name) for name in artifacts}, **extra)
+    # Record source contents as well as HEAD for local, uncommitted repairs.
+    root = Path(__file__).resolve().parents[1]
+    provenance[stage]["source_files"] = {str(p.relative_to(root)): file_info(p)
+        for p in sorted((root / "rls").glob("*.py"))}
     temporary = path.with_suffix(".json.tmp")
-    temporary.write_text(json.dumps(provenance, indent=2))
+    # Undefined correlations are represented as null, never nonstandard JSON.
+    def finite_json(value):
+        if isinstance(value, dict): return {k: finite_json(v) for k,v in value.items()}
+        if isinstance(value, (list, tuple)): return [finite_json(v) for v in value]
+        if isinstance(value, float) and not np.isfinite(value): return None
+        return value
+    provenance = finite_json(provenance)
+    temporary.write_text(json.dumps(provenance, indent=2, allow_nan=False))
     temporary.replace(path)
     # Archive only this run's declared outputs; stale optional artifacts stay out.
     import zipfile
