@@ -48,14 +48,15 @@ def repair_connectivity(edge_index, mask):
     device = edge_index.device
     num_nodes = int(edge_index.max().item()) + 1
     incident = torch.zeros(num_nodes, dtype=torch.long, device=device)
-    kept_idx = mask.nonzero(as_tuple=False).squeeze(-1)
+    real = edge_index[0] != edge_index[1]
+    kept_idx = (mask & real).nonzero(as_tuple=False).squeeze(-1)
     if kept_idx.numel() > 0:
         ones = torch.ones(kept_idx.numel(), dtype=torch.long, device=device)
         incident.index_add_(0, edge_index[0, kept_idx], ones)
         incident.index_add_(0, edge_index[1, kept_idx], ones)
     isolated = (incident == 0).nonzero(as_tuple=False).squeeze(-1)
     for node in isolated.tolist():
-        cand = (edge_index == node).sum(dim=0).bool()
+        cand = (edge_index == node).sum(dim=0).bool() & real
         if cand.any():
             first = int(cand.nonzero(as_tuple=False)[0].item())
             mask[first] = True
@@ -213,6 +214,7 @@ def topk_scheduled_mask(edge_index, probs, target_keep_frac,
     Returns a BOOL mask. Switchable via rls.sparsity_mode:
     "penalty" (old behavior) | "topk_scheduled" (this).
     """
+    probs = symmetrize_probs(edge_index, probs)
     assert probs.dtype in (torch.float32, torch.float64), \
         f"expected float probs, got {probs.dtype}"
     n = probs.numel()
@@ -264,6 +266,11 @@ def eval_mask(edge_index, probs, cfg, target_sparsity=None):
     repair_symmetric. Both paths guarantee pair-symmetry + self-loops.
     """
     mode = cfg.get("sparsity_mode", "penalty")
+    if mode == "pair_pl":
+        from rls.pair_policy import pair_mask
+        scores = torch.logit(probs.clamp(1e-6, 1-1e-6))
+        return pair_mask(edge_index, scores, cfg.get("target_sparsity_end", .4)
+                         if target_sparsity is None else target_sparsity)[0]
     if mode == "topk_scheduled":
         tgt = (target_sparsity if target_sparsity is not None
                else cfg.get("target_sparsity_end", 0.4))

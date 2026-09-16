@@ -183,7 +183,9 @@ def test_eval_mask_uses_same_decoder_as_training():
     probs = torch.rand(ei.shape[1]) * 0.4  # ALL below 0.5: threshold keeps ~floor
     m_pen = eval_mask(ei, probs, {"sparsity_mode": "penalty", "min_keep_frac": 0.1})
     assert pair_asymmetry_fraction(ei, m_pen) == 0.0
-    assert m_pen.float().mean() < 0.5
+    # Physical-isolation repair can exceed the old loop-counting floor.
+    real = ei[0] != ei[1]
+    assert set(ei[:, m_pen & real].reshape(-1).tolist()) == set(ei.reshape(-1).tolist())
     m_topk = eval_mask(ei, probs, {"sparsity_mode": "topk_scheduled",
                                    "target_sparsity_end": 0.4})
     assert pair_asymmetry_fraction(ei, m_topk) == 0.0

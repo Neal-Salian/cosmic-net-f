@@ -67,23 +67,28 @@ def _rmse(a, b):
 def compute_rewards(pred_pruned, pred_full, targets, keep_ratio, target_sparsity,
                     virial_penalty, cfg, connectivity_ok=True):
     """Vectorized over a batch of graphs (one entry per graph)."""
-    base_rmse = _rmse(pred_full, targets) + 1e-8
+    base_rmse = _rmse(pred_full, targets)
     pruned_rmse = _rmse(pred_pruned, targets)
-    delta_rel = (base_rmse - pruned_rmse) / base_rmse          # positive = better
+    # A fixed TRAIN-derived scale avoids giving near-perfect individual
+    # predictions arbitrarily large influence. The fallback is in dex and
+    # supports standalone callers; the notebook records its fitted scale.
+    scale = float(cfg.get("reward_error_scale", 0.1))
+    if not scale > 0 or not torch.isfinite(torch.tensor(scale)):
+        raise ValueError("reward_error_scale must be finite and positive.")
+    delta_rel = (base_rmse - pruned_rmse) / scale
 
     sparsity_term = (keep_ratio - target_sparsity) ** 2        # 0 at target, + away from it
     sparsity_term = min(sparsity_term, 1.0)
 
     # Disconnected graphs get a hard penalty strong enough to dominate even a
     # +1.0 relative-RMSE improvement (keeps the reward strictly negative).
-    conn_bonus = torch.where(torch.tensor(bool(connectivity_ok)), torch.ones_like(delta_rel),
-                             -2.0 * torch.ones_like(delta_rel))
+    conn_bonus = torch.ones_like(delta_rel) * (1.0 if connectivity_ok else -2.0)
 
     r = (cfg["w_acc"] * delta_rel
          - cfg["w_sp"] * sparsity_term
          + cfg["w_conn"] * conn_bonus
          - cfg["w_virial"] * virial_penalty)
-    return r
+    return r.clamp(-float(cfg.get("reward_clip", 10.0)), float(cfg.get("reward_clip", 10.0)))
 
 
 def label_free_reward(std_pruned, std_full, keep_ratio, target_sparsity,
