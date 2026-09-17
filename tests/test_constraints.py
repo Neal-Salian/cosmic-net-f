@@ -210,6 +210,26 @@ def test_connected_orders_normalize_and_sampling_replays_exact_likelihood():
         torch.testing.assert_close(out.log_probability, replay)
 
 
+@pytest.mark.parametrize('method', ['direct', 'scaffold'])
+@pytest.mark.parametrize('offset', [0., 1e8, -1e8])
+def test_order_replay_and_normalization_survive_common_logit_offset(method, offset):
+    c, p = api()
+    layout = c.PhysicalPairLayout.from_edge_index(torch.tensor([[0, 1], [1, 2]]), 3)
+    scores = torch.full((2,), offset, dtype=torch.float32)
+    marks = torch.tensor([1., 0.])
+    out = p.select_pairs(layout, scores, 1, method=method, sample=True,
+                         pair_marks=marks, generator=torch.Generator().manual_seed(9))
+    replay = p.constrained_order_log_probability(layout, scores, out.order, 1,
+                                                method=method, pair_marks=marks)
+    torch.testing.assert_close(replay, out.log_probability)
+    logps = torch.stack([p.constrained_order_log_probability(
+        layout, scores, torch.tensor([index]), 1, method=method, pair_marks=marks)
+        for index in range(2)])
+    # Both actions remain equiprobable under any shared shift of the logits.
+    torch.testing.assert_close(logps.exp(), torch.tensor([.5, .5]))
+    torch.testing.assert_close(logps.exp().sum(), torch.tensor(1.))
+
+
 def test_invalid_marks_budgets_and_inputs_are_not_silently_repaired():
     c, p = api()
     layout = c.PhysicalPairLayout.from_edge_index(torch.tensor([[0, 0, 1], [1, 2, 2]]), 3)

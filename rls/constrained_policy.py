@@ -126,7 +126,8 @@ def constrained_order_log_probability(layout, scores, order, k, constraint='none
         candidates = _candidates(layout, selected, k, constraint)
         if index not in candidates.tolist():
             return invalid
-        logp = logp + scores[index] - scores[candidates].logsumexp(0)
+        log_probs = torch.log_softmax(scores[candidates], 0)
+        logp = logp + log_probs[candidates == index].sum()
         selected[index] = True
     return logp
 
