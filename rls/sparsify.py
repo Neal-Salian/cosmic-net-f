@@ -1,323 +1,135 @@
-"""Hard decision layer: probabilities -> binary masks with guarantees."""
+"""Legacy mask decoders and additive physical-isolate repair.
+
+All topology-aware decisions group unordered non-self physical pairs, including
+one-way columns and duplicates. Exact-budget constrained selection is provided
+by rls.constrained_policy; the legacy repair here can exceed a sampled budget.
+"""
+import math
 import torch
+from rls.constraints import PhysicalPairLayout, pair_budget
+from rls.pair_policy import pair_mask, pair_scores, repair_pairs
+
+
+def _floor_count(probs, min_keep_frac):
+    if not math.isfinite(min_keep_frac) or not 0 <= min_keep_frac <= 1:
+        raise ValueError('min_keep_frac must be in [0, 1]')
+    return math.ceil(min_keep_frac * probs.numel())
 
 
 def hard_mask(probs, min_keep_frac=0.1):
-    """Threshold at 0.5, then force-keep the top-k highest-prob edges so the
-    kept fraction is at least min_keep_frac. Returns a BOOL mask — boolean
-    indexing everywhere (edge_index[:, mask]) requires bool, not 0/1 long."""
-    mask = (probs >= 0.5)
-    k_min = int(torch.ceil(torch.tensor(min_keep_frac) * probs.numel()))
-    if mask.sum() < k_min:
-        top = torch.topk(probs, k_min).indices
-        mask = torch.zeros_like(mask, dtype=torch.bool)
-        mask[top] = True
-    return mask
+    """Threshold at 0.5 with a tie-inclusive minimum floor.
+
+    This array-only legacy helper counts entries because it has no topology.
+    For physical budgets use final_symmetric_mask or topk_scheduled_mask.
+    All entries tied at the floor cutoff are retained; no index wins a tie.
+    """
+    return apply_min_keep_floor(probs >= 0.5, probs, min_keep_frac)
 
 
 def apply_min_keep_floor(mask, probs, min_keep_frac=0.1):
-    """Same floor-enforcement as hard_mask, but the candidate mask need
-    not be a thresholded-probs mask — e.g. a sampled Bernoulli action.
-    If the candidate keeps fewer than min_keep_frac of edges, replace it
-    with the top-(min_keep_frac) highest-probability edges instead."""
-    assert mask.dtype == torch.bool, f"expected bool mask, got {mask.dtype}"
+    """Legacy array floor; tied cutoff values are all kept (may exceed floor)."""
+    assert mask.dtype == torch.bool, f'expected bool mask, got {mask.dtype}'
     mask = mask.clone()
-    k_min = int(torch.ceil(torch.tensor(min_keep_frac) * probs.numel()))
-    if mask.sum() < k_min:
-        top = torch.topk(probs, k_min).indices
-        mask = torch.zeros_like(mask, dtype=torch.bool)
-        mask[top] = True
+    k_min = _floor_count(probs, min_keep_frac)
+    if int(mask.sum()) < k_min:
+        cutoff = torch.topk(probs, k_min).values.min()
+        mask = probs >= cutoff
     return mask
 
 
-def repair_connectivity(edge_index, mask):
-    """Guarantee every node has >= 1 incident kept edge.
+def repair_connectivity(edge_index, mask, *, pair_marks=None, num_nodes=None):
+    """Add pairs for physical isolates using independent exchangeable priorities.
 
-    For each isolated node, force-keep its first incident edge (in edge_index
-    order). Device-safe: the degree accumulator lives on edge_index's device,
-    so this works identically on CPU and CUDA (a CPU-only accumulator crashed
-    every GPU run). Requires a BOOL mask: downstream edge_index[:, mask] /
-    edge_attr[mask] silently positional-index with an int 0/1 mask.
-
-    NOTE (audit Sep 2026): repair adds a SINGLE directed edge, which can break
-    pairwise (u->v == v->u) symmetry. Callers that need a symmetric final mask
-    must pass the result through mirror_repair (inside final_symmetric_mask).
+    All copies of each retained physical pair share membership. Loops do not
+    cover isolates and retain their input mask values. Input-topology isolates
+    cannot be repaired; use pair_stats(..., num_nodes=...) to report them.
+    This is no-isolate repair, not a connected-component guarantee. It may
+    exceed the sampled budget. Explicit unique pair marks permit coupled replay.
     """
-    assert mask.dtype == torch.bool, f"expected bool mask, got {mask.dtype}"
-    mask = mask.clone()
-    device = edge_index.device
-    num_nodes = int(edge_index.max().item()) + 1
-    incident = torch.zeros(num_nodes, dtype=torch.long, device=device)
-    real = edge_index[0] != edge_index[1]
-    kept_idx = (mask & real).nonzero(as_tuple=False).squeeze(-1)
-    if kept_idx.numel() > 0:
-        ones = torch.ones(kept_idx.numel(), dtype=torch.long, device=device)
-        incident.index_add_(0, edge_index[0, kept_idx], ones)
-        incident.index_add_(0, edge_index[1, kept_idx], ones)
-    isolated = (incident == 0).nonzero(as_tuple=False).squeeze(-1)
-    for node in isolated.tolist():
-        cand = (edge_index == node).sum(dim=0).bool() & real
-        if cand.any():
-            first = int(cand.nonzero(as_tuple=False)[0].item())
-            mask[first] = True
-    return mask
-
-
-# ---------------------------------------------------------------------------
-# Pairwise-symmetry layer (FIX Sep 2026, audit P0-1/P0-2).
-#
-# WHAT WAS WRONG: graphs are built symmetric (each physical neighbor pair =
-# two directed rows u->v and v->u, plus self-loops), but EdgePolicyNet scores
-# concat([nu, nv, ...]) which is NOT invariant to swapping u and v, so
-# p(u->v) != p(v->u) in general (measured: 2/10 pairs differ by >0.01 at init;
-# after thresholding near 0.5, ~97/200 pairs end up asymmetric). hard_mask /
-# repair_connectivity then acted per directed edge, feeding the frozen GNN a
-# directionally-asymmetric topology it never saw in training. REINFORCE
-# responded by learning "keep everything" (keep stalled at 0.96-1.0 while the
-# curriculum annealed to 0.40).
-#
-# CHOICE: symmetrize the OUTPUT (pair-averaged probabilities), not the input.
-# Input symmetrization (nu+nv, |nu-nv|) would change the policy architecture
-# and invalidate every trained checkpoint; output symmetrization keeps
-# EdgePolicyNet untouched and enforces the invariant at the decision layer,
-# where it can be unit-tested independently of the network. Combination is the
-# pair MEAN: min would over-prune (drop if either direction is uncertain),
-# max would under-prune; mean preserves gradient flow to both directions.
-#
-# SELF-LOOPS: always retained (excluded from the action space). The GNN was
-# trained with self-loops on every node; dropping them is a separate,
-# untested distribution shift, so the final mask forces them True.
-# ---------------------------------------------------------------------------
-
-def _reverse_index(edge_index):
-    """Map each directed edge i to the index j of its reverse (v->u), or -1.
-
-    Handles odd/duplicate edges: for duplicates, maps to the first reverse
-    occurrence; edges with no reverse present (odd edges, self-loops) map
-    to -1. Self-loops map to themselves.
-    """
-    src, dst = edge_index[0], edge_index[1]
-    key_to_first = {}
-    for j in range(edge_index.shape[1]):
-        key = (int(src[j].item()), int(dst[j].item()))
-        if key not in key_to_first:
-            key_to_first[key] = j
-    rev = torch.full((edge_index.shape[1],), -1, dtype=torch.long,
-                     device=edge_index.device)
-    for i in range(edge_index.shape[1]):
-        u, v = int(src[i].item()), int(dst[i].item())
-        if u == v:
-            rev[i] = i
-        elif (v, u) in key_to_first:
-            rev[i] = key_to_first[(v, u)]
-    return rev
+    assert mask.dtype == torch.bool, f'expected bool mask, got {mask.dtype}'
+    layout = PhysicalPairLayout.from_edge_index(edge_index, num_nodes)
+    chosen = repair_pairs(layout.pairs, layout.collapse(mask), layout.num_nodes, pair_marks=pair_marks)
+    out = layout.expand(chosen, keep_self_loops=False)
+    out[~layout.real] = mask[~layout.real]
+    return out
 
 
 def pair_asymmetry_fraction(edge_index, mask):
-    """Diagnostic (audit P0-1): fraction of undirected pairs (u,v), u != v,
-    with mask[u->v] != mask[v->u]. Self-loops and odd edges (no reverse in
-    edge_index) are excluded. Returns a float in [0, 1]."""
-    assert mask.dtype == torch.bool, f"expected bool mask, got {mask.dtype}"
-    rev = _reverse_index(edge_index)
-    src, dst = edge_index[0], edge_index[1]
-    n_asym, n_pairs = 0, 0
-    seen = set()
-    for i in range(edge_index.shape[1]):
-        u, v = int(src[i].item()), int(dst[i].item())
-        if u == v or int(rev[i].item()) < 0:
-            continue
-        key = (min(u, v), max(u, v))
-        if key in seen:
-            continue
-        seen.add(key)
-        n_pairs += 1
-        if bool(mask[i].item()) != bool(mask[int(rev[i].item())].item()):
-            n_asym += 1
-    return (n_asym / n_pairs) if n_pairs > 0 else 0.0
+    """Fraction of physical pairs whose input copies disagree on membership.
+
+    All copies count, even duplicated one-way columns. Singleton physical pairs
+    necessarily agree. Self-loops are excluded from numerator and denominator.
+    """
+    assert mask.dtype == torch.bool, f'expected bool mask, got {mask.dtype}'
+    layout = PhysicalPairLayout.from_edge_index(edge_index)
+    any_kept = layout.collapse(mask)
+    any_dropped = layout.collapse(~mask)
+    return float((any_kept & any_dropped).float().mean()) if len(layout.pairs) else 0.0
 
 
 def symmetrize_probs(edge_index, probs):
-    """Pair-consensus probabilities: every directed copy of an unordered pair
-    {u,v} gets the MEAN probability over ALL copies (both directions,
-    including duplicates).
-
-    Done by pair-consensus rather than pairwise averaging so duplicate
-    directed edges cannot leave the group with split values (same fixpoint
-    issue as _mirror_mask). Edges with no reverse present (odd edges) and
-    self-loops keep their own probability. Returns a new tensor."""
-    rev = _reverse_index(edge_index)
-    src, dst = edge_index[0], edge_index[1]
+    """Mean over every copy of each physical pair; loops keep their values."""
+    layout = PhysicalPairLayout.from_edge_index(edge_index)
+    if probs.shape != layout.real.shape:
+        raise ValueError('probs must be a vector matching edge_index columns')
+    scores = pair_scores(edge_index, probs, (layout.pairs, layout.inverse, layout.real))
     out = probs.clone()
-    seen = set()
-    for i in range(probs.numel()):
-        u, v = int(src[i].item()), int(dst[i].item())
-        if u == v or int(rev[i].item()) < 0:
-            continue
-        key = (min(u, v), max(u, v))
-        if key in seen:
-            continue
-        seen.add(key)
-        copies = ((src == u) & (dst == v)) | ((src == v) & (dst == u))
-        out[copies] = probs[copies].mean()
+    out[layout.real] = scores[layout.inverse]
     return out
 
 
 def _mirror_mask(edge_index, mask):
-    """Pair-consensus OR: for every unordered pair {u,v} (u != v) present in
-    edge_index, the pair is kept iff ANY directed copy (either direction,
-    including duplicates) is kept; then ALL copies are set to that value.
-
-    Single-pass mirroring (if i kept, keep reverse(i)) is NOT enough: with
-    duplicate directed edges, an edge set True during the pass is never
-    itself mirrored, leaving its twin asymmetric (caught by
-    test_repair_symmetric_postcondition_on_sampled_masks). The consensus form
-    reaches the fixpoint in one shot. Repair only ADDS edges, so consensus-OR
-    preserves the no-isolated-nodes guarantee while restoring pair-symmetry.
-    Self-loops are unaffected. Odd edges (no reverse present) keep their own
-    value and are excluded from the asymmetry diagnostic."""
-    rev = _reverse_index(edge_index)
-    src, dst = edge_index[0], edge_index[1]
-    out = mask.clone()
-    seen = set()
-    for i in range(edge_index.shape[1]):
-        u, v = int(src[i].item()), int(dst[i].item())
-        if u == v or int(rev[i].item()) < 0:
-            continue
-        key = (min(u, v), max(u, v))
-        if key in seen:
-            continue
-        seen.add(key)
-        copies = ((src == u) & (dst == v)) | ((src == v) & (dst == u))
-        if bool(mask[copies].any().item()):
-            out[copies] = True
+    """OR over physical copies, retaining input loop membership."""
+    layout = PhysicalPairLayout.from_edge_index(edge_index)
+    out = layout.expand(layout.collapse(mask), keep_self_loops=False)
+    out[~layout.real] = mask[~layout.real]
     return out
 
 
-def topk_scheduled_mask(edge_index, probs, target_keep_frac,
-                        keep_self_loops=True):
-    """Structural-sparsity decision layer (FIX Sep 2026, audit P0-reward).
+def topk_scheduled_mask(edge_index, probs, target_keep_frac, keep_self_loops=True,
+                        *, pair_marks=None):
+    """Exactly ceil(fraction * physical_pairs) before any legacy repair.
 
-    WHAT WAS WRONG: the soft w_sp*(keep-target)^2 penalty let the policy eat
-    a fixed sparsity penalty and keep ~everything (keep 0.96-1.0 vs target
-    0.40) instead of learning to prune.
-
-    WHAT THIS DOES: the sparsity level becomes a SCHEDULED CONSTRAINT — keep
-    exactly the top-k non-self-loop edges by learned probability at the
-    current curriculum target (k = ceil(target * n_prunable)), so the
-    probabilities only decide WHICH edges to drop, not how many. Self-loops
-    are always retained on top (excluded from the k budget, matching the
-    action-space decision). Pair-consensus restores symmetry afterwards, so
-    the postcondition pair_asymmetry_fraction == 0.0 still holds (consensus
-    can only add edges, so keep >= target afterwards — the constraint binds
-    from below, which is the safe direction for the curriculum).
-
-    Returns a BOOL mask. Switchable via rls.sparsity_mode:
-    "penalty" (old behavior) | "topk_scheduled" (this).
+    Includes one-way/duplicate representations. Scores are pair means; cutoff
+    ties use exchangeable random marks, or transported explicit unique marks.
     """
-    probs = symmetrize_probs(edge_index, probs)
-    assert probs.dtype in (torch.float32, torch.float64), \
-        f"expected float probs, got {probs.dtype}"
-    n = probs.numel()
-    is_loop = edge_index[0] == edge_index[1]
-    src, dst = edge_index[0], edge_index[1]
-    mask = torch.zeros(n, dtype=torch.bool, device=probs.device)
-    # Select over UNDIRECTED pairs, not directed edges: probs are pair-equal
-    # after symmetrize_probs, but top-k over directed rows can still cut
-    # inside a pair (keep u->v, drop v->u) and consensus-OR then inflates keep
-    # far above target (measured 0.60 vs target 0.40 on 10 pairs). Pair-level
-    # selection keeps exactly ceil(target * n_pairs) pairs.
-    rev = _reverse_index(edge_index)
-    seen, pair_idx, pair_prob = set(), [], []
-    for i in range(n):
-        u, v = int(src[i].item()), int(dst[i].item())
-        if u == v or int(rev[i].item()) < 0:
-            continue
-        key = (min(u, v), max(u, v))
-        if key in seen:
-            continue
-        seen.add(key)
-        pair_idx.append(i)
-        pair_prob.append(float(probs[i].item()))
-    n_pairs = len(pair_idx)
-    if n_pairs > 0:
-        k = min(n_pairs, int(torch.ceil(
-            torch.tensor(target_keep_frac * n_pairs)).item()))
-        k = max(k, 1)
-        order = torch.argsort(torch.tensor(pair_prob), descending=True)[:k]
-        for j in order.tolist():
-            i = pair_idx[int(j)]
-            u, v = int(src[i].item()), int(dst[i].item())
-            mask[((src == u) & (dst == v)) | ((src == v) & (dst == u))] = True
-    mask = _mirror_mask(edge_index, mask)
-    if keep_self_loops and bool(is_loop.any().item()):
-        mask[is_loop] = True
+    mask = pair_mask(edge_index, probs, target_keep_frac, repair=False, pair_marks=pair_marks)[0]
+    if not keep_self_loops:
+        mask[edge_index[0] == edge_index[1]] = False
     return mask
 
 
 def eval_mask(edge_index, probs, cfg, target_sparsity=None):
-    """Mode-aware INFERENCE mask (FIX Sep 2026, audit P0-reward follow-up).
-
-    A real-data mechanism check showed the mismatch: a policy trained under
-    topk_scheduled learns probs whose 0.5-threshold keeps 0.106 while training
-    executed keep 0.40 — because thresholding is the wrong decoder for a
-    top-k-trained policy. Inference must use the same decision rule as
-    training: penalty mode -> final_symmetric_mask (threshold); topk_scheduled
-    mode -> top-k at `target_sparsity` (default cfg target_sparsity_end) +
-    repair_symmetric. Both paths guarantee pair-symmetry + self-loops.
-    """
-    mode = cfg.get("sparsity_mode", "penalty")
-    if mode == "pair_pl":
-        from rls.pair_policy import pair_mask
-        scores = torch.logit(probs.clamp(1e-6, 1-1e-6))
-        return pair_mask(edge_index, scores, cfg.get("target_sparsity_end", .4)
-                         if target_sparsity is None else target_sparsity)[0]
-    if mode == "topk_scheduled":
-        tgt = (target_sparsity if target_sparsity is not None
-               else cfg.get("target_sparsity_end", 0.4))
-        return repair_symmetric(
-            edge_index, topk_scheduled_mask(edge_index, probs, tgt))
-    return final_symmetric_mask(edge_index, probs,
-                                cfg.get("min_keep_frac", 0.1))
+    """Preserve the configured legacy training decoder for inference."""
+    mode = cfg.get('sparsity_mode', 'penalty')
+    target = cfg.get('target_sparsity_end', .4) if target_sparsity is None else target_sparsity
+    if mode == 'pair_pl':
+        scores = torch.logit(probs.clamp(1e-6, 1 - 1e-6))
+        return pair_mask(edge_index, scores, target)[0]
+    if mode == 'topk_scheduled':
+        return repair_symmetric(edge_index, topk_scheduled_mask(edge_index, probs, target))
+    return final_symmetric_mask(edge_index, probs, cfg.get('min_keep_frac', .1))
 
 
-def repair_symmetric(edge_index, mask, keep_self_loops=True):
-    """Repair path for SAMPLED (training/TTA) masks: floor/repair may break
-    pair-symmetry, so mirror repair additions and force self-loops True.
-
-    Postcondition: pair_asymmetry_fraction == 0.0 (and self-loops kept when
-    keep_self_loops=True). Use final_symmetric_mask for the deterministic
-    (eval/frozen) path; use this for the stochastic training path where the
-    candidate mask is a Bernoulli sample rather than a thresholded mask."""
-    assert mask.dtype == torch.bool, f"expected bool mask, got {mask.dtype}"
-    mask = repair_connectivity(edge_index, mask)
-    mask = _mirror_mask(edge_index, mask)
+def repair_symmetric(edge_index, mask, keep_self_loops=True, *, pair_marks=None, num_nodes=None):
+    """Legacy sampled-action repair; symmetric copies and optional loop retention."""
+    mask = repair_connectivity(edge_index, mask, pair_marks=pair_marks, num_nodes=num_nodes)
     if keep_self_loops:
-        self_loop = edge_index[0] == edge_index[1]
-        if bool(self_loop.any().item()):
-            mask = mask.clone()
-            mask[self_loop] = True
+        mask[edge_index[0] == edge_index[1]] = True
     return mask
 
 
-def final_symmetric_mask(edge_index, probs, min_keep_frac=0.1,
-                         keep_self_loops=True):
-    """End-to-end decision layer with a PROVABLE pair-symmetry invariant.
+def final_symmetric_mask(edge_index, probs, min_keep_frac=0.1, keep_self_loops=True,
+                         *, pair_marks=None, num_nodes=None):
+    """Physical-pair threshold/floor, then legacy additive no-isolate repair.
 
-    symmetrize probs -> threshold/floor (hard_mask) -> repair_connectivity
-    -> OR-mirror repair additions -> force self-loops True.
-
-    Postcondition (asserted in tests): pair_asymmetry_fraction == 0.0 and,
-    when keep_self_loops=True, every self-loop edge is kept.
+    Floor ties are inclusive; repair marks are exchangeable. Both may exceed
+    the floor. For an exact budget, use constrained_policy.select_pairs.
     """
-    assert probs.dtype in (torch.float32, torch.float64), \
-        f"expected float probs, got {probs.dtype}"
-    sym = symmetrize_probs(edge_index, probs)
-    mask = hard_mask(sym, min_keep_frac=min_keep_frac)
-    mask = repair_connectivity(edge_index, mask)
-    mask = _mirror_mask(edge_index, mask)
-    if keep_self_loops:
-        self_loop = edge_index[0] == edge_index[1]
-        if bool(self_loop.any().item()):
-            mask = mask.clone()
-            mask[self_loop] = True
-    return mask
+    layout = PhysicalPairLayout.from_edge_index(edge_index, num_nodes)
+    scores = pair_scores(edge_index, probs, (layout.pairs, layout.inverse, layout.real))
+    # Validate the physical fraction even for an empty graph.
+    pair_budget(layout, min_keep_frac)
+    selected = hard_mask(scores, min_keep_frac)
+    selected = repair_pairs(layout.pairs, selected, layout.num_nodes, pair_marks=pair_marks)
+    return layout.expand(selected, keep_self_loops)

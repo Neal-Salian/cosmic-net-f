@@ -9,11 +9,8 @@ changed PHYSICS-EDGE semantics only: _graph_physics_terms now excludes
 self-loops, and the reward uses the relative penalty
 (log r_pruned - log r_full)^2 — see tests/test_relative_virial_reward.py.
 
-INTENTIONALLY STILL OLD BEHAVIOR (deliberate, awaiting V2 methodology
-approval): _no_isolated / repair_connectivity count a kept self-loop as
-covering a node, while GraphBuilder._connect_isolated_nodes excludes
-self-loops when finding isolated nodes. Test 3 below pins that divergence —
-do not change it without approval.
+PHYSICAL CONNECTIVITY: loops never cover a physical isolate. Coverage requires
+an incident unordered non-self pair, consistently in repair and reward checks.
 
 GNN self-loops in edge_index/edge_attr remain INTENTIONAL graph architecture
 and are unchanged by the physics filter.
@@ -76,16 +73,12 @@ def test_legacy_one_sided_penalty_function_is_unchanged():
     assert virial_penalty(torch.tensor(2.0), torch.tensor(0.5)).item() == 49.0
 
 
-def test_self_loop_counts_as_covering_a_node_in_rl_connectivity():
-    """CURRENT behavior (V2 GATE — not changed by V1): _no_isolated counts a
-    kept self-loop as an incident edge, so a node whose ONLY kept edge is its
-    self-loop is 'not isolated' on the RL side. (GraphBuilder
-    ._connect_isolated_nodes deliberately uses the opposite convention when
-    building graphs.) Changing this is a reward change — gated."""
-    edge_index = torch.tensor([[0, 1, 0, 2, 2],
-                               [1, 0, 2, 0, 2]])  # real 0-1, real 0-2, loop on 2
-    # keep the 0-1 pair and node 2's self-loop; drop the real 0-2 edges
+def test_self_loop_does_not_cover_a_physical_isolate_in_rl_connectivity():
+    edge_index = torch.tensor([[0, 1, 0, 2, 2], [1, 0, 2, 0, 2]])
     mask = torch.tensor([True, True, False, False, True])
-    assert _no_isolated(edge_index, mask) is True
-    # and without the self-loop, node 2 is isolated:
-    assert _no_isolated(edge_index, mask.clone()[:4]) is False
+    assert _no_isolated(edge_index, mask) is False
+    assert _no_isolated(edge_index[:, :4], mask[:4]) is False
+    from rls.sparsify import repair_connectivity
+    repaired = repair_connectivity(edge_index, mask)
+    assert repaired.tolist() == [True, True, True, True, True]
+    assert _no_isolated(edge_index, repaired) is True

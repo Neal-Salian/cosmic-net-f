@@ -37,9 +37,12 @@ def test_pair_scores_permutation_duplicates_and_selfloop_gradients():
     logp.backward()
     assert torch.equal(scores.grad[ei[0]==ei[1]],torch.zeros(4))
     assert mask[ei[0]==ei[1]].all()
-    deterministic=pair_mask(ei,scores,.5)[0]
+    # Scores 0-3 and 1-2 tie at the cutoff; transport explicit physical-pair
+    # marks so column permutation couples the exchangeable tie/repair policy.
+    marks=torch.tensor([.1,.2,.3,.4,.5,.6])
+    deterministic=pair_mask(ei,scores,.5,pair_marks=marks)[0]
     order=torch.randperm(16)
-    permuted=pair_mask(ei[:,order],scores[order],.5)[0]
+    permuted=pair_mask(ei[:,order],scores[order],.5,pair_marks=marks)[0]
     assert torch.equal(permuted,deterministic[order])
     assert pair_stats(ei,deterministic,4)["physical_isolates"]==0
     # Reverse copies receive exactly the same membership.

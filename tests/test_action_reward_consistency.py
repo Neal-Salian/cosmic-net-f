@@ -87,6 +87,9 @@ def test_train_loop_mask_derives_from_the_sampled_action():
     def spy_floor(mask, probs, min_keep_frac=0.1):
         rec = rollouts[-1]
         rec["floor_args"] = (mask.detach().clone(), probs.detach().clone())
+        # Repair uses independent exchangeable marks; replay its RNG state to
+        # compare the same environment realization, not a fresh repair draw.
+        rec["repair_rng_state"] = torch.random.get_rng_state()
         return real_floor(mask, probs, min_keep_frac)
 
     def spy_gnns(graph, mask):
@@ -111,9 +114,11 @@ def test_train_loop_mask_derives_from_the_sampled_action():
         # floor(action) — mirror only ADDS reverse twins + self-loops, never
         # removes a sampled edge, so the mask still derives from the sample
         # (credit assignment intact) while guaranteeing pair-symmetry.
-        expected = repair_symmetric(
-            rec["edge_index"],
-            apply_min_keep_floor(rec["action"].bool(), rec["probs"], 0.1))
+        with torch.random.fork_rng(devices=[]):
+            torch.random.set_rng_state(rec["repair_rng_state"])
+            expected = repair_symmetric(
+                rec["edge_index"],
+                apply_min_keep_floor(rec["action"].bool(), rec["probs"], 0.1))
         assert rec["reward_mask"].equal(expected), "reward mask is not repair_symmetric(floor(action))"
         assert pair_asymmetry_fraction(rec["edge_index"], rec["reward_mask"]) == 0.0
     # at least one rollout's reward mask must differ from the deterministic
@@ -130,9 +135,11 @@ def test_repair_connectivity_repairs_action_derived_masks():
     action = torch.tensor([1.0, 1.0, 0.0, 0.0])              # isolates nodes 3, 4
     m = apply_min_keep_floor(action.bool(), probs, min_keep_frac=0.0)
     assert m.equal(torch.tensor([True, True, False, False]))
-    repaired = repair_connectivity(edge_index, m)
+    # Pair 3-4 has first priority and covers both isolates in one addition.
+    repaired = repair_connectivity(edge_index, m, pair_marks=torch.tensor([.1, .2, .3, .4]))
     assert repaired.dtype == torch.bool
-    assert (repaired & ~m).equal(torch.tensor([False, False, True, True]))
+    assert (repaired & ~m).equal(torch.tensor([False, False, False, True]))
+    assert (repaired >= m).all()
     deg = torch.zeros(5)
     for i in range(repaired.shape[0]):
         if repaired[i]:

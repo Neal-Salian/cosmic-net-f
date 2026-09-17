@@ -112,7 +112,8 @@ def test_old_path_can_be_asymmetric_but_new_path_is_not():
     noise = torch.randn(H) * 0.02
     probs = torch.cat([torch.clamp(base + noise, 0, 1),
                        torch.clamp(base - noise, 0, 1)])
-    old = repair_connectivity(edge_index, hard_mask(probs, min_keep_frac=0.1))
+    # The raw directed action can disagree; physical repair now groups copies.
+    old = hard_mask(probs, min_keep_frac=0.1)
     assert pair_asymmetry_fraction(edge_index, old) > 0.0  # bug reproduces
     new = final_symmetric_mask(edge_index, probs, min_keep_frac=0.1,
                                keep_self_loops=False)

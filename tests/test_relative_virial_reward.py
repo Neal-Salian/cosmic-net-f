@@ -124,9 +124,13 @@ def test_8_reward_uses_exactly_the_action_mask():
     probs = torch.tensor([0.9, 0.9, 0.9, 0.1, 0.1, 0.1, 0.9, 0.9, 0.9, 0.9])
     action = torch.tensor([1, 1, 1, 0, 0, 0, 1, 1, 1, 1], dtype=torch.bool)
     m = repair_connectivity(g["edge_index"], apply_min_keep_floor(action, probs, 0.1))
-    # floor is a no-op (6 kept >= ceil(0.1*10)=1) and every node is covered,
-    # so the executed mask IS the sampled action:
-    assert torch.equal(m, action)
+    # Floor is a no-op, but node 3 has only a self-loop in the raw action.
+    # Physical repair adds pair 2-3 and mirrors every existing kept pair.
+    assert m.tolist() == [True] * 10
+    assert (m >= action).all()
+    from rls.train_policy import _no_isolated
+    assert not _no_isolated(g["edge_index"], action)
+    assert _no_isolated(g["edge_index"], m)
     ke_m, pe_m = _terms(g, m)
     # PE depends only on the kept edge set -> exactly equal to slicing first:
     ke_slice, pe_slice = _graph_physics_terms(
