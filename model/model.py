@@ -535,7 +535,10 @@ def build_model(config: Dict[str, Any]) -> CosmicNetGNN:
 def load_model(
     checkpoint_path: str,
     config: Dict[str, Any],
-    device: torch.device
+    device: torch.device,
+    *,
+    research_label: Optional[str] = None,
+    expected_provenance: Optional[Dict[str, Any]] = None,
 ) -> CosmicNetGNN:
     """
     Load model from checkpoint.
@@ -544,11 +547,41 @@ def load_model(
         checkpoint_path: Path to checkpoint file
         config: Configuration dictionary
         device: Device to load model to
+        research_label: Explicit research label for legacy unprovenanced
+            checkpoints.  When *None*, falls back to
+            ``config['data']['checkpoint_research_label']`` if present.
 
     Returns:
         Loaded model
     """
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    from data.provenance import (
+        model_state_hash, validate_checkpoint_file, validate_run_provenance,
+    )
+    validate_checkpoint_file(checkpoint_path)
+    checkpoint = torch.load(
+        checkpoint_path, map_location=device, weights_only=True
+    )
+    provenance = checkpoint.get('provenance') if isinstance(checkpoint, dict) else None
+    legacy_labels = {'legacy_total_radius', 'legacy_uncertified', 'synthetic'}
+    if research_label is None:
+        research_label = (
+            config.get('data', {}).get('checkpoint_research_label')
+        )
+    if expected_provenance is not None and provenance is None:
+        raise ValueError(
+            "expected_provenance was supplied but checkpoint has no provenance; "
+            "cannot validate expected contract against unprovenanced weights"
+        )
+    if provenance is None and research_label not in legacy_labels:
+        raise ValueError(
+            "Checkpoint has no research provenance; pass an explicit legacy "
+            "research_label to load historical weights"
+        )
+    if provenance is not None and expected_provenance is not None:
+        for key in ('catalog_contract_sha256', 'split_manifest_sha256',
+                    'config_sha256', 'research_label'):
+            if expected_provenance.get(key) != provenance.get(key):
+                raise ValueError(f"checkpoint provenance mismatch for {key}")
 
     # Prefer the checkpoint's own embedded config for the model architecture.
     # This makes loading robust to config.yaml drift: the checkpoint knows the
@@ -561,9 +594,12 @@ def load_model(
         model = build_model(config)
 
     if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
-        model.load_state_dict(checkpoint['model_state_dict'])
+        state_dict = checkpoint['model_state_dict']
     else:
-        model.load_state_dict(checkpoint)
+        state_dict = checkpoint
+    if provenance is not None:
+        validate_run_provenance(provenance, model_state=state_dict)
+    model.load_state_dict(state_dict)
 
     model.to(device)
     model.eval()

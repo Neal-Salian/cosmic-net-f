@@ -8,6 +8,8 @@ import os
 import logging
 import time
 import math
+import json
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple, List
@@ -371,7 +373,12 @@ class Trainer:
         logger.info(f"Training completed in {total_time/60:.1f} minutes")
         logger.info(f"Best validation MSE: {best_val_loss:.4f} at epoch {best_epoch}")
 
-        # Final test evaluation
+        # Save final checkpoint with last-epoch weights and validation metrics
+        # BEFORE reloading best weights for test evaluation.
+        final_metrics = {**val_metrics}
+        self._save_checkpoint('final_model.pt', epoch, final_metrics)
+
+        # Final test evaluation using best weights
         test_metrics = {}
         if self.test_loader is not None:
             best_checkpoint = self.checkpoint_dir / 'best_model.pt'
@@ -385,10 +392,6 @@ class Trainer:
             if self.use_wandb:
                 wandb.log(test_metrics)
 
-        # Save final checkpoint
-        final_metrics = {**val_metrics, **test_metrics}
-        self._save_checkpoint('final_model.pt', epoch, final_metrics)
-
         if self.use_wandb:
             wandb.finish()
 
@@ -400,13 +403,22 @@ class Trainer:
         }
 
     def _save_checkpoint(self, filename: str, epoch: int, metrics: Dict[str, float]) -> None:
+        from data.provenance import model_state_hash, validate_checkpoint_file
+        state_hash = model_state_hash(self.model.state_dict())
+        provenance = deepcopy(self.config.get('provenance', {
+            'schema_version': 1,
+            'research_label': self.config.get('data', {}).get(
+                'research_label', 'legacy_uncertified'),
+        }))
+        provenance['model_state_sha256'] = state_hash
         checkpoint = {
             'epoch': epoch,
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'lambda_scheduler_state': self.lambda_scheduler.state_dict(),
             'metrics': metrics,
-            'config': self.config
+            'config': self.config,
+            'provenance': provenance,
         }
 
         if self.lr_scheduler is not None:
@@ -414,10 +426,42 @@ class Trainer:
 
         path = self.checkpoint_dir / filename
         torch.save(checkpoint, path)
+        checkpoint_info = validate_checkpoint_file(path)
+        manifest = {
+            **provenance,
+            'checkpoint_path': str(path),
+            'checkpoint_sha256': checkpoint_info['sha256'],
+            'checkpoint_size_bytes': checkpoint_info['size_bytes'],
+        }
+        path.with_name(path.name + '.manifest.json').write_text(
+            json.dumps(manifest, sort_keys=True, indent=2, allow_nan=False)
+        )
         logger.debug(f"Saved checkpoint: {path}")
 
     def _load_checkpoint(self, path: Path) -> None:
-        checkpoint = torch.load(path, map_location=self.device)
+        from data.provenance import validate_checkpoint_file, validate_run_provenance
+        validate_checkpoint_file(path)
+        checkpoint = torch.load(path, map_location=self.device, weights_only=True)
+        if checkpoint.get('provenance'):
+            validate_run_provenance(
+                checkpoint['provenance'], model_state=checkpoint['model_state_dict']
+            )
+        active_provenance = self.config.get('provenance')
+        ckpt_provenance = checkpoint.get('provenance') if isinstance(checkpoint, dict) else None
+        if active_provenance and not ckpt_provenance:
+            raise ValueError(
+                "Active run requires provenance but checkpoint has no provenance; "
+                "refusing to load unprovenanced weights into a provenanced run"
+            )
+        if active_provenance and ckpt_provenance:
+            for key in ('catalog_contract_sha256', 'split_manifest_sha256',
+                        'config_sha256', 'research_label'):
+                if active_provenance.get(key) != ckpt_provenance.get(key):
+                    raise ValueError(
+                        f"checkpoint provenance mismatch for {key}: "
+                        f"active={active_provenance.get(key)!r} "
+                        f"vs checkpoint={ckpt_provenance.get(key)!r}"
+                    )
         self.model.load_state_dict(checkpoint['model_state_dict'])
         logger.info(f"Loaded checkpoint: {path}")
 

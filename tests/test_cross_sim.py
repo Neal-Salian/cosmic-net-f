@@ -18,7 +18,8 @@ def test_cross_sim_runs(tmp_path):
     # OUT of the real-data guard explicitly.
     out = evaluate_cross_sim(cfg, checkpoint=None, max_halos=8,
                              out_dir=str(tmp_path / "out"),
-                             require_real_data=False)
+                             require_real_data=False,
+                             allow_random_backbone=True)
     assert os.path.exists(os.path.join(out, "cross_sim_results.csv"))
 
 def test_cross_sim_rejects_synthetic_fallback_by_default(tmp_path):

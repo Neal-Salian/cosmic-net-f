@@ -14,34 +14,8 @@ import yaml
 import torch
 import numpy as np
 
-def _ensure_graph_builder_works():
-    """Env fallback: torch_geometric's radius_graph/knn_graph require
-    pyg-lib (no wheel for torch 2.12 on Windows). When pyg-lib is missing,
-    patch GraphBuilder with a pure-torch kNN edge builder so the pipeline
-    still runs. On normal installs (Kaggle), nothing changes."""
-    try:
-        import pyg_lib  # noqa: F401
-        return
-    except ImportError:
-        pass
-    from graph.graph_builder import GraphBuilder
 
-    def _knn_edges_torch(self, positions, num_nodes):
-        k = min(int(self.k_neighbors), max(num_nodes - 1, 1))
-        d = torch.cdist(positions, positions)
-        d.fill_diagonal_(float("inf"))
-        nn = d.topk(k, dim=1, largest=False).indices          # [N,k]
-        src = torch.arange(num_nodes).repeat_interleave(k)
-        dst = nn.reshape(-1)
-        return torch.cat([torch.stack([src, dst]),
-                          torch.stack([dst, src])], dim=1)
-
-    GraphBuilder._build_knn_edges = _knn_edges_torch
-    print("[run_experiment] pyg-lib not available — using pure-torch kNN "
-          "edge builder fallback")
-
-
-def main(cfg=None, checkpoint=None):
+def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False):
     if cfg is None:
         parser = argparse.ArgumentParser()
         parser.add_argument("--config", default="config/config.yaml")
@@ -52,7 +26,7 @@ def main(cfg=None, checkpoint=None):
         checkpoint = args.checkpoint
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    out = os.path.join("outputs", "rls")
+    out = os.fspath(output_dir) if output_dir is not None else os.path.join("outputs", "rls")
     os.makedirs(out, exist_ok=True)
     seed = cfg.get("seed", 42)
     torch.manual_seed(seed); np.random.seed(seed)
@@ -61,7 +35,6 @@ def main(cfg=None, checkpoint=None):
     # 1. Data + graphs
     from data.loaders.base_loader import get_loader
     from graph.graph_builder import build_dataloaders
-    _ensure_graph_builder_works()
     loader = get_loader(cfg)
     train_halos, val_halos, test_halos = loader.split_data()
     train_loader, val_loader, test_loader = build_dataloaders(
@@ -69,14 +42,21 @@ def main(cfg=None, checkpoint=None):
 
     # 2. Frozen backbone
     from model.model import build_model, load_model
-    if checkpoint is None:
-        checkpoint = os.path.join(cfg["training"]["checkpoint_dir"], "best_model.pt")
-    if os.path.exists(checkpoint):
-        gnn = load_model(checkpoint, cfg, device)
-    else:
-        print(f"[run_experiment] checkpoint not found at {checkpoint}; "
-              "using randomly-initialized backbone (smoke mode)")
+    if checkpoint is None and allow_random_backbone:
         gnn = build_model(cfg).to(device)
+    else:
+        if checkpoint is None:
+            checkpoint = os.path.join(cfg["training"]["checkpoint_dir"], "best_model.pt")
+        if not os.path.exists(checkpoint):
+            raise FileNotFoundError(
+                f"Required checkpoint does not exist: {checkpoint}. "
+                "Smoke tests may opt into allow_random_backbone=True."
+            )
+        research_label = cfg.get("data", {}).get(
+            "research_label", "legacy_total_radius")
+        gnn = load_model(
+            checkpoint, cfg, device, research_label=research_label
+        )
     gnn.eval()
 
     # 3. Prepare policy-training graphs (node embeddings precomputed)

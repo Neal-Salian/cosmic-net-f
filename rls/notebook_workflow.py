@@ -3,7 +3,6 @@
 Training, masking and adaptation remain in their respective rls modules.
 """
 import copy
-import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,16 +19,11 @@ from rls.sparsify import eval_mask
 from rls.train_policy import prepare_graphs
 from rls.tta import adapt_at_test_time, tta_should_enable
 from rls.pair_policy import policy_action, pair_stats, pair_mask
+from data.provenance import sha256_file
 
 
 def file_info(path):
-    path = Path(path)
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1 << 20), b""):
-            digest.update(chunk)
-    return {"path": str(path), "size_bytes": path.stat().st_size,
-            "sha256": digest.hexdigest()}
+    return sha256_file(path)
 
 
 def run_context(cfg, csv, checkpoint, graphs, backbone, smoke):

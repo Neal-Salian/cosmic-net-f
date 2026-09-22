@@ -7,14 +7,11 @@ import torch
 import pandas as pd
 
 def evaluate_cross_sim(cfg, checkpoint, max_halos=200, out_dir="outputs/rls",
-                       require_real_data=True):
+                       require_real_data=True, allow_random_backbone=False):
     from data.loaders.base_loader import get_loader
     from graph.graph_builder import GraphBuilder
     from model.model import load_model, build_model
     from rls.policy import build_policy
-    from rls.run_experiment import _ensure_graph_builder_works
-
-    _ensure_graph_builder_works()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     loader = get_loader(cfg)
     halos = loader.load()[:max_halos]
@@ -29,19 +26,25 @@ def evaluate_cross_sim(cfg, checkpoint, max_halos=200, out_dir="outputs/rls",
     gb = GraphBuilder(cfg)
     graphs = gb.build_graphs(halos)
 
-    if checkpoint is None:
-        checkpoint = os.path.join(cfg["training"]["checkpoint_dir"], "best_model.pt")
-    if os.path.exists(checkpoint):
-        gnn = load_model(checkpoint, cfg, device)
-    else:
-        print("[cross_sim] checkpoint not found; using random backbone "
-              "(smoke mode)")
+    if checkpoint is None and allow_random_backbone:
         gnn = build_model(cfg).to(device)
+    else:
+        if checkpoint is None:
+            checkpoint = os.path.join(cfg["training"]["checkpoint_dir"], "best_model.pt")
+        if not os.path.exists(checkpoint):
+            raise FileNotFoundError(f"Required checkpoint does not exist: {checkpoint}")
+        gnn = load_model(
+            checkpoint, cfg, device,
+            research_label=cfg.get("data", {}).get(
+                "research_label", "legacy_total_radius"),
+        )
     gnn.eval()
     policy = build_policy(cfg, node_emb_dim=gnn.output_dim).to(device)
     policy_path = os.path.join(out_dir, "policy.pt")
     if os.path.exists(policy_path):
-        policy.load_state_dict(torch.load(policy_path, map_location=device))
+        policy.load_state_dict(torch.load(
+            policy_path, map_location=device, weights_only=True
+        ))
     else:
         print("[cross_sim] policy.pt not found; using randomly-initialized "
               "policy (smoke mode)")
