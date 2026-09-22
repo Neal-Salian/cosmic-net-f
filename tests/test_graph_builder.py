@@ -373,6 +373,11 @@ class TestGraphStatistics:
         assert 'edges_mean' in stats
         assert stats['nodes_mean'] > 0
 
+    def test_empty_graph_collection_has_explicit_error(self):
+        """Removing the explicit empty guard must expose an incidental NumPy error."""
+        with pytest.raises(ValueError, match="at least one graph"):
+            compute_graph_statistics([])
+
 
 class TestHierarchicalGraphs:
     """Tests for hierarchical graph scaffolding."""
@@ -388,6 +393,100 @@ class TestHierarchicalGraphs:
         # Should have hierarchy_level attribute
         assert hasattr(graph, 'hierarchy_level')
         assert graph.hierarchy_level.shape[0] == graph.num_nodes
+
+    def test_hierarchical_batch_uses_same_public_behavior(self, base_config):
+        base_config['graph']['hierarchical'] = True
+        graphs = GraphBuilder(base_config).build_graphs([
+            create_test_halo(num_subhalos=4, cluster_id='h0'),
+            create_test_halo(num_subhalos=5, cluster_id='h1'),
+        ])
+        assert [graph.hierarchy_level.shape[0] for graph in graphs] == [4, 5]
+
+
+def _geometry_halo(positions, cluster_id='geometry'):
+    return HaloData(
+        cluster_id=cluster_id,
+        subhalos=[
+            SubhaloData(
+                subhalo_id=index,
+                position=np.asarray(position, dtype=np.float32),
+                velocity=np.asarray(position, dtype=np.float32) * 10,
+                stellar_mass=1e10 + index,
+                velocity_dispersion=100 + index,
+                half_mass_radius=0.01,
+                metallicity=0.02,
+            )
+            for index, position in enumerate(positions)
+        ],
+        halo_mass=1e13,
+    )
+
+
+def _edge_set(edge_index):
+    return {tuple(edge) for edge in edge_index.t().tolist()}
+
+
+class TestPortableTieInclusiveConstruction:
+    def test_builder_initialization_does_not_mutate_global_rng(self, base_config):
+        np.random.seed(1701)
+        torch.manual_seed(1701)
+        expected_np = np.random.random(3)
+        expected_torch = torch.rand(3)
+
+        np.random.seed(1701)
+        torch.manual_seed(1701)
+        GraphBuilder(base_config)
+
+        assert np.array_equal(np.random.random(3), expected_np)
+        assert torch.equal(torch.rand(3), expected_torch)
+
+    @pytest.mark.parametrize('method', ['radius', 'knn'])
+    def test_exact_ties_are_permutation_equivariant(self, base_config, method):
+        positions = np.array([
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [-1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+        ], dtype=np.float32)
+        base_config['graph'].update({
+            'method': method,
+            'radius_mpc': 1.0,
+            'k_neighbors': 1,
+            'self_loops': False,
+        })
+        original = GraphBuilder(base_config).build_graph(_geometry_halo(positions))
+        permutation = np.array([2, 0, 3, 1])
+        permuted = GraphBuilder(base_config).build_graph(
+            _geometry_halo(positions[permutation], cluster_id='permuted'))
+        transported = permutation[permuted.edge_index.cpu().numpy()]
+
+        assert _edge_set(original.edge_index) == {
+            tuple(edge) for edge in transported.T.tolist()
+        }
+
+    def test_edge_helpers_preserve_input_device(self, base_config):
+        positions = torch.tensor([[0., 0., 0.], [1., 0., 0.]])
+        builder = GraphBuilder(base_config)
+        assert builder._build_radius_edges(positions, 2).device == positions.device
+        builder.method = 'knn'
+        assert builder._build_knn_edges(positions, 2).device == positions.device
+
+
+class TestBatchFailurePolicy:
+    def test_build_graphs_fails_closed_with_halo_context(self, base_config, monkeypatch):
+        halo = _geometry_halo([[0, 0, 0]], cluster_id='broken-halo')
+        builder = GraphBuilder(base_config)
+        monkeypatch.setattr(builder, 'build_graph', lambda _: (_ for _ in ()).throw(RuntimeError('boom')))
+
+        with pytest.raises(RuntimeError, match='broken-halo'):
+            builder.build_graphs([halo])
+
+    def test_build_graphs_skip_mode_is_explicit(self, base_config, monkeypatch):
+        halo = _geometry_halo([[0, 0, 0]], cluster_id='broken-halo')
+        builder = GraphBuilder(base_config)
+        monkeypatch.setattr(builder, 'build_graph', lambda _: (_ for _ in ()).throw(RuntimeError('boom')))
+
+        assert builder.build_graphs([halo], on_error='skip') == []
 
 
 if __name__ == "__main__":

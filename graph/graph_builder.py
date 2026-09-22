@@ -19,8 +19,6 @@ from typing import List, Dict, Any, Optional, Tuple
 import numpy as np
 import torch
 from torch_geometric.data import Data, Batch
-from torch_geometric.nn import knn_graph, radius_graph
-from scipy.spatial.distance import cdist
 
 from data.loaders.base_loader import HaloData
 
@@ -84,9 +82,9 @@ class GraphBuilder:
         self.hierarchical = self.graph_config.get('hierarchical', False)
         self.hierarchical_settings = self.graph_config.get('hierarchical_settings', {})
 
-        # Set random seed
-        np.random.seed(self.seed)
-        torch.manual_seed(self.seed)
+        self.distance_chunk_size = int(self.graph_config.get('distance_chunk_size', 1024))
+        self.tie_rtol = float(self.graph_config.get('tie_rtol', 1e-6))
+        self.tie_atol = float(self.graph_config.get('tie_atol', 1e-8))
 
         logger.info(f"GraphBuilder initialized: method={self.method}, "
                    f"edge_features={self.edge_feature_names}, "
@@ -102,6 +100,12 @@ class GraphBuilder:
         Returns:
             torch_geometric.data.Data object
         """
+        if self.hierarchical:
+            return self._build_hierarchical_graph(halo)
+        return self._build_standard_graph(halo)
+
+    def _build_standard_graph(self, halo: HaloData) -> Data:
+        """Build the single-level physical graph used by every public path."""
         # Get node features [N, 4]
         node_features = torch.tensor(halo.get_node_features(), dtype=torch.float32)
         num_nodes = node_features.shape[0]
@@ -160,6 +164,7 @@ class GraphBuilder:
             vel_disp=vel_dispersions,
             half_mass_r=half_mass_radii,
             cluster_id=halo.cluster_id,
+            metadata=dict(halo.metadata),
             num_nodes=num_nodes
         )
 
@@ -181,17 +186,21 @@ class GraphBuilder:
             edge_index: Tensor [2, E] in COO format
         """
         if num_nodes <= 1:
-            return torch.zeros((2, 0), dtype=torch.long)
+            return torch.zeros((2, 0), dtype=torch.long, device=positions.device)
 
-        # Use PyG's radius_graph
-        edge_index = radius_graph(
-            positions,
-            r=self.radius_mpc,
-            loop=False,  # We add self-loops separately
-            max_num_neighbors=num_nodes - 1  # Allow all potential neighbors
-        )
-
-        return edge_index
+        edges = []
+        for start in range(0, num_nodes, self.distance_chunk_size):
+            stop = min(start + self.distance_chunk_size, num_nodes)
+            distances = torch.cdist(positions[start:stop], positions)
+            rows = torch.arange(start, stop, device=positions.device)[:, None]
+            cols = torch.arange(num_nodes, device=positions.device)[None, :]
+            mask = (rows != cols) & (distances <= self.radius_mpc)
+            local_row, dst = torch.where(mask)
+            if local_row.numel():
+                edges.append(torch.stack((local_row + start, dst)))
+        edge_index = (torch.cat(edges, dim=1) if edges else
+                      torch.zeros((2, 0), dtype=torch.long, device=positions.device))
+        return self._symmetrize_and_coalesce(edge_index, num_nodes)
 
     def _build_knn_edges(
         self,
@@ -209,27 +218,41 @@ class GraphBuilder:
             edge_index: Tensor [2, E] in COO format
         """
         if num_nodes <= 1:
-            return torch.zeros((2, 0), dtype=torch.long)
+            return torch.zeros((2, 0), dtype=torch.long, device=positions.device)
 
         k = min(self.k_neighbors, num_nodes - 1)
 
         if k <= 0:
-            return torch.zeros((2, 0), dtype=torch.long)
+            return torch.zeros((2, 0), dtype=torch.long, device=positions.device)
 
-        # Use PyG's knn_graph
-        edge_index = knn_graph(
-            positions,
-            k=k,
-            loop=False
-        )
+        edges = []
+        for start in range(0, num_nodes, self.distance_chunk_size):
+            stop = min(start + self.distance_chunk_size, num_nodes)
+            distances = torch.cdist(positions[start:stop], positions)
+            rows = torch.arange(start, stop, device=positions.device)[:, None]
+            cols = torch.arange(num_nodes, device=positions.device)[None, :]
+            distances = distances.masked_fill(rows == cols, torch.inf)
+            threshold = torch.kthvalue(distances, k, dim=1).values[:, None]
+            # Include every exact/tolerance-level tie at the kth boundary.
+            mask = distances <= (
+                threshold + self.tie_atol + self.tie_rtol * threshold.abs()
+            )
+            local_row, dst = torch.where(mask)
+            if local_row.numel():
+                edges.append(torch.stack((local_row + start, dst)))
+        edge_index = (torch.cat(edges, dim=1) if edges else
+                      torch.zeros((2, 0), dtype=torch.long, device=positions.device))
+        return self._symmetrize_and_coalesce(edge_index, num_nodes)
 
-        # Make undirected (add reverse edges)
-        edge_index = torch.cat([edge_index, edge_index.flip(0)], dim=1)
-
-        # Remove duplicates
-        edge_index = torch.unique(edge_index, dim=1)
-
-        return edge_index
+    @staticmethod
+    def _symmetrize_and_coalesce(edge_index: torch.Tensor, num_nodes: int) -> torch.Tensor:
+        """Return sorted, unique directed edges for an undirected physical graph."""
+        if edge_index.numel() == 0:
+            return edge_index.reshape(2, 0)
+        symmetric = torch.cat((edge_index, edge_index.flip(0)), dim=1)
+        linear = symmetric[0] * num_nodes + symmetric[1]
+        linear = torch.unique(linear, sorted=True)
+        return torch.stack((linear // num_nodes, linear % num_nodes))
 
     def _add_self_loops(
         self,
@@ -246,8 +269,12 @@ class GraphBuilder:
         Returns:
             edge_index with self-loops added
         """
-        self_loops = torch.arange(num_nodes, dtype=torch.long).unsqueeze(0).repeat(2, 1)
-        return torch.cat([edge_index, self_loops], dim=1)
+        self_loops = torch.arange(
+            num_nodes, dtype=torch.long, device=edge_index.device
+        ).unsqueeze(0).repeat(2, 1)
+        return self._symmetrize_and_coalesce(
+            torch.cat([edge_index, self_loops], dim=1), num_nodes
+        )
 
     def _connect_isolated_nodes(
         self,
@@ -273,31 +300,25 @@ class GraphBuilder:
         mask = edge_index[0] != edge_index[1]
         connected_nodes = torch.unique(edge_index[:, mask].flatten())
 
-        all_nodes = torch.arange(num_nodes)
+        all_nodes = torch.arange(num_nodes, device=positions.device)
         isolated_mask = ~torch.isin(all_nodes, connected_nodes)
         isolated_nodes = all_nodes[isolated_mask]
 
         if len(isolated_nodes) == 0:
             return edge_index
 
-        # Compute pairwise distances
-        positions_np = positions.numpy()
-        distances = cdist(positions_np, positions_np)
-
-        new_edges = []
-        for node in isolated_nodes.tolist():
-            # Find nearest non-self neighbor
-            dist_from_node = distances[node].copy()
-            dist_from_node[node] = np.inf  # Exclude self
-            nearest = np.argmin(dist_from_node)
-
-            # Add bidirectional edge
-            new_edges.append([node, nearest])
-            new_edges.append([nearest, node])
-
-        if new_edges:
-            new_edge_tensor = torch.tensor(new_edges, dtype=torch.long).T
-            edge_index = torch.cat([edge_index, new_edge_tensor], dim=1)
+        distances = torch.cdist(positions[isolated_nodes], positions)
+        distances.scatter_(1, isolated_nodes[:, None], torch.inf)
+        minimum = distances.min(dim=1).values[:, None]
+        tied = torch.isclose(
+            distances, minimum, rtol=self.tie_rtol, atol=self.tie_atol
+        )
+        local_row, nearest = torch.where(tied)
+        if local_row.numel():
+            new_edge_tensor = torch.stack((isolated_nodes[local_row], nearest))
+            edge_index = self._symmetrize_and_coalesce(
+                torch.cat([edge_index, new_edge_tensor], dim=1), num_nodes
+            )
             logger.debug(f"Connected {len(isolated_nodes)} isolated nodes")
 
         return edge_index
@@ -324,7 +345,10 @@ class GraphBuilder:
         num_edges = edge_index.shape[1]
 
         if num_edges == 0:
-            return torch.zeros((0, self.num_edge_features), dtype=torch.float32)
+            return torch.zeros(
+                (0, self.num_edge_features), dtype=torch.float32,
+                device=positions.device
+            )
 
         src, dst = edge_index
 
@@ -369,7 +393,9 @@ class GraphBuilder:
                 logger.warning(f"Unknown edge feature: {name}")
 
         if not selected_features:
-            return torch.zeros((num_edges, 1), dtype=torch.float32)
+            return torch.zeros(
+                (num_edges, 1), dtype=torch.float32, device=positions.device
+            )
 
         edge_attr = torch.cat(selected_features, dim=1)
 
@@ -399,10 +425,11 @@ class GraphBuilder:
             vel_disp=torch.zeros((0,), dtype=torch.float32),
             half_mass_r=torch.zeros((0,), dtype=torch.float32),
             cluster_id=halo.cluster_id,
+            metadata=dict(halo.metadata),
             num_nodes=0
         )
 
-    def build_graphs(self, halos: List[HaloData]) -> List[Data]:
+    def build_graphs(self, halos: List[HaloData], on_error: str = 'raise') -> List[Data]:
         """
         Build graphs for a list of halos.
 
@@ -412,16 +439,18 @@ class GraphBuilder:
         Returns:
             List of PyG Data objects
         """
+        if on_error not in {'raise', 'skip'}:
+            raise ValueError("on_error must be 'raise' or 'skip'")
         graphs = []
 
         for halo in halos:
             try:
-                if self.hierarchical:
-                    graph = self._build_hierarchical_graph(halo)
-                else:
-                    graph = self.build_graph(halo)
-                graphs.append(graph)
+                graphs.append(self.build_graph(halo))
             except Exception as e:
+                if on_error == 'raise':
+                    raise RuntimeError(
+                        f"Failed to build graph for halo {halo.cluster_id}: {e}"
+                    ) from e
                 logger.warning(f"Failed to build graph for {halo.cluster_id}: {e}")
 
         logger.info(f"Built {len(graphs)} graphs from {len(halos)} halos")
@@ -446,7 +475,7 @@ class GraphBuilder:
             Data object (currently single-level, ready for hierarchical extension)
         """
         # Build standard graph first
-        data = self.build_graph(halo)
+        data = self._build_standard_graph(halo)
 
         # Add hierarchical placeholders
         data.hierarchy_level = torch.zeros(data.num_nodes, dtype=torch.long)
@@ -505,7 +534,8 @@ def build_dataloaders(
     config: Dict[str, Any],
     train_halos: List[HaloData],
     val_halos: List[HaloData],
-    test_halos: List[HaloData]
+    test_halos: List[HaloData],
+    seed: Optional[int] = None,
 ) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
     """
     Build PyTorch Geometric DataLoaders for train/val/test sets.
@@ -521,6 +551,19 @@ def build_dataloaders(
     """
     from torch_geometric.loader import DataLoader
 
+    augmentation_manifest = None
+    augmentation_config = config.get('augmentation', {})
+    if augmentation_config.get('enabled', False):
+        from data.augmentation import augment_training_split
+        train_halos, augmentation_manifest = augment_training_split(
+            train_halos,
+            copies=int(augmentation_config.get('copies', 1)),
+            seed=int(augmentation_config.get('seed', config.get('seed', 42))),
+            jitter_std=float(augmentation_config.get('jitter_std', 0.0)),
+            rotate=bool(augmentation_config.get('rotate', True)),
+            line_of_sight=augmentation_config.get('line_of_sight', 'z'),
+        )
+
     # Build graph builder
     graph_builder = GraphBuilder(config)
 
@@ -534,11 +577,13 @@ def build_dataloaders(
     num_workers = config.get('data', {}).get('num_workers', 4)
 
     # Create dataloaders
+    train_gen = torch.Generator().manual_seed(seed) if seed is not None else None
     train_loader = DataLoader(
         train_graphs,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=num_workers
+        num_workers=num_workers,
+        generator=train_gen,
     )
     val_loader = DataLoader(
         val_graphs,
@@ -552,6 +597,7 @@ def build_dataloaders(
         shuffle=False,
         num_workers=num_workers
     )
+    train_loader.augmentation_manifest = augmentation_manifest
 
     logger.info(f"Created dataloaders: train={len(train_graphs)}, "
                f"val={len(val_graphs)}, test={len(test_graphs)}")
@@ -569,6 +615,9 @@ def compute_graph_statistics(graphs: List[Data]) -> Dict[str, Any]:
     Returns:
         Dictionary of statistics
     """
+    if not graphs:
+        raise ValueError("compute_graph_statistics requires at least one graph")
+
     num_nodes_list = []
     num_edges_list = []
     edge_lengths = []

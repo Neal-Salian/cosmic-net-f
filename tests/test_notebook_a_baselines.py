@@ -83,7 +83,7 @@ def test_run_all_and_reruns(tmp_path, monkeypatch, small_inputs, device_name):
         assert provenance["status"] == "complete"
         assert provenance["run_mode"] == "smoke"
         assert provenance["full_split_sizes"] == {"train": 11, "val": 2, "test": 3}
-        assert provenance["graph_backend"] == "torch"
+        assert provenance["graph_backend"] == "portable_torch"
         assert provenance["dataset"]["checkpoint"]["path"] == str(small_inputs / "best_model_augmented.pt")
         assert provenance["backbone"]["sha256"] != provenance["gumbel_backbone"]["sha256"]
         assert not (tmp_path / "output" / "baselines.csv").exists()
@@ -154,17 +154,10 @@ def test_clone_skips_lfs_and_redacts_errors(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("method", ["radius", "knn"])
-def test_graph_fallback_preserves_neighborhood(monkeypatch, method):
+def test_portable_graph_core_preserves_neighborhood(method):
     from graph.graph_builder import GraphBuilder
-    source = cells()["graphs"].split("def validate_graph")[0]
-    namespace = {"GraphBuilder": GraphBuilder, "torch": torch, "GRAPH_BACKEND": "auto"}
-    execute(source, namespace)
-
-    def unavailable(*args, **kwargs):
-        raise ImportError("optional graph extension missing")
-
-    monkeypatch.setattr(GraphBuilder, f"_build_{method}_edges", unavailable)
-    builder = namespace["NotebookGraphBuilder"]({"graph": {"radius_mpc": 1.5, "k_neighbors": 1}})
+    builder = GraphBuilder({"graph": {"radius_mpc": 1.5,
+                            "k_neighbors": 1, "method": method}})
     positions = torch.tensor([[0., 0., 0.], [1., 0., 0.], [4., 0., 0.]])
     edges = getattr(builder, f"_build_{method}_edges")(positions, 3)
     pairs = set(map(tuple, edges.T.tolist()))
@@ -172,4 +165,3 @@ def test_graph_fallback_preserves_neighborhood(monkeypatch, method):
     if method == "knn":
         expected |= {(1, 2), (2, 1)}
     assert pairs == expected
-    assert builder.backend_used == "torch"
