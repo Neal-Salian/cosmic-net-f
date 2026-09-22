@@ -25,6 +25,7 @@ import requests
 from dotenv import load_dotenv
 
 from data.loaders.base_loader import BaseDataLoader, HaloData, SubhaloData
+from data.catalog import CatalogContract, source_file_record
 
 # Load environment variables
 load_dotenv()
@@ -109,6 +110,7 @@ class TNGLoader(BaseDataLoader):
         # Local CSV file paths (new)
         self.raw_file = tng_config.get('raw_file', None)
         self.clustered_file = tng_config.get('clustered_file', None)
+        self._catalog_origin = "unresolved"
 
         # API key from environment
         self.api_key = os.environ.get('TNG_API_KEY', '')
@@ -201,11 +203,13 @@ class TNGLoader(BaseDataLoader):
         """
         # Try clustered file first
         if self.clustered_file and Path(self.clustered_file).exists():
+            self._catalog_origin = "clustered_csv"
             logger.info(f"Loading clustered data from {self.clustered_file}")
             return self._load_from_clustered_csv(self.clustered_file)
 
         # Try raw file and cluster it
         if self.raw_file and Path(self.raw_file).exists():
+            self._catalog_origin = "raw_csv_api_expansion"
             logger.info(f"Loading raw data from {self.raw_file}")
             df, groups = self._load_from_raw_csv(self.raw_file)
 
@@ -217,7 +221,39 @@ class TNGLoader(BaseDataLoader):
 
         # Fall back to API
         logger.info("No local files found, fetching from TNG API...")
+        self._catalog_origin = "api"
         return self._fetch_from_api()
+
+    def get_catalog_contract(self):
+        if self.declared_catalog_contract is not None:
+            return self.declared_catalog_contract
+        is_legacy_csv = self._catalog_origin == "clustered_csv"
+        files = []
+        if is_legacy_csv and self.clustered_file:
+            files.append(source_file_record(self.clustered_file))
+        elif self.raw_file and Path(self.raw_file).is_file():
+            files.append(source_file_record(self.raw_file))
+        return CatalogContract(
+            research_label=("legacy_total_radius" if is_legacy_csv
+                            else "legacy_uncertified"),
+            source="illustris_tng", suite="TNG100-1", simulation="TNG100-1",
+            snapshot=self.snapshot, volume_or_ic_group="TNG100",
+            target_field="unknown" if is_legacy_csv else "Group_M_Crit200",
+            target_definition="unknown" if is_legacy_csv else "log10(M200c/M_sun)",
+            mass_units="M_sun", position_units="Mpc", radius_units="Mpc",
+            velocity_units="km/s", coordinate_frame="physical",
+            velocity_convention="catalog_peculiar", hubble_param=self.H_PARAM,
+            scale_factor=1.0,
+            radius_source_field=("SubhaloHalfmassRad" if is_legacy_csv
+                                 else "SubhaloHalfmassRadType[:,4]_with_fallback"),
+            radius_semantic=("total_subhalo_half_mass_radius" if is_legacy_csv
+                             else "uncertified_stellar_radius_with_fallback"),
+            synthetic=False, fallback=not is_legacy_csv, source_files=files,
+            field_mapping={"halo_mass": "unknown" if is_legacy_csv
+                           else "Group_M_Crit200"},
+            conversion_record={"position": "ckpc/h -> physical Mpc",
+                               "radius": "ckpc/h -> physical Mpc"},
+        )
 
     def _load_from_clustered_csv(self, filepath: str) -> Tuple[pd.DataFrame, Dict[int, Dict[str, Any]]]:
         """

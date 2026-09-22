@@ -17,6 +17,7 @@ import pandas as pd
 import torch
 
 from data.loaders.base_loader import BaseDataLoader, HaloData, SubhaloData
+from data.catalog import CatalogContract, source_file_record
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,27 @@ class SyntheticLoader(BaseDataLoader):
 
         return features, df
 
+    def get_catalog_contract(self):
+        if self.declared_catalog_contract is not None:
+            return self.declared_catalog_contract
+        files = [source_file_record(path) for path in
+                 (self.features_path, self.csv_path) if os.path.isfile(path)]
+        return CatalogContract(
+            research_label="synthetic", source="synthetic", suite=None,
+            simulation=None, snapshot=None, volume_or_ic_group="synthetic_seed",
+            target_field="synthetic_halo_mass",
+            target_definition="log10(synthetic_halo_mass/M_sun)",
+            mass_units="M_sun", position_units="synthetic_distance",
+            radius_units="synthetic_distance", velocity_units="synthetic_velocity",
+            coordinate_frame="synthetic_cartesian",
+            velocity_convention="synthetic", hubble_param=None, scale_factor=None,
+            radius_source_field="synthetic_half_mass_radius",
+            radius_semantic="synthetic_half_mass_radius", synthetic=True,
+            fallback=True, source_files=files,
+            field_mapping={"halo_mass": "halo_mass"},
+            conversion_record={"cosmology": "not_applicable_synthetic"},
+        )
+
     def _generate_synthetic_data(self) -> Tuple[torch.Tensor, pd.DataFrame]:
         """
         Generate synthetic halo data for testing/development.
@@ -100,7 +122,7 @@ class SyntheticLoader(BaseDataLoader):
         Returns:
             Tuple of (features_tensor, metadata_dataframe)
         """
-        np.random.seed(self.seed)
+        rng = np.random.RandomState(self.seed)
 
         # Number of halos and subhalos per halo
         num_halos = 500
@@ -112,23 +134,23 @@ class SyntheticLoader(BaseDataLoader):
 
         for halo_idx in range(num_halos):
             # Halo properties (following realistic scaling relations)
-            log_halo_mass = np.random.uniform(11.0, 15.0)  # log10(M_halo / M_sun)
+            log_halo_mass = rng.uniform(11.0, 15.0)  # log10(M_halo / M_sun)
             halo_mass = 10 ** log_halo_mass
 
             # Number of subhalos scales with halo mass
             expected_subhalos = int(5 * (halo_mass / 1e12) ** 0.5)
-            num_subhalos = np.clip(expected_subhalos + np.random.randint(-2, 3),
+            num_subhalos = np.clip(expected_subhalos + rng.randint(-2, 3),
                                    min_subhalos, max_subhalos)
 
             # Halo center position
-            halo_center = np.random.uniform(-50, 50, size=3)  # Mpc
-            halo_velocity = np.random.normal(0, 200, size=3)  # km/s
+            halo_center = rng.uniform(-50, 50, size=3)  # Mpc
+            halo_velocity = rng.normal(0, 200, size=3)  # km/s
 
             for i in range(num_subhalos):
                 # Subhalo position relative to halo center
-                r = np.random.exponential(0.5)  # Mpc, NFW-like profile
-                theta = np.random.uniform(0, np.pi)
-                phi = np.random.uniform(0, 2 * np.pi)
+                r = rng.exponential(0.5)  # Mpc, NFW-like profile
+                theta = rng.uniform(0, np.pi)
+                phi = rng.uniform(0, 2 * np.pi)
                 offset = r * np.array([
                     np.sin(theta) * np.cos(phi),
                     np.sin(theta) * np.sin(phi),
@@ -138,10 +160,10 @@ class SyntheticLoader(BaseDataLoader):
 
                 # Velocity with dispersion
                 vel_disp = 100 * (halo_mass / 1e12) ** 0.25  # km/s
-                velocity = halo_velocity + np.random.normal(0, vel_disp, size=3)
+                velocity = halo_velocity + rng.normal(0, vel_disp, size=3)
 
                 # Stellar mass (Moster et al. stellar-to-halo mass relation)
-                log_stellar = log_halo_mass - 1.5 - np.abs(np.random.normal(0, 0.3))
+                log_stellar = log_halo_mass - 1.5 - np.abs(rng.normal(0, 0.3))
                 stellar_mass = max(10 ** log_stellar, 1e6)
 
                 # Half-mass radius (size-mass relation)

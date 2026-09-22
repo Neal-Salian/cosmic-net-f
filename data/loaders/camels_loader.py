@@ -36,6 +36,7 @@ import requests
 from dotenv import load_dotenv
 
 from data.loaders.base_loader import BaseDataLoader, HaloData, SubhaloData
+from data.catalog import CatalogContract, source_file_record
 
 # Load environment variables
 load_dotenv()
@@ -184,7 +185,7 @@ class CAMELSLoader(BaseDataLoader):
             Path to generated file
         """
         self.used_synthetic_fallback = True
-        np.random.seed(self.seed)
+        rng = np.random.RandomState(self.seed)
 
         num_groups = 200
         total_subhalos = 0
@@ -206,9 +207,9 @@ class CAMELSLoader(BaseDataLoader):
 
         for group_idx in range(num_groups):
             # Group properties
-            log_group_mass = np.random.uniform(10.5, 14.0)
+            log_group_mass = rng.uniform(10.5, 14.0)
             group_mass = 10 ** log_group_mass / self.MASS_UNIT * self.H_PARAM
-            group_pos = np.random.uniform(0, 25, 3)  # 25 Mpc/h box
+            group_pos = rng.uniform(0, 25, 3)  # 25 Mpc/h box
 
             num_subhalos = max(1, int(3 * (group_mass * self.MASS_UNIT / self.H_PARAM / 1e12) ** 0.4))
             num_subhalos = min(num_subhalos, 30)
@@ -219,20 +220,20 @@ class CAMELSLoader(BaseDataLoader):
 
             for _ in range(num_subhalos):
                 # Subhalo properties
-                offset = np.random.exponential(0.3, 3)  # Mpc/h
-                pos = group_pos + offset * np.random.choice([-1, 1], 3)
+                offset = rng.exponential(0.3, 3)  # Mpc/h
+                pos = group_pos + offset * rng.choice([-1, 1], 3)
 
-                vel = np.random.normal(0, 150, 3)
+                vel = rng.normal(0, 150, 3)
                 vel_disp = 50 * (group_mass * self.MASS_UNIT / self.H_PARAM / 1e12) ** 0.25
 
-                stellar_mass = 10 ** (log_group_mass - 2.0 + np.random.normal(0, 0.3))
+                stellar_mass = 10 ** (log_group_mass - 2.0 + rng.normal(0, 0.3))
                 stellar_mass = stellar_mass / self.MASS_UNIT * self.H_PARAM
 
                 half_mass_r = 5 * (stellar_mass * self.MASS_UNIT / self.H_PARAM / 1e10) ** 0.2
 
                 metallicity = 0.02 * (stellar_mass * self.MASS_UNIT / self.H_PARAM / 1e10) ** 0.3
 
-                subhalo_data['SubhaloMass'].append(stellar_mass + np.random.exponential(stellar_mass * 10))
+                subhalo_data['SubhaloMass'].append(stellar_mass + rng.exponential(stellar_mass * 10))
                 subhalo_data['SubhaloPos'].append(pos)
                 subhalo_data['SubhaloVel'].append(vel)
                 subhalo_data['SubhaloVelDisp'].append(vel_disp)
@@ -286,6 +287,34 @@ class CAMELSLoader(BaseDataLoader):
                    f"{len(group_dict.get('GroupMass', []))} groups")
 
         return f, subhalo_dict, group_dict
+
+    def get_catalog_contract(self):
+        if self.declared_catalog_contract is not None:
+            return self.declared_catalog_contract
+        path = self._get_cache_path()
+        files = [source_file_record(path)] if path.is_file() else []
+        synthetic = bool(self.used_synthetic_fallback)
+        return CatalogContract(
+            research_label="synthetic" if synthetic else "legacy_total_radius",
+            source="camels", suite=self.suite, simulation=self.simulation,
+            snapshot=self.snapshot, volume_or_ic_group=self.simulation,
+            target_field="synthetic_GroupMass" if synthetic else "GroupMass",
+            target_definition=("synthetic halo mass" if synthetic
+                               else "log10(GroupMass/M_sun); not M200c"),
+            mass_units="M_sun", position_units="Mpc", radius_units="Mpc",
+            velocity_units="km/s",
+            coordinate_frame="synthetic_cartesian" if synthetic else "physical",
+            velocity_convention="synthetic" if synthetic else "catalog_peculiar",
+            hubble_param=None if synthetic else self.H_PARAM,
+            scale_factor=None,
+            radius_source_field="SubhaloHalfmassRad",
+            radius_semantic=("synthetic_half_mass_radius" if synthetic
+                             else "total_subhalo_half_mass_radius"),
+            synthetic=synthetic, fallback=synthetic, source_files=files,
+            field_mapping={"halo_mass": "GroupMass"},
+            conversion_record={"position": "ckpc/h -> physical Mpc",
+                               "radius": "ckpc/h -> physical Mpc"},
+        )
 
     def _parse_subhalo(self, raw_record: Dict[str, Any]) -> SubhaloData:
         """
@@ -521,26 +550,26 @@ class CAMELSHuggingFaceLoader(BaseDataLoader):
             List of dictionaries with simulated data
         """
         self.used_synthetic_fallback = True
-        np.random.seed(self.seed)
+        rng = np.random.RandomState(self.seed)
 
         data = []
         num_samples = 300
 
         for i in range(num_samples):
             # Simulate a halo with multiple subhalos
-            num_subhalos = np.random.randint(3, 25)
-            log_halo_mass = np.random.uniform(11.0, 14.5)
+            num_subhalos = rng.randint(3, 25)
+            log_halo_mass = rng.uniform(11.0, 14.5)
 
             subhalos = []
             for j in range(num_subhalos):
-                log_stellar = log_halo_mass - 2.0 + np.random.normal(0, 0.3)
+                log_stellar = log_halo_mass - 2.0 + rng.normal(0, 0.3)
                 subhalos.append({
-                    'x': np.random.uniform(-5, 5),
-                    'y': np.random.uniform(-5, 5),
-                    'z': np.random.uniform(-5, 5),
-                    'vx': np.random.normal(0, 200),
-                    'vy': np.random.normal(0, 200),
-                    'vz': np.random.normal(0, 200),
+                    'x': rng.uniform(-5, 5),
+                    'y': rng.uniform(-5, 5),
+                    'z': rng.uniform(-5, 5),
+                    'vx': rng.normal(0, 200),
+                    'vy': rng.normal(0, 200),
+                    'vz': rng.normal(0, 200),
                     'stellar_mass': 10 ** log_stellar,
                     'vel_disp': 100 * (10 ** log_halo_mass / 1e12) ** 0.25,
                     'half_mass_r': 0.001 * (10 ** log_stellar / 1e10) ** 0.25,

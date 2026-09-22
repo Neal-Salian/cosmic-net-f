@@ -132,6 +132,8 @@ class BaseDataLoader(ABC):
         - Data validation and logging
     """
 
+    supports_strict_research = False
+
     def __init__(self, config: Dict[str, Any]):
         """
         Initialize the data loader.
@@ -143,6 +145,8 @@ class BaseDataLoader(ABC):
         self.data_config = config.get('data', {})
         self.seed = config.get('seed', 42)
         self.source_name = self.__class__.__name__
+        self.strict_research = bool(self.data_config.get('strict_research', False))
+        self.declared_catalog_contract = self.data_config.get('catalog_contract')
 
         # Split ratios
         self.train_ratio = self.data_config.get('train_ratio', 0.7)
@@ -207,6 +211,25 @@ class BaseDataLoader(ABC):
             logger.info(f"Returning cached data ({len(self._halos)} halos)")
             return self._halos
 
+        # Strict runs accept only a positive, explicit source declaration.
+        # Source adapters normalize fields and unit conversions before this
+        # boundary; Task 5 supplies the astronomy-specific adapter.
+        if self.strict_research:
+            if self.declared_catalog_contract is None:
+                raise ValueError(
+                    "strict_research requires an explicit corrected_research "
+                    "catalog_contract before parsing source records"
+                )
+            from data.catalog import CatalogContract
+            CatalogContract.from_mapping(self.declared_catalog_contract).validate(
+                strict_research=True
+            )
+            if not self.supports_strict_research:
+                raise ValueError(
+                    f"{self.source_name} is not a strict normalized catalog "
+                    "adapter; use a source adapter that validates fields before parsing"
+                )
+
         logger.info(f"Loading data from {self.source_name}...")
 
         # Load raw data
@@ -221,10 +244,21 @@ class BaseDataLoader(ABC):
         self._halos = self._group_into_halos(subhalos, raw_data)
         logger.info(f"Grouped into {len(self._halos)} halos")
 
+        contract = self.get_catalog_contract()
+        if contract is not None:
+            from data.catalog import attach_catalog_contract
+            attach_catalog_contract(
+                self._halos, contract, strict_research=self.strict_research
+            )
+
         # Validate
         self._validate_data()
 
         return self._halos
+
+    def get_catalog_contract(self):
+        """Return a source contract; subclasses provide legacy defaults."""
+        return self.declared_catalog_contract
 
     def _parse_all_subhalos(self, raw_data: Any) -> List[SubhaloData]:
         """
@@ -287,12 +321,9 @@ class BaseDataLoader(ABC):
                 self.load()
             halos = self._halos
 
-        # Set random seed for reproducibility
-        np.random.seed(self.seed)
-
-        # Shuffle indices
+        # Preserve historical MT19937 membership without mutating global RNG.
         n = len(halos)
-        indices = np.random.permutation(n)
+        indices = np.random.RandomState(self.seed).permutation(n)
 
         # Calculate split points
         train_end = int(n * self.train_ratio)
