@@ -413,9 +413,8 @@ def test_primitives_relabel_invariant_with_transported_marks():
     assert m_add(Batch.from_data_list([d])).item() == pytest.approx(
         m_add(Batch.from_data_list([dn])).item())
     # Oracle minimum objective is invariant; optimal masks map equivariantly.
-    # The literal fixture predictor keys weights by absolute endpoint labels
-    # and is therefore NOT relabeling-invariant, so the mapping check uses
-    # the synthetic w-predictor whose strengths/positions travel with nodes.
+    # Literal fixture weights travel in edge_attr; this learning-family check
+    # uses node strengths/positions and confirms their relabeling transport.
     t_old = analytic_target_for(d, 'additive')
     t_new = analytic_target_for(dn, 'additive')
     assert t_new == pytest.approx(t_old)
@@ -469,15 +468,102 @@ def test_pilot_four_decoder_interfaces_relabel_invariant():
     torch.manual_seed(0)
     scores = torch.randn(6)
     marks = pair_marks(layout, generator=torch.Generator().manual_seed(9))
+    data_old = make_literal_k4()[0]
+    data_new = _permute_data(data_old, PERM)
+    layout_new = PhysicalPairLayout.from_edge_index(data_new.edge_index, 4)
+    idx_map = _pair_index_map(layout, layout_new, PERM)
+    scores_new = scores[idx_map]
+    marks_new = marks[idx_map]
     for method in fp.METHODS:
-        g = torch.Generator().manual_seed(21)
         out = entry(layout, scores, 3, method=method, pair_marks=marks,
-                    generator=g)
+                    generator=torch.Generator().manual_seed(21))
+        out_new = entry(layout_new, scores_new, 3, method=method,
+                        pair_marks=marks_new,
+                        generator=torch.Generator().manual_seed(21))
         assert int(out['selected'].sum()) == 3
         rep = feasible_budget(layout, 3, 'no_isolates', out['selected'])
         assert rep['feasible']
-    # Transported-marks run must give equivariant membership (checked per
-    # method once the prototype exposes deterministic replay arguments).
+        assert torch.equal(out_new['selected'], out['selected'][idx_map]), method
+
+
+def test_pilot_decoders_have_deterministic_map_path_with_no_likelihood():
+    fp = importlib.import_module('rls.feasible_pilot')
+    layout = k4_layout()
+    scores = torch.tensor([0.2, 1.3, -0.7, 0.9, -1.2, 0.4])
+    marks = pair_marks(layout, generator=torch.Generator().manual_seed(17))
+    data = make_literal_k4()[0]
+    permuted = _permute_data(data, PERM)
+    new_layout = PhysicalPairLayout.from_edge_index(permuted.edge_index, 4)
+    idx_map = _pair_index_map(layout, new_layout, PERM)
+    for method in fp.METHODS:
+        first = fp.decode(layout, scores, 3, method=method, pair_marks=marks,
+                          sample=False)
+        second = fp.decode(new_layout, scores[idx_map], 3, method=method,
+                           pair_marks=marks[idx_map], sample=False)
+        assert first['sampled_log_probability'] is None
+        assert first['log_probability'] is None
+        assert int(first['selected'].sum()) == first['final_count'] == 3
+        assert torch.equal(second['selected'], first['selected'][idx_map]), method
+
+
+def test_repaired_decoder_reports_each_membership_transition():
+    fp = importlib.import_module('rls.feasible_pilot')
+    layout = k4_layout()
+    out = fp.decode(layout, torch.tensor([5., 4., 3., 2., 1., 0.]), 2,
+                    method='repaired_pl',
+                    pair_marks=torch.tensor([0., 1., 2., 3., 4., 5.]),
+                    generator=torch.Generator().manual_seed(1))
+    sampled = out['sampled_selection']
+    repaired = out['repaired_selection']
+    projected = out['projected_selection']
+    assert torch.equal(out['repaired_added'], repaired & ~sampled)
+    assert torch.equal(out['repaired_removed'], sampled & ~repaired)
+    assert torch.equal(out['repaired_xor'], sampled ^ repaired)
+    assert torch.equal(out['projected_added'], projected & ~repaired)
+    assert torch.equal(out['projected_removed'], repaired & ~projected)
+    assert torch.equal(out['projected_xor'], repaired ^ projected)
+    assert int(repaired.sum()) == out['repaired_count']
+    assert int(projected.sum()) == out['projected_count'] == 2
+
+
+def test_caps_reject_oversized_smoke_and_invalid_family_counts():
+    fp = importlib.import_module('rls.feasible_pilot')
+    smoke = fp.smoke_config()
+    cases = [
+        dict(smoke, epochs=1000, n_train_add=100000),
+        dict(smoke, n_train_add=-1, n_train_int=3),
+        dict(smoke, n_val_add=0),
+        dict(smoke, policy_seeds=[-1]),
+        dict(smoke, rollouts_B=5),
+        dict(smoke, n_train_add=33, n_train_int=32),
+        dict(smoke, n_val_add=9, n_val_int=8),
+    ]
+    for bad in cases:
+        with pytest.raises(ValueError):
+            fp.validate_caps(bad, allow_smoke=True)
+
+
+def test_oversized_smoke_rejected_before_output_side_effect(tmp_path):
+    fp = importlib.import_module('rls.feasible_pilot')
+    bad = dict(fp.smoke_config(), n_train_add=100000, epochs=1000)
+    target = tmp_path / 'oversized_smoke'
+    with pytest.raises(ValueError):
+        fp.run_pilot(bad, str(target), smoke=True)
+    assert not target.exists()
+
+
+def test_caps_reject_noninteger_or_negative_capped_counts_and_seeds():
+    fp = importlib.import_module('rls.feasible_pilot')
+    base = fp.default_config()
+    for bad in (
+        dict(base, n_train_add=-1, n_train_int=17),
+        dict(base, n_train_add=8.5),
+        dict(base, policy_seeds=[0, 1, -2]),
+        dict(base, data_seed=-1),
+        dict(base, validation_seed=1001),
+    ):
+        with pytest.raises(ValueError):
+            fp.validate_caps(bad)
 
 
 def test_caps_reject_invalid_configs():
