@@ -1,0 +1,18 @@
+# Transform-only example. Apply after loading an audited catalog.
+observation:
+  schema: projected_observation_v1
+  line_of_sight: z
+  units:
+    position: Mpc
+    velocity: km/s
+    stellar_mass: M_sun
+  seed: 31
+  realization_id: mock-observation-0
+  missing_fraction: 0.1
+  noise:
+    projected_position_mpc: 0.02
+    los_velocity_kms: 5.0
+    stellar_mass_dex: 0.0
+  richness:
+    min_inclusive: 5
+    max_inclusive: null
