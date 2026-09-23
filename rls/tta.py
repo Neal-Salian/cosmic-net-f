@@ -47,7 +47,7 @@ def tta_should_enable(val_frozen_rmse, val_tta_rmse, tol=0.02):
 
 
 def adapt_at_test_time(policy, graph, gnn, cfg, device="cpu", init="offline",
-                       target_sparsity=0.5, log_fn=None, diag_targets=None):
+                       target_sparsity=None, log_fn=None, diag_targets=None):
     """Adapt the policy to ONE graph via K policy-gradient steps on the
     label-free reward. Returns (final_mask, info). NEVER mutates `policy`.
 
@@ -59,8 +59,15 @@ def adapt_at_test_time(policy, graph, gnn, cfg, device="cpu", init="offline",
     KL(p_adapted || p_offline) with step-size decay tta_lr_decay**step, so
     adaptation cannot drift far from the offline policy that was validated.
     Tune (K, tta_lr, w_unc) on the VAL split only.
+
+    Requested keep fraction q is resolved once: explicit target_sparsity,
+    else cfg tta_target_sparsity, else cfg target_sparsity_end. The same q
+    must be used for K=0 and K>0 by callers.
     """
-    if cfg.get("sparsity_mode") == "pair_pl":
+    from rls.budget_accounting import resolve_requested_keep
+    target_sparsity = resolve_requested_keep(cfg, explicit=target_sparsity)
+    if cfg.get("sparsity_mode") == "pair_pl" or (
+            isinstance(cfg.get("rls"), dict) and cfg["rls"].get("sparsity_mode") == "pair_pl"):
         if init != "offline":
             raise ValueError("Normalized pair policies require the saved offline initialization.")
         from rls.pair_tta import adapt_pair_policy
@@ -167,5 +174,11 @@ def adapt_at_test_time(policy, graph, gnn, cfg, device="cpu", init="offline",
         # (same train/inference decoder rule as offline training).
         final = eval_mask(g["edge_index"], p, cfg,
                           target_sparsity=target_sparsity)
-    return final, {"reward_hist": hist, "steps_run": len(hist), "best_r": best_r,
-                   "step_diag": diag}
+    from rls.budget_accounting import LEGACY_DECODER_KIND, legacy_repair_report
+    # Penalty-mode threshold has no ordered sampling; do not invent a count.
+    report = legacy_repair_report(g["edge_index"], final, keep_fraction=target_sparsity,
+                                  order=None, num_nodes=len(g["x"]))
+    info = {"reward_hist": hist, "steps_run": len(hist), "best_r": best_r,
+            "step_diag": diag}
+    info.update(report)
+    return final, info

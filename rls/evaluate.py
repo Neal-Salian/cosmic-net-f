@@ -120,34 +120,87 @@ def save_paper_plots(rows, out_dir="outputs/rls"):
 
 
 def evaluate_tta(policy, graphs, gnn, cfg, device, ks=(0, 5, 10, 20),
-                 inits=("offline",), target_sparsity=0.5):
+                 inits=("offline",), target_sparsity=None):
     """Run TTA at several K values on every graph; labels used ONLY for the
     final RMSE (never in the reward). Returns rows for the paper table:
-    {mode, K, init, rmse, fidelity, keep_frac, mean_steps, mean_time_s}."""
+    {mode, K, init, rmse, fidelity, keep_frac, mean_steps, mean_time_s,
+    requested_keep_fraction, decoder_kind, requested/sampled/final counts}."""
     import time
     from rls.tta import adapt_at_test_time
+    from rls.budget_accounting import (
+        LEGACY_DECODER_KIND,
+        legacy_repair_report,
+        resolve_requested_keep,
+    )
+    q = resolve_requested_keep(cfg, explicit=target_sparsity)
     rows = []
     for init in inits:
         for k in ks:
             preds, fulls, ys, keeps, steps, secs = [], [], [], [], [], []
+            req_counts, sampled_counts, final_counts = [], [], []
+            repair_added, excess, phys_keeps = [], [], []
             for g in graphs:
                 gd = {kk: v.to(device) for kk, v in g.items()
                       if isinstance(v, torch.Tensor)}
+                if torch.cuda.is_available():
+                    torch.cuda.synchronize()
                 t0 = time.time()
+                order = None
                 if k == 0 or init == "frozen":  # FROZEN mode: no adaptation
                     with torch.no_grad():
-                        p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"],
-                                                 gd["edge_index"], gd["ctx"])).squeeze(-1)
-                        # FIX (audit P0-2, Sep 2026): mode-aware symmetric mask
-                        # (threshold in penalty mode, top-k in topk mode).
-                        mask = eval_mask(gd["edge_index"], p, cfg)
+                        if (cfg.get("sparsity_mode") == "pair_pl" or
+                                (isinstance(cfg.get("rls"), dict) and
+                                 cfg["rls"].get("sparsity_mode") == "pair_pl")):
+                            from rls.pair_policy import policy_action
+                            full_g = dict(gd)
+                            if "pair_marks" in g:
+                                full_g["pair_marks"] = g["pair_marks"]
+                            mask, _, _, order = policy_action(
+                                policy, full_g, cfg, sample=False, keep=q)
+                        else:
+                            p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"],
+                                                     gd["edge_index"], gd["ctx"])).squeeze(-1)
+                            # FIX (audit P0-2, Sep 2026): mode-aware symmetric mask
+                            # (threshold in penalty mode, top-k in topk mode).
+                            mask = eval_mask(gd["edge_index"], p, cfg,
+                                             target_sparsity=q)
                 else:
                     trial_cfg = dict(cfg, tta_steps=k)
                     unlabeled = {key: value for key, value in gd.items() if key != "y"}
                     mask, info = adapt_at_test_time(policy, unlabeled, gnn, trial_cfg, device,
                                                     init=init,
-                                                    target_sparsity=target_sparsity)
+                                                    target_sparsity=q)
                     steps.append(info["steps_run"])
+                    counted_from_adapt = False
+                    if info.get("sampled_pair_count") is not None:
+                        sampled_counts.append(float(info["sampled_pair_count"]))
+                        req_counts.append(float(info["requested_pair_count"]))
+                        final_counts.append(float(info["final_pair_count"]))
+                        repair_added.append(float(info["final_pair_count"] - info["sampled_pair_count"]))
+                        excess.append(float(info.get("budget_excess_pair_count", 0)))
+                        phys_keeps.append(float(info.get("physical_pair_keep", float("nan"))))
+                        counted_from_adapt = True
+                    if not counted_from_adapt:
+                        rep = legacy_repair_report(gd["edge_index"], mask, keep_fraction=q,
+                                                   order=None,
+                                                   num_nodes=len(gd["x"]))
+                        req_counts.append(float(rep["requested_pair_count"]))
+                        final_counts.append(float(rep["final_pair_count"]))
+                        excess.append(float(rep["budget_excess_pair_count"]))
+                        phys_keeps.append(float(rep["physical_pair_keep"]))
+                    order = None
+                if k == 0 or init == "frozen":
+                    # K=0 path: report from actual mask/order (order only for pair_pl).
+                    rep = legacy_repair_report(gd["edge_index"], mask, keep_fraction=q,
+                                               order=order,
+                                               num_nodes=len(gd["x"]))
+                    req_counts.append(float(rep["requested_pair_count"]))
+                    final_counts.append(float(rep["final_pair_count"]))
+                    excess.append(float(rep["budget_excess_pair_count"]))
+                    phys_keeps.append(float(rep["physical_pair_keep"]))
+                    if rep["sampled_pair_count"] is not None:
+                        sampled_counts.append(float(rep["sampled_pair_count"]))
+                        repair_added.append(float(rep["repair_added_pair_count"]))
                 # predict with frozen GNN on adapted mask
                 from torch_geometric.data import Data, Batch
                 d = Data(x=gd["x"], edge_index=gd["edge_index"][:, mask],
@@ -162,6 +215,7 @@ def evaluate_tta(policy, graphs, gnn, cfg, device, ks=(0, 5, 10, 20),
                 ys.append(float(gd["y"].view(-1)[0])); keeps.append(float(mask.float().mean()))
             import numpy as np
             preds, fulls, ys = np.array(preds), np.array(fulls), np.array(ys)
+            import math as _math
             rows.append({
                 "mode": "frozen" if k == 0 else "tta", "K": k, "init": init,
                 "rmse": float(np.sqrt(((preds - ys) ** 2).mean())),
@@ -169,5 +223,13 @@ def evaluate_tta(policy, graphs, gnn, cfg, device, ks=(0, 5, 10, 20),
                 "keep_frac": float(np.mean(keeps)),
                 "mean_steps": float(np.mean(steps)) if steps else 0.0,
                 "mean_time_s": float(np.mean(secs)),
+                "requested_keep_fraction": q,
+                "decoder_kind": LEGACY_DECODER_KIND,
+                "mean_requested_pair_count": float(np.mean(req_counts)) if req_counts else None,
+                "mean_sampled_pair_count": float(np.mean(sampled_counts)) if sampled_counts else None,
+                "mean_final_pair_count": float(np.mean(final_counts)) if final_counts else None,
+                "mean_repair_added_pair_count": float(np.mean(repair_added)) if repair_added else None,
+                "mean_budget_excess_pair_count": float(np.mean(excess)) if excess else None,
+                "mean_physical_pair_keep": float(np.mean(phys_keeps)) if phys_keeps else None,
             })
     return rows

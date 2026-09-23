@@ -69,10 +69,18 @@ def test_reward_finite_for_perfect_and_nearly_perfect_backbone():
 
 
 def test_validation_rejects_worse_than_random_or_isolated_policy():
-    random=[dict(rmse=.2),dict(rmse=.22)]
-    assert policy_validation(dict(rmse=.3,physical_isolates=0),random)["verdict"]=="FAIL"
-    assert policy_validation(dict(rmse=.1,physical_isolates=1),random)["verdict"]=="FAIL"
-    assert policy_validation(dict(rmse=.1,physical_isolates=0),random)["verdict"]=="PASS"
+    random=[dict(rmse=.2,requested_keep_fraction=.4),
+            dict(rmse=.22,requested_keep_fraction=.4)]
+    assert policy_validation(dict(rmse=.3,physical_isolates=0,
+                                  requested_keep_fraction=.4),random)["verdict"]=="FAIL"
+    assert policy_validation(dict(rmse=.1,physical_isolates=1,
+                                  requested_keep_fraction=.4),random)["verdict"]=="FAIL"
+    assert policy_validation(dict(rmse=.1,physical_isolates=0,
+                                  requested_keep_fraction=.4),random)["verdict"]=="PASS"
+    missing_tags = policy_validation(dict(rmse=.1,physical_isolates=0),
+                                     [dict(rmse=.2), dict(rmse=.22)])
+    assert missing_tags["verdict"] == "FAIL"
+    assert missing_tags["budget_comparable"] is False
 
 
 def test_pair_training_learns_useful_ranking_and_restores_validation_best():

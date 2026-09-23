@@ -6,8 +6,15 @@ from rls.train_policy import _graph_physics_terms
 from rls.rewards import relative_virial_penalty
 
 
-def adapt_pair_policy(policy, graph, gnn, cfg, device, target_sparsity, log_fn=None):
+def adapt_pair_policy(policy, graph, gnn, cfg, device, target_sparsity=None, log_fn=None):
     from rls.tta import mc_std
+    from rls.budget_accounting import (
+        LEGACY_DECODER_KIND,
+        legacy_repair_report,
+        resolve_requested_keep,
+    )
+    from rls.constraints import pair_budget, PhysicalPairLayout
+    q = resolve_requested_keep(cfg, explicit=target_sparsity)
     g = {key: value.to(device) for key,value in graph.items() if isinstance(value,torch.Tensor) and key != "y"}
     pol = copy.deepcopy(policy).to(device).train()
     optimizer = torch.optim.Adam(pol.parameters(), lr=cfg["tta_lr"])
@@ -25,13 +32,16 @@ def adapt_pair_policy(policy, graph, gnn, cfg, device, target_sparsity, log_fn=N
             group["lr"] = cfg["tta_lr"] * float(cfg.get("tta_lr_decay",1.))**step
         rewards, logps = [], []
         for _ in range(2):
-            mask, logp, _, _ = policy_action(pol,g,cfg,sample=True,keep=target_sparsity)
+            mask, logp, _, order = policy_action(pol,g,cfg,sample=True,keep=q)
             with torch.no_grad():
                 std = mc_std(gnn,g,g["edge_index"][:,mask],g["edge_attr"][mask],n_samples=cfg["tta_mc_samples"],device=device)
                 vp = relative_virial_penalty(*_graph_physics_terms(g,g["edge_index"],mask),*reference_physics)
-                stats = pair_stats(g["edge_index"],mask,len(g["x"]))
+                layout_now = PhysicalPairLayout.from_edge_index(g["edge_index"], len(g["x"]))
+                stats = pair_stats(g["edge_index"],mask,len(g["x"]),
+                                   requested_count=int(pair_budget(layout_now, q)),
+                                   sampled_count=int(order.numel()))
                 reward = (cfg.get("w_unc",.5)*((full_std-std)/scale).mean()
-                    - cfg.get("w_sp",.5)*(stats["physical_pair_keep"]-target_sparsity)**2
+                    - cfg.get("w_sp",.5)*(stats["physical_pair_keep"]-q)**2
                     + cfg.get("w_conn",1.)*(1. if stats["physical_isolates"]==0 else -2.)
                     - cfg.get("w_virial",0.)*vp).clamp(-cfg.get("reward_clip",10.),cfg.get("reward_clip",10.)).reshape(())
             rewards.append(reward); logps.append(logp)
@@ -49,5 +59,12 @@ def adapt_pair_policy(policy, graph, gnn, cfg, device, target_sparsity, log_fn=N
         stall = 0 if mean > best else stall+1
         best=max(best,mean)
         if stall>=cfg.get("tta_patience",3):break
-    with torch.no_grad():mask=policy_action(pol.eval(),g,cfg,keep=target_sparsity)[0]
-    return mask,dict(reward_hist=history,steps_run=len(history),best_r=best if history else None,step_diag=diagnostics)
+    with torch.no_grad():
+        mask, _, _, order = policy_action(pol.eval(),g,cfg,keep=q)
+    report = legacy_repair_report(g["edge_index"], mask, keep_fraction=q, order=order,
+                                  num_nodes=len(g["x"]))
+    info = dict(reward_hist=history,steps_run=len(history),best_r=best if history else None,
+                step_diag=diagnostics)
+    info.update(report)
+    info["selected_order"] = order.detach().cpu().tolist()
+    return mask,info

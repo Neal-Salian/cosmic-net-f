@@ -11,8 +11,21 @@ from torch_geometric.nn import global_mean_pool
 from rls.policy_gradient import (compute_advantages, compute_pg_loss,
                                  bernoulli_logp, bernoulli_entropy, sample_actions)
 from rls.sparsify import (apply_min_keep_floor, repair_connectivity,
-                          symmetrize_probs, repair_symmetric,
-                          topk_scheduled_mask)
+                           symmetrize_probs, repair_symmetric,
+                           topk_scheduled_mask)
+
+
+def training_budget_report(edge_index, mask, cfg, *, order=None, num_nodes=None,
+                           explicit_keep=None):
+    """Accounting-only helper: requested/sampled/final counts for diagnostics.
+
+    Training algorithm unchanged; callers pass the actual sampled order when
+    known so declared requested/sample counts are not null.
+    """
+    from rls.budget_accounting import legacy_repair_report, resolve_requested_keep
+    q = resolve_requested_keep(cfg, explicit=explicit_keep)
+    return legacy_repair_report(edge_index, mask, keep_fraction=q, order=order,
+                                num_nodes=num_nodes)
 
 
 def check_curriculum_divergence(keep_hist, target_hist, tol=0.1,

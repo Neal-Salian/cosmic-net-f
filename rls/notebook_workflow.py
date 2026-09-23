@@ -128,18 +128,29 @@ def prediction_pair(model):
     return predict
 
 
-def policy_masks(policy, graphs, cfg):
+def policy_masks(policy, graphs, cfg, target_sparsity=None, return_diagnostics=False):
+    from rls.budget_accounting import legacy_repair_report, resolve_requested_keep
+    q = resolve_requested_keep(cfg, explicit=target_sparsity)
     policy.eval()
-    masks, probabilities = [], []
+    masks, probabilities, diagnostics = [], [], []
     with torch.no_grad():
         for graph in graphs:
             probs = torch.sigmoid(policy(graph["edge_attr"], graph["emb"],
                                          graph["edge_index"], graph["ctx"])).squeeze(-1)
             if not torch.isfinite(probs).all():
                 raise ValueError("Policy produced nonfinite probabilities.")
-            masks.append(policy_action(policy, graph, cfg)[0] if cfg.get("sparsity_mode") == "pair_pl"
-                         else eval_mask(graph["edge_index"], probs, cfg))
+            if cfg.get("sparsity_mode") == "pair_pl":
+                mask, _, _, order = policy_action(policy, graph, cfg, keep=q)
+            else:
+                order = None
+                mask = eval_mask(graph["edge_index"], probs, cfg, target_sparsity=q)
+            masks.append(mask)
             probabilities.append(probs)
+            diagnostics.append(legacy_repair_report(
+                graph["edge_index"], mask, keep_fraction=q, order=order,
+                num_nodes=len(graph["x"])))
+    if return_diagnostics:
+        return masks, probabilities, diagnostics
     return masks, probabilities
 
 
@@ -164,17 +175,27 @@ def result_rows(result, backbone, run_mode):
     return rows
 
 
-def policy_metrics(policy, graphs, gnn, cfg):
-    masks, _ = policy_masks(policy, graphs, cfg)
+def policy_metrics(policy, graphs, gnn, cfg, target_sparsity=None):
+    from rls.budget_accounting import resolve_requested_keep
+    q = resolve_requested_keep(cfg, explicit=target_sparsity)
+    masks, _, diagnostics = policy_masks(policy, graphs, cfg, target_sparsity=q,
+                                         return_diagnostics=True)
     result = evaluate_masks(gnn, graphs, masks)
     row = result_rows(result, record_backbone("frozen", gnn), "full")[1]
-    stats = [pair_stats(g["edge_index"], m.to(g["edge_index"].device), len(g["x"])) for g,m in zip(graphs,masks)]
+    stats = [pair_stats(g["edge_index"], m.to(g["edge_index"].device), len(g["x"]),
+                        requested_count=d["requested_pair_count"],
+                        sampled_count=d["sampled_pair_count"])
+             for g, m, d in zip(graphs, masks, diagnostics)]
     row.update(physical_pair_keep=float(np.mean([s["physical_pair_keep"] for s in stats])),
-               total_edge_keep=row["mean_keep_frac"], physical_isolates=sum(s["physical_isolates"] for s in stats))
+               total_edge_keep=row["mean_keep_frac"], physical_isolates=sum(s["physical_isolates"] for s in stats),
+               requested_keep_fraction=q, decoder_kind=diagnostics[0]["decoder_kind"] if diagnostics else "legacy_repaired",
+               budget_tag="stageA_legacy_repaired")
     return row
 
 
-def random_pair_reference(graphs, gnn, cfg, seeds=range(10)):
+def random_pair_reference(graphs, gnn, cfg, seeds=range(10), target_sparsity=None):
+    from rls.budget_accounting import resolve_requested_keep
+    q = resolve_requested_keep(cfg, explicit=target_sparsity)
     rows = []
     for seed in seeds:
         masks = []
@@ -183,9 +204,11 @@ def random_pair_reference(graphs, gnn, cfg, seeds=range(10)):
             torch.manual_seed(seed)
             for graph in graphs:
                 scores = torch.zeros(graph["edge_index"].shape[1], device=graph["edge_index"].device)
-                masks.append(pair_mask(graph["edge_index"], scores, cfg["target_sparsity_end"], sample=True)[0])
+                masks.append(pair_mask(graph["edge_index"], scores, q, sample=True)[0])
         row = result_rows(evaluate_masks(gnn, graphs, masks), record_backbone("frozen", gnn), "full")[1]
-        row.update(seed=seed)
+        row.update(seed=seed, requested_keep_fraction=q,
+                   decoder_kind="legacy_repaired",
+                   budget_tag="stageA_legacy_repaired")
         rows.append(row)
     if len(rows) < 2:
         raise ValueError("Random reference requires at least two seeds.")
@@ -194,10 +217,21 @@ def random_pair_reference(graphs, gnn, cfg, seeds=range(10)):
 
 def policy_validation(metrics, random_rows):
     random_mean = float(np.mean([r["rmse"] for r in random_rows]))
-    passed = np.isfinite(metrics["rmse"]) and metrics["rmse"] < random_mean and metrics["physical_isolates"] == 0
+    mq = metrics.get("requested_keep_fraction")
+    rqs = [r.get("requested_keep_fraction") for r in random_rows]
+    budgets_known = mq is not None and all(q is not None for q in rqs)
+    comparable = budgets_known and all(q == mq for q in rqs)
+    passed = (comparable and np.isfinite(metrics["rmse"])
+              and metrics["rmse"] < random_mean and metrics["physical_isolates"] == 0)
+    criterion = ("Validation RMSE below random-pair mean at the same requested budget; "
+                 "no physical isolates.")
+    if not budgets_known:
+        criterion += " Requested-budget metadata missing: comparability unknown."
+    elif not comparable:
+        criterion += " Requested budgets differ: tagged incomparable."
     return dict(verdict="PASS" if passed else "FAIL", selected_metrics=metrics,
                 random_rmse_mean=random_mean, random_rmse_std=float(np.std([r["rmse"] for r in random_rows], ddof=1)),
-                criterion="Validation RMSE below random-pair mean at the same requested budget; no physical isolates.")
+                criterion=criterion, budget_comparable=comparable)
 
 
 def merge_baselines(rows, folder, manifest):
@@ -252,27 +286,53 @@ def coverage_rows(model, graphs, masks, n_samples):
     return rows
 
 
-def adaptation_trial(policy, graphs, gnn, cfg, device, k):
+def adaptation_trial(policy, graphs, gnn, cfg, device, k, target_sparsity=None):
+    from rls.budget_accounting import LEGACY_DECODER_KIND, resolve_requested_keep
     if not isinstance(k, int) or isinstance(k, bool) or k < 0:
         raise ValueError("TTA K must be a nonnegative integer.")
+    q = resolve_requested_keep(cfg, explicit=target_sparsity)
+    dev = torch.device(device) if isinstance(device, str) else device
     masks, histories = [], []
     for index, graph in enumerate(graphs):
         # Comparable reproducible random streams across K; never pass labels.
-        with torch.random.fork_rng(devices=[device.index or 0] if device.type == "cuda" else []):
+        with torch.random.fork_rng(devices=[dev.index or 0] if dev.type == "cuda" else []):
             torch.manual_seed(int(cfg.get("seed", 42)) + index)
             if k == 0:
-                mask = policy_masks(policy, [graph], cfg)[0][0]
-                info = {"steps_run": 0, "reward_hist": [], "step_diag": []}
+                m, _, diags = policy_masks(policy, [graph], cfg, target_sparsity=q,
+                                           return_diagnostics=True)
+                mask = m[0]
+                info = {"steps_run": 0, "reward_hist": [], "step_diag": [],
+                        **diags[0]}
+                if torch.cuda.is_available():
+                    torch.cuda.synchronize()
             else:
                 trial_cfg = dict(cfg, tta_steps=k)
                 unlabeled = {key: value for key, value in graph.items() if key not in ("y", "cluster_id")}
+                if torch.cuda.is_available():
+                    torch.cuda.synchronize()
                 mask, info = adapt_at_test_time(policy, unlabeled, gnn, trial_cfg, device,
-                    target_sparsity=cfg.get("tta_target_sparsity", cfg["target_sparsity_end"]))
+                    target_sparsity=q)
+                if torch.cuda.is_available():
+                    torch.cuda.synchronize()
         masks.append(mask)
         histories.append(dict(cluster_id=graph.get("cluster_id"), **info))
     result = evaluate_masks(gnn, graphs, masks)
     row = result_rows(result, record_backbone("frozen", gnn), "full")[1]
-    row.update(K=k, mode="frozen" if k == 0 else "tta", mean_steps=float(np.mean([h["steps_run"] for h in histories])))
+    req = [h["requested_pair_count"] for h in histories if h.get("requested_pair_count") is not None]
+    samp = [h["sampled_pair_count"] for h in histories if h.get("sampled_pair_count") is not None]
+    final = [h["final_pair_count"] for h in histories if h.get("final_pair_count") is not None]
+    row.update(K=k, mode="frozen" if k == 0 else "tta",
+               mean_steps=float(np.mean([h["steps_run"] for h in histories])),
+               requested_keep_fraction=q, decoder_kind=LEGACY_DECODER_KIND,
+               requested_pair_count=float(np.mean(req)) if req else None,
+               sampled_pair_count=float(np.mean(samp)) if samp else None,
+               final_pair_count=float(np.mean(final)) if final else None,
+               budget_excess_pair_count=float(np.mean(
+                   [h["final_pair_count"] - h["requested_pair_count"] for h in histories
+                    if h.get("final_pair_count") is not None and h.get("requested_pair_count") is not None])) if req and final else None,
+               repair_added_pair_count=float(np.mean(
+                   [h["final_pair_count"] - h["sampled_pair_count"] for h in histories
+                    if h.get("final_pair_count") is not None and h.get("sampled_pair_count") is not None])) if samp and final else None)
     return row, histories
 
 
