@@ -1,13 +1,23 @@
-"""Cross-simulation OOD evaluation: policy trained on TNG, tested on CAMELS.
+"""Legacy cross-simulation smoke plumbing for the existing CAMELS loader.
 
-The headline generalization claim of the paper. Uses the repo's CAMELSLoader
-(HDF5 download or synthetic fallback) and the SAME frozen policy + GNN."""
+This path does not validate an audited scientific manifest or compatible
+research artifacts. Real-data evaluation belongs to the separate audited
+astronomy workflow; this legacy function is available only with its explicit
+smoke-mode opt-out."""
 import os
 import torch
 import pandas as pd
 
 def evaluate_cross_sim(cfg, checkpoint, max_halos=200, out_dir="outputs/rls",
                        require_real_data=True, allow_random_backbone=False):
+    if require_real_data:
+        raise ValueError(
+            "The legacy cross-simulation evaluator has no positive audited "
+            "scientific manifest or compatible artifact preflight for any "
+            "source. Use the audited astronomy evaluation path for real-data "
+            "work, or pass require_real_data=False for an explicitly labeled "
+            "smoke run."
+        )
     from data.loaders.base_loader import get_loader
     from graph.graph_builder import GraphBuilder
     from model.model import load_model, build_model
@@ -15,14 +25,21 @@ def evaluate_cross_sim(cfg, checkpoint, max_halos=200, out_dir="outputs/rls",
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     loader = get_loader(cfg)
     halos = loader.load()[:max_halos]
-    if require_real_data:
-        # The CAMELS loader silently generates synthetic data when the HDF5 is
-        # missing; synthetic OOD results must never be reported as real ones.
-        # require_real_data=False is the explicit opt-out for plumbing tests.
-        assert getattr(loader, "used_synthetic_fallback", False) is False, (
-            "CAMELS loader used its synthetic fallback - synthetic OOD results "
-            "are not publishable. Cache the real HDF5 first (or pass "
-            "require_real_data=False for plumbing tests only).")
+    contract = loader.get_catalog_contract()
+    if hasattr(contract, "to_dict"):
+        contract = contract.to_dict()
+    elif not isinstance(contract, dict):
+        contract = {}
+    # Include both the loader's runtime signal and its persisted catalog
+    # contract. The latter survives process boundaries and is written into
+    # every result row so opt-out plumbing runs remain visibly labeled.
+    synthetic = bool(getattr(loader, "used_synthetic_fallback", False)
+                     or contract.get("synthetic", False))
+    fallback = bool(getattr(loader, "used_synthetic_fallback", False)
+                    or contract.get("fallback", False))
+    research_label = str(contract.get(
+        "research_label", "synthetic" if synthetic else "unknown"
+    ))
     gb = GraphBuilder(cfg)
     graphs = gb.build_graphs(halos)
 
@@ -75,8 +92,14 @@ def evaluate_cross_sim(cfg, checkpoint, max_halos=200, out_dir="outputs/rls",
             rows.append({"cluster_id": getattr(g, "cluster_id", "?"),
                          "y": float(g.y.cpu()), "pred_full": float(pred_full.cpu()),
                          "pred_pruned": float(pred_pruned.cpu()),
-                         "keep_frac": float(m.float().mean().cpu())})
-    df = pd.DataFrame(rows)
+                         "keep_frac": float(m.float().mean().cpu()),
+                         "evaluation_mode": "smoke",
+                         "research_label": research_label,
+                         "synthetic": synthetic,
+                         "fallback": fallback})
+    columns = ["cluster_id", "y", "pred_full", "pred_pruned", "keep_frac",
+               "evaluation_mode", "research_label", "synthetic", "fallback"]
+    df = pd.DataFrame(rows, columns=columns)
     os.makedirs(out_dir, exist_ok=True)
     df.to_csv(os.path.join(out_dir, "cross_sim_results.csv"), index=False)
     return out_dir

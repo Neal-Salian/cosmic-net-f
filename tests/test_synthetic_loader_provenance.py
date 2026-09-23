@@ -41,7 +41,7 @@ def test_cross_sim_rejects_synthetic_source_by_default(tmp_path):
     from rls.cross_sim import evaluate_cross_sim
     cfg = _synthetic_cfg(tmp_path)
     cfg["graph"] = {"method": "knn", "k_neighbors": 4}
-    with pytest.raises(AssertionError, match="synthetic"):
+    with pytest.raises(ValueError, match="synthetic|audited"):
         evaluate_cross_sim(cfg, checkpoint=None, max_halos=8,
                            out_dir=str(tmp_path / "out"))
 
@@ -52,6 +52,6 @@ def test_cross_sim_rejects_config_default_source_by_default(tmp_path):
     from rls.cross_sim import evaluate_cross_sim
     cfg = _synthetic_cfg(tmp_path, drop_source=True)
     cfg["graph"] = {"method": "knn", "k_neighbors": 4}
-    with pytest.raises(AssertionError, match="synthetic"):
+    with pytest.raises(ValueError, match="synthetic|audited"):
         evaluate_cross_sim(cfg, checkpoint=None, max_halos=8,
                            out_dir=str(tmp_path / "out"))

@@ -78,6 +78,8 @@ class CAMELSLoader(BaseDataLoader):
     MASS_UNIT = 1e10  # 1e10 M_sun/h
     LENGTH_UNIT = 1e-3  # ckpc/h to Mpc
     H_PARAM = 0.6711  # Default CAMELS Hubble parameter
+    SYNTHETIC_PROVENANCE_ATTR = "cosmic_net_data_provenance"
+    SYNTHETIC_PROVENANCE_VALUE = "synthetic_camels_fallback_v1"
 
     # CAMELS data URLs (FIX Sep 2026, verified live against the Flatiron
     # directory listing + a real 14 MB download of the LH_0 file below).
@@ -246,6 +248,9 @@ class CAMELSLoader(BaseDataLoader):
 
         # Write HDF5 file
         with h5py.File(cache_path, 'w') as f:
+            # Persist fallback provenance with the cached data. The in-memory
+            # flag alone is lost when a later process reopens this file.
+            f.attrs[self.SYNTHETIC_PROVENANCE_ATTR] = self.SYNTHETIC_PROVENANCE_VALUE
             subhalo_grp = f.create_group('Subhalo')
             for key, values in subhalo_data.items():
                 subhalo_grp.create_dataset(key, data=np.array(values))
@@ -268,6 +273,10 @@ class CAMELSLoader(BaseDataLoader):
 
         # Open HDF5 file
         f = h5py.File(hdf5_path, 'r')
+        # A cache hit in a fresh process must not turn a previous synthetic
+        # fallback into apparently real CAMELS data.
+        if f.attrs.get(self.SYNTHETIC_PROVENANCE_ATTR) == self.SYNTHETIC_PROVENANCE_VALUE:
+            self.used_synthetic_fallback = True
 
         # Read subhalo data
         subhalo_dict = {}
@@ -289,7 +298,9 @@ class CAMELSLoader(BaseDataLoader):
         return f, subhalo_dict, group_dict
 
     def get_catalog_contract(self):
-        if self.declared_catalog_contract is not None:
+        # Synthetic provenance takes precedence over user-supplied catalog
+        # metadata: a declaration cannot relabel generated data as real.
+        if self.declared_catalog_contract is not None and not self.used_synthetic_fallback:
             return self.declared_catalog_contract
         path = self._get_cache_path()
         files = [source_file_record(path)] if path.is_file() else []
