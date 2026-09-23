@@ -86,6 +86,47 @@ def test_audit_reads_standard_header_group_epoch_attributes(tmp_path):
     assert report.ok, report.errors
 
 
+@pytest.mark.parametrize("epoch_field,declared,header_value", [
+    ("h", 1e-8, 0.0),
+    ("scale_factor", 1e-8, 0.0),
+    ("h", 1e-8, float("nan")),
+    ("scale_factor", 1e-8, float("inf")),
+])
+def test_audit_rejects_nonpositive_or_nonfinite_header_epoch(tmp_path, epoch_field, declared, header_value):
+    file_path = tmp_path / f"bad_header_{epoch_field}.h5"
+    _fixture(file_path)
+    catalog = _catalog(file_path)
+    if epoch_field == "h":
+        catalog["epoch"]["h"] = declared
+        with h5py.File(file_path, "a") as f:
+            f.attrs["h"] = header_value
+    else:
+        catalog["epoch"]["scale_factor"] = declared
+        catalog["epoch"]["redshift"] = (1. / declared) - 1.
+        with h5py.File(file_path, "a") as f:
+            f.attrs["Time"] = header_value
+    catalog["source"]["sha256"] = hashlib.sha256(file_path.read_bytes()).hexdigest()
+    report = audit_astronomy_manifest(load_astronomy_manifest(_write_manifest(tmp_path, [catalog])))
+    assert not report.ok
+    assert "positive and finite" in report.errors[0]["error"]
+
+
+@pytest.mark.parametrize("epoch_field", ["h", "scale_factor"])
+def test_audit_compares_tiny_positive_header_epoch_relatively(tmp_path, epoch_field):
+    file_path = tmp_path / f"tiny_mismatch_{epoch_field}.h5"
+    _fixture(file_path)
+    catalog = _catalog(file_path)
+    catalog["epoch"][epoch_field] = 1e-8
+    with h5py.File(file_path, "a") as f:
+        f.attrs["h" if epoch_field == "h" else "Time"] = 1e-12
+    if epoch_field == "scale_factor":
+        catalog["epoch"]["redshift"] = 1e8 - 1
+    catalog["source"]["sha256"] = hashlib.sha256(file_path.read_bytes()).hexdigest()
+    report = audit_astronomy_manifest(load_astronomy_manifest(_write_manifest(tmp_path, [catalog])))
+    assert not report.ok
+    assert "mismatches declared" in report.errors[0]["error"]
+
+
 @pytest.mark.parametrize("mutation, match", [
     (lambda c: c["fields"].pop("velocity"), "velocity"),
     (lambda c: c["fields"]["position"].update(unit="parsec"), "unit"),

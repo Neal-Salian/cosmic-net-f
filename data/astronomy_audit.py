@@ -64,7 +64,9 @@ def _inspect(catalog):
             if actual_name is None:
                 raise ValueError(f"HDF5 header is missing {attr} required for {label} check")
             actual = float(header_attrs[actual_name])
-            if not np.isfinite(actual) or not np.isclose(actual, expected, rtol=1e-5, atol=1e-7):
+            if not np.isfinite(actual) or actual <= 0:
+                raise ValueError(f"HDF5 header {actual_name} must be positive and finite for {label}")
+            if not np.isclose(actual, expected, rtol=1e-5, atol=0.0):
                 raise ValueError(f"HDF5 header {actual_name}={actual} mismatches declared {label}={expected}")
         target_len = h5[catalog["target"]["path"]].shape[0]
         groups = h5[catalog["fields"]["group_index"]["path"]][...]
