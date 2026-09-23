@@ -173,6 +173,8 @@ def observe_halo(halo, config: ObservationConfig) -> Tuple[object, dict]:
             "schema": OBSERVATION_SCHEMA,
             "observable_fields": list(OBSERVABLE_FIELDS),
             "line_of_sight": config.line_of_sight,
+            "realization_id": config.realization_id,
+            "seed": int(config.seed),
             "position_units": config.position_units,
             "velocity_units": config.velocity_units,
             "stellar_mass_units": config.stellar_mass_units,
@@ -197,7 +199,9 @@ def observe_halo(halo, config: ObservationConfig) -> Tuple[object, dict]:
             {"name": "missingness", "fraction": float(config.missing_fraction), "seed": int(config.seed), "key": "catalog/halo/member/realization"},
             {"name": "project", "axis": config.line_of_sight, "center": "selected_member_sky_centroid", "units": {"position": config.position_units, "velocity": config.velocity_units}},
             {"name": "noise", "scales": noise, "seed": int(config.seed), "key": "catalog/halo/member/realization"},
-            {"name": "richness_selection", "min_inclusive": config.min_richness, "max_inclusive": config.max_richness},
+        {"name": "richness_selection", "min_inclusive": config.min_richness, "max_inclusive": config.max_richness},
         ],
     }
+    if result is not None:
+        result.metadata["observation_provenance"] = deepcopy(report)
     return result, report

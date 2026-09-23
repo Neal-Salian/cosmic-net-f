@@ -100,6 +100,12 @@ class GraphBuilder:
         Returns:
             torch_geometric.data.Data object
         """
+        if (isinstance(getattr(halo, "metadata", None), dict)
+                and isinstance(halo.metadata.get("observation"), dict)
+                and halo.metadata["observation"].get("schema") == "projected_observation_v1"):
+            raise ValueError(
+                "projected observations require data.projected_graph.build_projected_graph"
+            )
         if self.hierarchical:
             return self._build_hierarchical_graph(halo)
         return self._build_standard_graph(halo)
