@@ -599,6 +599,21 @@ def test_caps_reject_invalid_configs():
         fp.validate_caps(dict(smoke, mode='capped_pilot'))
 
 
+def test_capped_mode_requires_the_exact_approved_campaign_contract():
+    fp = importlib.import_module('rls.feasible_pilot')
+    base = fp.default_config()
+    assert fp.validate_caps(base)
+    for change in (
+        {'data_seed': 1002}, {'validation_seed': 2002},
+        {'n_train_add': 7}, {'n_train_int': 9},
+        {'n_val_add': 3}, {'n_val_int': 5},
+        {'rollouts_B': 3}, {'learning_rate': 0.002},
+        {'structured_temperature': 0.5}, {'hidden_dim': 8},
+    ):
+        with pytest.raises(ValueError):
+            fp.validate_caps(dict(base, **change))
+
+
 def test_invalid_config_creates_no_output(tmp_path):
     fp = importlib.import_module('rls.feasible_pilot')
     bad = fp.default_config()
@@ -634,10 +649,30 @@ def test_smoke_artifact_counts_and_identities(tmp_path):
     assert summary['queries']['oracle'] == (n_train + n_val) * sum(
         fp.ORACLE_MASKS_PER_BUDGET[k] for k in cfg['budgets'])
     assert summary['queries']['full'] == n_train + n_val
+    assert summary['coverage']['validation_rows'] == len(cfg['policy_seeds']) * \
+        len(cfg['budgets']) * n_methods * E * n_val
+    assert summary['coverage']['validation_rows'] == \
+        summary['coverage']['expected_validation_rows']
+    accounting = summary['query_accounting']
+    assert accounting['training']['forward_calls'] == summary['queries']['training']
+    assert accounting['validation']['graph_evaluations'] == summary['queries']['validation']
     with open(os.path.join(out, 'curves.json')) as f:
         curves = json.load(f)
     assert {c['method'] for c in curves} == set(fp.METHODS)
     assert {c['budget'] for c in curves} == set(cfg['budgets'])
+    duplicates = summary['duplicate_final_masks_per_B']
+    assert len(duplicates) == len(curves)
+    curve_dups = {(c['seed'], c['budget'], c['method'], c['epoch']):
+                  (c['duplicate_final_masks'], c['training_rollout_masks'])
+                  for c in curves}
+    for row in duplicates:
+        key = (row['seed'], row['budget'], row['method'], row['epoch'])
+        assert (row['duplicate_masks'], row['rollout_masks']) == curve_dups[key]
+        assert row['duplicate_masks'] <= row['rollout_masks']
+    for curve in curves:
+        assert curve['validation_rmse'] ** 2 == pytest.approx(curve['validation_mean_se'])
+        assert curve['validation_mean_objective'] == pytest.approx(
+            -curve['validation_mean_se'])
     with open(os.path.join(out, 'val_per_example.json')) as f:
         per_ex = json.load(f)
     assert per_ex
@@ -646,6 +681,20 @@ def test_smoke_artifact_counts_and_identities(tmp_path):
         assert row['constraint_satisfied'] is True
         assert row['regret'] >= -1e-9
         assert row['method'] in fp.METHODS
+        assert row['objective'] == pytest.approx(-row['squared_error'])
+        assert row['oracle_objective'] == pytest.approx(-row['oracle_se'])
+        assert row['regret'] == pytest.approx(row['squared_error'] - row['oracle_se'])
+        assert row['prediction_error'] == pytest.approx(row['prediction'] - row['target'])
+        assert row['absolute_prediction_error'] == pytest.approx(abs(row['prediction_error']))
+        assert row['final_physical_retention'] == pytest.approx(
+            row['final_pair_count'] / row['total_physical_pair_count'])
+        assert row['requested_physical_retention'] == pytest.approx(
+            row['requested_pair_count'] / row['total_physical_pair_count'])
+        assert row['total_edge_retention'] == pytest.approx(
+            row['selected_stored_edge_count'] / row['total_stored_edge_count'])
+        assert row['total_physical_pair_count'] == 6
+        assert row['total_stored_edge_count'] == 12
+        assert row['selected_stored_edge_count'] == 2 * row['final_pair_count']
     with open(os.path.join(out, 'provenance.json')) as f:
         prov = json.load(f)
     for key in ('source_hash', 'dataset_hash', 'split_hash', 'config_hash',
@@ -674,7 +723,17 @@ def test_smoke_matched_init_and_scaffold_support(tmp_path):
         assert len(hashes) == 1, key
     # Scaffold at kmin has no learnable residual and unchanged parameters.
     scaf = [c for c in summary['support_limits'] if c['method'] == 'scaffold']
-    assert scaf and all(s['no_residual_zero_gradient'] for s in scaf)
-    assert summary['param_update_norm']['scaffold'] == pytest.approx(0.0)
+    assert scaf
+    assert all(s['no_residual_zero_gradient'] == (s['budget'] == 2)
+               for s in scaf)
+    scaffold_by_budget = {entry['budget']: entry['norm'] for entry in
+                          summary['param_update_norm']['scaffold']}
+    assert scaffold_by_budget[2] == pytest.approx(0.0)
+    assert all(entry['no_residual_zero_gradient']
+               for entry in summary['support_limits']
+               if entry['method'] == 'scaffold' and entry['budget'] == 2)
+    # At k=3/4 the scaffold leaves residual actions, so learning may update
+    # the scorer; the primitive test only guarantees the k_min=2 case.
     # Another method shows an actual nonzero update on the fixture.
-    assert summary['param_update_norm']['direct'] > 0.0
+    assert any(entry['norm'] > 0.0
+               for entry in summary['param_update_norm']['direct'])

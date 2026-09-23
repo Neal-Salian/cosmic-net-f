@@ -1,0 +1,17 @@
+mode: capped_pilot
+policy_seeds: [0, 1, 2]
+data_seed: 1001
+validation_seed: 2001
+n_train_add: 8
+n_train_int: 8
+n_val_add: 4
+n_val_int: 4
+epochs: 10
+budgets: [2, 3, 4]
+constraint: no_isolates
+max_pairs: 6
+max_k: 4
+rollouts_B: 4
+learning_rate: 0.001
+hidden_dim: 16
+structured_temperature: 1.0
