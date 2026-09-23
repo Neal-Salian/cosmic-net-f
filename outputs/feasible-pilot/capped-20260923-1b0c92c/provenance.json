@@ -1,0 +1,168 @@
+{
+  "config": {
+    "budgets": [
+      2,
+      3,
+      4
+    ],
+    "constraint": "no_isolates",
+    "data_seed": 1001,
+    "epochs": 10,
+    "hidden_dim": 16,
+    "learning_rate": 0.001,
+    "max_k": 4,
+    "max_pairs": 6,
+    "mode": "capped_pilot",
+    "n_train_add": 8,
+    "n_train_int": 8,
+    "n_val_add": 4,
+    "n_val_int": 4,
+    "policy_seeds": [
+      0,
+      1,
+      2
+    ],
+    "rollouts_B": 4,
+    "structured_temperature": 1.0,
+    "validation_seed": 2001
+  },
+  "config_hash": "63f9ba24f076d64d0bfe46df203f5ed5419c8ff8e3a2503d198308380c1fa47b",
+  "dataset_hash": "d49b43544bb740abf04521fe528e708d46185438e81579a9a6813985c122c6d5",
+  "normalization": {
+    "budgets": [
+      2,
+      3,
+      4
+    ],
+    "fit_ids": [
+      "train_add_00",
+      "train_add_01",
+      "train_add_02",
+      "train_add_03",
+      "train_add_04",
+      "train_add_05",
+      "train_add_06",
+      "train_add_07",
+      "train_int_00",
+      "train_int_01",
+      "train_int_02",
+      "train_int_03",
+      "train_int_04",
+      "train_int_05",
+      "train_int_06",
+      "train_int_07"
+    ],
+    "fitted_on": "train_only",
+    "split_hash": "9cedbf3098eb650a131726b087762a623231dd4d9aaa73f28445f27583fbd589",
+    "state_hash": "8848fb19ddc7106a326ad3ceebc083feb587d637767099ce6604cfa03a0786a3"
+  },
+  "predictor_identities": {
+    "additive": {
+      "class": "rls.pilot_synthetic.SyntheticAdditivePredictor",
+      "definition_sha256": "09999feeae6e3c7f5acc7c7bb16357448ee09242a091f1e5c189e80f97ffe505",
+      "parameter_state_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_sha256": "4560e3ca7c2ae6cb3796eb7101b0b6b23a1756f6572483f7d9e87da9e56202ee"
+    },
+    "interaction": {
+      "class": "rls.pilot_synthetic.SyntheticInteractionPredictor",
+      "definition_sha256": "7222240dd4ad27dec90f09ef04696126cac0de20ca5cbe32e4026bb6dd978924",
+      "parameter_state_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_sha256": "4560e3ca7c2ae6cb3796eb7101b0b6b23a1756f6572483f7d9e87da9e56202ee"
+    }
+  },
+  "reward_scale": 54.713181414365124,
+  "reward_scale_fitted_on": [
+    "train_add_00",
+    "train_add_01",
+    "train_add_02",
+    "train_add_03",
+    "train_add_04",
+    "train_add_05",
+    "train_add_06",
+    "train_add_07",
+    "train_int_00",
+    "train_int_01",
+    "train_int_02",
+    "train_int_03",
+    "train_int_04",
+    "train_int_05",
+    "train_int_06",
+    "train_int_07"
+  ],
+  "seed_roles": {
+    "data": 1001,
+    "policy": [
+      0,
+      1,
+      2
+    ],
+    "validation": 2001
+  },
+  "source_files": {
+    "rls/benchmark_predictor.py": "34126e5935c83540dfba6ed9e709d8956f06fe8916105918808da8d8701f0f58",
+    "rls/constrained_policy.py": "3642a8f1a79dcac5bf76def3f79f361cb1277d3a499b002bdc7c56510ff861d4",
+    "rls/feasible_pilot.py": "552630715e7942898250221dc4073b42a52a455bd96959250b9a8418ea4a0202",
+    "rls/pilot_synthetic.py": "4560e3ca7c2ae6cb3796eb7101b0b6b23a1756f6572483f7d9e87da9e56202ee",
+    "rls/raw_selector.py": "e4c5a4d8d5c6537bdfabecfda9ece5605f75b593900620df78aefefaa77ba7ad",
+    "rls/structured_selection.py": "2ec5432589f1de5d4eb7f420ef8a180f9249b364fc7daa309e0e50aa43b0edfd"
+  },
+  "source_hash": "7714c5084a938e85cf462920bb32838a63c0bfdf2a09aabed4ff0ba6d71c0c69",
+  "source_revision": "1b0c92c04c49344f5483da237a24c1f4f3b56393",
+  "split_hash": "9cedbf3098eb650a131726b087762a623231dd4d9aaa73f28445f27583fbd589",
+  "train_content_hashes": {
+    "train_add_00": "d32588d1e37f510926b98754b1209c1ca1972eec02c8601239b276333643a6d0",
+    "train_add_01": "14d9f1487c810bd62cb561f60b69130f06d47059ffac77b2eb60988f8b49d02d",
+    "train_add_02": "aa3f9239590949f79934bb6a197847d541c967c4e8d5215817604b28e28d80cb",
+    "train_add_03": "a1c642bcaf230539b205b08c378b8496046f9ce367169e4dfed246b41acdbcaa",
+    "train_add_04": "14640be5b65f859c1e27cb73ebaad79e369f47229157daac61dc0cc14f2af1c2",
+    "train_add_05": "330804823189cd6f6119d08715eea11a905dfe116e0ad04f8b0b314729f0f02d",
+    "train_add_06": "711473cc4b8cf90a31e57b8da6d2a64f1d0705afd99c8151e26405ba2507ffed",
+    "train_add_07": "4571d2ab04468e0016e9b07019ab0433bb7122e4c4304fd6947fac8c8951df1f",
+    "train_int_00": "abbafa5a70d9b1280d05099bec7bacbf2a738eaf6875b50e30b474c44ae31374",
+    "train_int_01": "c75f2029f660a21c2f7cdf5fdbfa91249a21da17c7e9cafd34d12c4d0f30bd64",
+    "train_int_02": "276717bdc85788b7a2c2f32db19540da6655ce34b0334f52a78ee166c26226c4",
+    "train_int_03": "1cb5fc6c74c520ec87c2e53d4c91ceb1e7164bf1bdea81e49fce4626127e3209",
+    "train_int_04": "379094c0c25e2416e8ada7f9a1ee5fa6e265b7026e7b16f389f6813902697512",
+    "train_int_05": "a5eb287885e942cebcd6392ca9d25adf88620b6fe7091685242fb56b226ff088",
+    "train_int_06": "a36608e3a94fadab8d0294d7181410d91c599ac84519707ee618614a5b92077a",
+    "train_int_07": "816cd283b6dd202ba353ac91668ea8555bdf37c6d596dfe67e25b947e232e636"
+  },
+  "train_ids": [
+    "train_add_00",
+    "train_add_01",
+    "train_add_02",
+    "train_add_03",
+    "train_add_04",
+    "train_add_05",
+    "train_add_06",
+    "train_add_07",
+    "train_int_00",
+    "train_int_01",
+    "train_int_02",
+    "train_int_03",
+    "train_int_04",
+    "train_int_05",
+    "train_int_06",
+    "train_int_07"
+  ],
+  "val_content_hashes": {
+    "val_add_00": "02c1151bfb506544a6560ceb4fc1beb5ff66e880c97d6fd5aca037a6b5d2dd41",
+    "val_add_01": "f6dae03eb625c8bf416d9e5bfd991373fb87dec51b85d3b7b8658118711ca295",
+    "val_add_02": "8a5cc3eee94ad3ef005b32f6192c8b68385de2070a66b888de760abd7625cc59",
+    "val_add_03": "ff52764c0bed5a59f7c5efa2a5b8e7048e19ab284a71bd71a2cd74dd9c822615",
+    "val_int_00": "782f3f2f2ae243eb35c84f4f3f370169cf82eed0603ab7388ef2165b625c4a2d",
+    "val_int_01": "08ed671b71ecac92b5d499c026f243a446b59d86ed3178d4e43b931e48d10549",
+    "val_int_02": "67883434c734498b44c12d91ecc5b806daecbc1756944fc30a5612832cb9df03",
+    "val_int_03": "ffcab7e823db2214f27f03d7e863a9c98f62d01b4a6fd4b699ba55cdaa5191ac"
+  },
+  "val_ids": [
+    "val_add_00",
+    "val_add_01",
+    "val_add_02",
+    "val_add_03",
+    "val_int_00",
+    "val_int_01",
+    "val_int_02",
+    "val_int_03"
+  ]
+}
