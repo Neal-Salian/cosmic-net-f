@@ -1,21 +1,20 @@
 # Projected observation transform
 
-`data.observations.observe_halo(halo, ObservationConfig(...))` returns a copied `HaloData` and a JSON-safe provenance report. A `None` copy means the transformed member count failed the declared inclusive richness bounds; the report still records pre- and post-selection counts and rejection reasons. The minimum richness must be an integer of at least one; the optional maximum must be an integer. Inputs need stable `metadata.catalog_id`, `cluster_id`, and unique `subhalo_id` values.
+`data.observations.observe_halo(halo, ObservationConfig(...))` handles the legacy complete-schema input. `data.astronomy_observations.observe_astronomy_halo(halo, ObservationConfig(...))` accepts immutable `AstronomyHalo` records returned by the strict audited astronomy loader. Both return a copied observation and a JSON-safe provenance report. A `None` copy means transformed richness fell outside the declared inclusive bounds; the report retains pre- and post-selection counts and rejection reasons. Inputs require stable catalog, halo, and member IDs.
 
-The current schema is `projected_observation_v1`. Select LOS `x`, `y`, or `z`; positions are physical Mpc and velocities are km/s. The LOS coordinate and transverse velocities are zeroed in the observation payload. Sky positions are centered on the retained-member sky centroid. Intrinsic dispersion, half-mass radius, and metallicity are zeroed and excluded from the positive observable allowlist (`projected_position`, `los_velocity`, `stellar_mass_proxy`). The halo mass remains on the copied halo strictly as the label; transforms, centering, noise and selection do not read it. Target mass and any target-derived `R200c` metadata do not affect projected positions, LOS velocities, stellar-mass noise or member selection.
+The observation schema is `projected_observation_v1`. Select LOS `x`, `y`, or `z`; positions are physical Mpc and velocities are km/s. The LOS coordinate and transverse velocities are zeroed. Sky positions are centered on the retained-member sky centroid. The legacy complete-schema path clears its intrinsic dispersion, half-mass-radius, and metallicity attributes for compatibility. The partial astronomy path carries only observed ID, position, velocity, and stellar mass; it never fabricates unavailable dispersion or metallicity fields. Both exclude hidden quantities from the positive observable allowlist (`projected_position`, `los_velocity`, `stellar_mass_proxy`). Halo mass remains on the copied record strictly as the label; transforms, centering, noise, and selection do not read it. Target mass and target-derived `R200c` metadata do not affect observables or member selection.
 
-Missingness is a stable-ID-keyed Bernoulli draw. Gaussian noise may be configured in physical projected-position Mpc, LOS velocity km/s, or stellar-mass dex. The same identity, seed, and realization replay regardless of member ordering. Nonpositive/nonfinite stellar mass and invalid physical units fail closed. Transform order and settings are retained in report metadata. This module does not construct graph tensors; a later projected graph adapter must consume the schema and rebuild edges from transformed members.
+Missingness is a stable-ID-keyed Bernoulli draw. Gaussian noise can be configured for projected-position Mpc, LOS velocity km/s, or stellar-mass dex. The same identity, seed, and realization replay regardless of member ordering. Nonpositive or nonfinite stellar mass and invalid physical units fail closed. The observation report records transform order, settings, catalog and halo IDs, LOS, and richness accounting. For strict astronomy records, source hash, role, initial-condition identity, release, selection accounting, and catalog contract stay in the copied halo's metadata; `build_projected_graph` carries those fields into `graph.catalog_provenance`.
 
-Example:
+Pass the result to `data.projected_graph.build_projected_graph` to rebuild edges from projected 2D coordinates and LOS velocity. The legacy `GraphBuilder` rejects projected copies.
+
+Example for the legacy input:
 
 ```python
 from data.observations import ObservationConfig, observe_halo
 
 config = ObservationConfig(
     line_of_sight="z",
-    position_units="Mpc",
-    velocity_units="km/s",
-    stellar_mass_units="M_sun",
     seed=31,
     realization_id="mock-observation-0",
     missing_fraction=0.1,
@@ -25,3 +24,8 @@ config = ObservationConfig(
 )
 observed_halo, transform_record = observe_halo(halo, config)
 ```
+
+For an audited partial catalog, call `observe_astronomy_halo` from
+`data.astronomy_observations`, then call
+`build_projected_graph(observed_halo, observation_report=transform_record)`.
+The copied record retains its `partial_observation_inputs_v1` source identity.

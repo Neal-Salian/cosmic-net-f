@@ -136,9 +136,12 @@ def observe_halo(halo, config: ObservationConfig) -> Tuple[object, dict]:
         member.position = pos
         member.velocity = vel
         # These intrinsic simulation fields are not part of this observation mode.
-        member.velocity_dispersion = 0.0
-        member.half_mass_radius = 0.0
-        member.metallicity = 0.0
+        # Legacy complete-schema members carry these fields, but partial
+        # astronomy observation records deliberately do not. Never invent
+        # unavailable intrinsic measurements on those records.
+        for name in ("velocity_dispersion", "half_mass_radius", "metallicity"):
+            if hasattr(member, name):
+                setattr(member, name, 0.0)
     noise = {"projected_position_mpc": config.position_noise_mpc,
              "los_velocity_kms": config.los_velocity_noise_kms,
              "stellar_mass_dex": config.stellar_mass_noise_dex, **dict(config.noise)}
