@@ -16,6 +16,7 @@ import torch.nn as nn
 
 from data.provenance import model_state_hash
 from rls.constraints import PhysicalPairLayout
+from data.projected_graph import validate_checkpoint_compatibility
 from rls.raw_selector import (
     RawBudgetPairScorer,
     VALID_EDGE_FEATURE_NAMES,
@@ -367,10 +368,30 @@ class PairScorer:
         if not isinstance(names, (list, tuple)) or not names:
             raise ValueError(
                 'provided_rl requires a declared nonempty edge_feature_names schema')
-        for name in names:
-            if name not in VALID_EDGE_FEATURE_NAMES:
-                raise ValueError(f'unknown edge feature name: {name}. '
-                                 f'Valid: {VALID_EDGE_FEATURE_NAMES}')
+        projected_names = {'projected_distance', 'los_delta_v'}
+        declared_projected = (getattr(graph, 'feature_mode', None) == 'projected_observation'
+                              or any(name in projected_names for name in names))
+        if declared_projected:
+            compatibility = getattr(graph, 'compatibility_record', None)
+            if getattr(graph, 'feature_mode', None) != 'projected_observation':
+                raise ValueError('projected policy feature names require projected_observation graph mode')
+            if not isinstance(compatibility, dict):
+                raise ValueError('projected policy requires a complete compatibility schema')
+            axis = getattr(graph, 'observer_axis', None)
+            try:
+                validate_checkpoint_compatibility(compatibility, compatibility)
+            except ValueError as exc:
+                raise ValueError(f'invalid projected compatibility schema: {exc}') from exc
+            expected = list(compatibility.get('edge_features', []))
+            if (compatibility.get('line_of_sight') != axis
+                    or getattr(graph, 'schema_identity', None) != compatibility.get('schema_identity')
+                    or list(names) != expected):
+                raise ValueError('projected policy edge_feature_names must exactly match graph compatibility schema order')
+        else:
+            for name in names:
+                if name not in VALID_EDGE_FEATURE_NAMES:
+                    raise ValueError(f'unknown edge feature name: {name}. '
+                                     f'Valid: {VALID_EDGE_FEATURE_NAMES}')
         if len(set(names)) != len(names):
             raise ValueError(
                 f'duplicate edge feature name in provided_rl schema: {list(names)}')

@@ -86,7 +86,41 @@ IDs are not checked against the training catalog rows. The record reports
 these limits rather than treating hashes as proof of executed training or
 evaluation.
 
-The current repository does not contain projected trained artifacts or
-audited real CAMELS/SIMBA catalogs. Therefore fixture tests exercise format
-and rejection behavior only; no scientific preflight success or astronomy
-result is claimed from those tests.
+`rls.astronomy_evaluation.run_astronomy_evaluation` is the execution boundary.
+It calls preflight first, then rehashes the source, artifact files and split
+manifest before constructing a model or graph. It strictly loads the projected
+backbone and policy state dicts into their declared architectures, verifies
+projected feature identity, transforms each audited halo with
+`observe_astronomy_halo`, rebuilds the graph, and calls the shared
+`evaluate_matched_budget` with random, distance, degree and provided-policy
+scorers. The returned per-example rows retain requested and final physical
+pair accounting. The runner checks that methods share each successful graph's
+final pair count and that it equals the declared exact budget. It rechecks the
+manifest content hash after preflight and before architecture or graph work.
+The policy architecture payload and ordered edge feature names must match the
+policy artifact's hashed resolved training configuration and projected schema.
+
+Development evaluation requires every evaluated halo ID and its IC group to
+appear explicitly in validation or test membership and outside training. An
+external role requires identifiable evaluation IC groups disjoint from every
+training group. If catalog IDs or lineage do not reconcile with the split,
+evaluation stops rather than treating hashes as proof of membership.
+
+The result provenance describes the evaluation catalog and source hash, while
+training artifact and split hashes, training source revision, observation
+reports, graph schema, and exact budget are separately retained. The runner
+source file receives its own hash identity. `scientific_result` is true only
+for scientific mode with at least one graph successful for all four methods;
+method-specific success counts and the common graph IDs are reported so a
+partial comparison is visible. `fixture_smoke` always uses the
+`fixture_smoke` research label and sets `scientific_result=false`, even when
+the fixture executes every method.
+
+The repository still has no projected trained research artifacts or audited
+real CAMELS/SIMBA catalogs. The runnable test creates a tiny synthetic HDF5
+fixture and actual initialized model/policy weights only to exercise loading,
+observation, graph rebuilding and matched evaluation. It is not scientific
+evidence. The preflight records that training membership is not independently
+reconciled to training catalog rows; the runner closes development membership
+with explicit split IDs and IC groups, but does not rehash historical training
+source files.

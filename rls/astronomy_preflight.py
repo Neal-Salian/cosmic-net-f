@@ -78,13 +78,14 @@ def _read_split_manifest(path):
         raise ValueError("training split manifest must explicitly define train, val and test")
     if data.get("group_key") not in {"initial_condition_id", "lineage_group", "volume_or_ic_group"}:
         raise ValueError("training split must group by initial-condition/lineage identity")
+    for name in names:
+        if not isinstance(sections[name], dict):
+            raise ValueError(f"split {name} must be a mapping")
     if not sections["train"].get("cluster_ids"):
         raise ValueError("training split manifest has no explicit training membership")
     for field in ("group_ids", "cluster_ids", "parent_ids"):
         seen = set()
         for name in names:
-            if not isinstance(sections[name], dict):
-                raise ValueError(f"split {name} must be a mapping")
             values = sections[name].get(field)
             if not isinstance(values, list) or len(values) != len(set(values)):
                 raise ValueError(f"split {name} requires unique {field}")

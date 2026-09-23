@@ -710,9 +710,64 @@ def test_provided_rl_rejects_missing_schema_or_policy_or_unknown():
             g, layout, 1, meter=meter)
     with pytest.raises(ValueError, match='unknown|schema|feature'):
         bs.PairScorer('provided_rl', policy=_OrientedPolicy(),
-                      edge_feature_names=['distance',
+            edge_feature_names=['distance',
                                           'nope']).score(
             g, layout, 1, meter=meter)
+
+
+def _projected_rl_graph():
+    from data.projected_graph import ProjectedGraphConfig, checkpoint_compatibility_record
+    g, layout = _two_pair_rl_graph()
+    config = ProjectedGraphConfig()
+    names = list(config.edge_features)
+    # Three columns carry the actual projected semantics in the declared order.
+    g.edge_attr = torch.tensor([[2., .5, .1], [2., .5, -.1],
+                                [3., .25, .2], [3., .25, -.2]])
+    g.feature_mode = "projected_observation"
+    g.graph_schema = "projected_graph_v1"
+    g.observer_axis = "z"
+    g.compatibility_record = checkpoint_compatibility_record(config, "z")
+    g.schema_identity = g.compatibility_record["schema_identity"]
+    return g, layout, names
+
+
+def test_provided_rl_accepts_projected_names_only_with_exact_projected_schema():
+    bs = _api()
+    from rls.benchmark_predictor import MeteredPredictor
+    g, layout, names = _projected_rl_graph()
+    scorer = bs.PairScorer("provided_rl", policy=_OrientedPolicy(), edge_feature_names=names)
+    result = scorer.score(g, layout, 1, meter=MeteredPredictor(_EmbedToy()))
+    assert result.scores.shape == (2,)
+    assert result.metadata["edge_feature_names"] == names
+    reverse = copy.deepcopy(g)
+    reverse.edge_index = reverse.edge_index.flip(0)
+    reverse.edge_attr[:, 2] *= -1  # signed mass_ratio reverses with endpoints
+    result_reversed = scorer.score(reverse, layout, 1, meter=MeteredPredictor(_EmbedToy()))
+    torch.testing.assert_close(result.scores, result_reversed.scores)
+
+
+def test_projected_policy_schema_rejects_legacy_graph_and_wrong_order():
+    bs = _api()
+    from rls.benchmark_predictor import MeteredPredictor
+    g, layout, names = _projected_rl_graph()
+    meter = MeteredPredictor(_EmbedToy())
+    g.feature_mode = "legacy_3d"
+    with pytest.raises(ValueError, match="projected|feature mode"):
+        bs.PairScorer("provided_rl", policy=_OrientedPolicy(), edge_feature_names=names).score(
+            g, layout, 1, meter=meter)
+    g.feature_mode = "projected_observation"
+    with pytest.raises(ValueError, match="exactly match|schema"):
+        bs.PairScorer("provided_rl", policy=_OrientedPolicy(), edge_feature_names=names[::-1]).score(
+            g, layout, 1, meter=meter)
+
+    scorer = bs.PairScorer("provided_rl", policy=_OrientedPolicy(), edge_feature_names=names)
+    g.schema_identity = "0" * 64
+    with pytest.raises(ValueError, match="schema|compatibility"):
+        scorer.score(g, layout, 1, meter=meter)
+    g.schema_identity = g.compatibility_record["schema_identity"]
+    g.observer_axis = "x"
+    with pytest.raises(ValueError, match="exactly match|schema"):
+        scorer.score(g, layout, 1, meter=meter)
 
 
 def _two_pair_rl_graph():

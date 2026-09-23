@@ -215,6 +215,16 @@ def test_preflight_rejects_snapshot_grouped_split_even_with_valid_hash(tmp_path)
         _call(tuple(paths))
 
 
+def test_preflight_malformed_split_section_raises_value_error(tmp_path):
+    paths = list(_setup(tmp_path))
+    split = json.loads(paths[1].read_text())
+    split["splits"]["train"] = []
+    split["manifest_sha256"] = hash_payload({k: v for k, v in split.items() if k != "manifest_sha256"})
+    paths[1].write_text(json.dumps(split))
+    with pytest.raises(ValueError, match="split train"):
+        _call(tuple(paths))
+
+
 def test_preflight_rejects_feature_record_that_differs_from_resolved_config(tmp_path):
     paths = list(_setup(tmp_path))
     artifact = torch.load(paths[4], map_location="cpu", weights_only=True)
