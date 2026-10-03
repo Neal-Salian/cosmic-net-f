@@ -53,7 +53,7 @@ def test_two_actions_two_reward_masks():
     thresh = hard_mask(probs, 0.1)                      # old (buggy) mask source
     assert not (m1.equal(thresh) and m2.equal(thresh))  # not a probs-threshold
     # what the training loop executes per rollout: repair(floor(action))
-    ei = _path_edges(probs.numel())
+    ei = _path_edges(probs.numel() + 1)
     r1 = repair_connectivity(ei, m1)
     r2 = repair_connectivity(ei, m2)
     assert r1.dtype == torch.bool and r2.dtype == torch.bool

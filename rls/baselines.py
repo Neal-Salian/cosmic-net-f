@@ -3,11 +3,12 @@ import torch
 
 
 def random_mask(edge_index, edge_attr, pos, frac, seed=0):
+    # Keep the seeded CPU permutation identical across CPU and GPU runs.
     g = torch.Generator().manual_seed(seed)
     n = edge_attr.shape[0]
     k = int(frac * n)
-    idx = torch.randperm(n, generator=g)[:k]
-    m = torch.zeros(n, dtype=torch.bool)
+    idx = torch.randperm(n, generator=g, device="cpu")[:k].to(edge_index.device)
+    m = torch.zeros(n, dtype=torch.bool, device=edge_index.device)
     m[idx] = True
     return m
 
@@ -15,12 +16,13 @@ def random_mask(edge_index, edge_attr, pos, frac, seed=0):
 def degree_mask(edge_index, edge_attr, pos, frac):
     """Keep the highest-degree edges (hubs are informative)."""
     n = edge_index.shape[1]
-    deg = torch.zeros(edge_index.max().item() + 1)
-    deg.index_add_(0, edge_index[0], torch.ones(n))
-    deg.index_add_(0, edge_index[1], torch.ones(n))
+    deg = torch.zeros(edge_index.max().item() + 1, device=edge_index.device)
+    counts = torch.ones(n, device=edge_index.device)
+    deg.index_add_(0, edge_index[0], counts)
+    deg.index_add_(0, edge_index[1], counts)
     edge_deg = (deg[edge_index[0]] + deg[edge_index[1]]) / 2
     k = int(frac * n)
-    m = torch.zeros(n, dtype=torch.bool)
+    m = torch.zeros(n, dtype=torch.bool, device=edge_index.device)
     m[torch.topk(edge_deg, k).indices] = True
     return m
 
@@ -30,7 +32,7 @@ def distance_mask(edge_index, edge_attr, pos, frac):
     n = edge_index.shape[1]
     dists = torch.norm(pos[edge_index[0]] - pos[edge_index[1]], dim=1)
     k = int(frac * n)
-    m = torch.zeros(n, dtype=torch.bool)
+    m = torch.zeros(n, dtype=torch.bool, device=edge_index.device)
     m[torch.topk(-dists, k).indices] = True
     return m
 
@@ -43,7 +45,7 @@ def mass_ratio_mask(edge_index, edge_attr, pos, frac, mass_ratio_idx=3):
     n = edge_index.shape[1]
     scores = edge_attr[:, mass_ratio_idx]
     k = int(frac * n)
-    m = torch.zeros(n, dtype=torch.bool)
+    m = torch.zeros(n, dtype=torch.bool, device=edge_index.device)
     m[torch.topk(scores, k).indices] = True
     return m
 
@@ -65,8 +67,9 @@ def gradient_saliency_mask(edge_index, edge_attr, pos, frac, model=None, x=None)
     from torch_geometric.data import Data, Batch
     pred, _ = model(Batch.from_data_list([Data(x=x, edge_index=edge_index,
                                                edge_attr=edge_attr)]))
-    pred.backward()
-    g = x.grad.abs().sum(dim=1)
+    # Only input gradients are needed; do not accumulate backbone gradients.
+    input_grad, = torch.autograd.grad(pred.sum(), x)
+    g = input_grad.abs().sum(dim=1)
     scores = (g[edge_index[0]] + g[edge_index[1]]) / 2
     k = int(frac * n)
     m = torch.zeros(n, dtype=torch.bool, device=edge_index.device)
@@ -80,9 +83,11 @@ def attention_topk_mask(edge_index, edge_attr, pos, frac, model=None):
     if model is None:
         return distance_mask(edge_index, edge_attr, pos, frac)
     n = edge_index.shape[1]
-    scores = model(edge_attr).squeeze(-1)
+    scores = model(edge_attr).reshape(-1)
+    if scores.numel() != n:
+        raise ValueError("Attention scorer must return one score per edge.")
     k = int(frac * n)
-    m = torch.zeros(n, dtype=torch.bool)
+    m = torch.zeros(n, dtype=torch.bool, device=edge_index.device)
     m[torch.topk(scores, k).indices] = True
     return m
 
@@ -105,9 +110,11 @@ class GumbelEdgeMask(torch.nn.Module):
         )
 
     def forward(self, edge_attr, hard=False, tau=0.5):
-        logits = self.net(edge_attr).squeeze(-1)      # [E]
+        logits = self.net(edge_attr).reshape(-1)      # [E], including E=1
         logits = torch.stack([-logits, logits], dim=-1)  # [E,2] keep/drop
-        u = torch.rand_like(logits) + 1e-8
+        # Clamp both endpoints: log(0) and rounding to 1 produce infinities.
+        eps = torch.finfo(logits.dtype).eps
+        u = torch.rand_like(logits).clamp(min=eps, max=1 - eps)
         g = -torch.log(-torch.log(u))
         soft = torch.softmax((logits + g) / tau, dim=-1)
         if hard:

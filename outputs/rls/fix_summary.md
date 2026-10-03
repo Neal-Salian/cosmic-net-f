@@ -41,8 +41,13 @@ mechanics are)
    (`eval_mask` guarantees the same symmetric decoder everywhere).
 3. Re-tune `(K, tta_lr, w_unc)` on VAL only with `tta_kl_coef > 0`; the
    `tta_should_enable` gate keeps TTA off when val regresses.
-4. Re-run OOD frozen-vs-TTA once the CAMELS URL is fixed (still 404; synthetic
-   fallback stays fail-closed).
-5. Notebook A–D inline copies (`EdgePolicyNet`, `hard_mask`,
-   `repair_connectivity`, …) still need replacing with package imports and a
-   Kaggle Run-All to verify — intentionally deferred, not done blind.
+4. Re-run OOD frozen-vs-TTA on real CAMELS data — the loader URL is fixed
+   and verified (Sep 2026: `FOF_Subfind/IllustrisTNG/LH/LH_0/groups_090.hdf5`
+   downloads and parses; `set`/`snapshot` configurable). Still needs the
+   Kaggle run itself.
+5. Notebook A–D are rewired to the fixed package (Sep 2026, same branch):
+   imports-only helper cells, B via `train_policy`/`fine_tune_gnn`, C via
+   `build_results_table`, D via `adapt_at_test_time` + val gate cell,
+   `tests/test_notebook_hygiene.py` guards drift in CI. `tta_kl_coef=0.05` /
+   `tta_lr_decay=0.9` are placeholder starting values — sweep
+   `tta_kl_coef ∈ [0.01, 0.05, 0.1]` on VAL before trusting test TTA numbers.

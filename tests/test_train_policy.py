@@ -125,7 +125,7 @@ def test_topk_scheduled_training_keeps_gradients_flowing():
     torch.manual_seed(0)
     with open("config/config.yaml") as f:
         cfg = yaml.safe_load(f)
-    rls_cfg = dict(cfg["rls"], sparsity_mode="topk_scheduled",
+    rls_cfg = dict(cfg["rls"], sparsity_mode="pair_pl",
                    target_sparsity_start=0.7, target_sparsity_end=0.4,
                    sparsity_anneal_epochs=2)
     out_dim = cfg["model"]["output_dim"]

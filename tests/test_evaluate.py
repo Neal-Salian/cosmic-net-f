@@ -34,11 +34,21 @@ def test_save_paper_plots_writes_files(tmp_path):
     assert os.path.isfile(os.path.join(out, "pareto_and_fidelity.png"))
 
 
-def test_evaluate_tta_rows():
+def test_evaluate_tta_rows(monkeypatch):
     """evaluate_tta returns one row per (mode, K); K=0 runs the FROZEN path
     (no adaptation) and must not touch the label-free TTA machinery."""
     from rls.policy import EdgePolicyNet
     from rls.evaluate import evaluate_tta
+    import rls.tta as tta
+    original = tta.adapt_at_test_time
+    requested_steps = []
+
+    def checked_adapt(policy, graph, gnn, cfg, *args, **kwargs):
+        assert "y" not in graph
+        requested_steps.append(cfg["tta_steps"])
+        return original(policy, graph, gnn, cfg, *args, **kwargs)
+
+    monkeypatch.setattr(tta, "adapt_at_test_time", checked_adapt)
 
     torch.manual_seed(0)
 
@@ -68,6 +78,8 @@ def test_evaluate_tta_rows():
            "min_keep_frac": 0.1, "entropy_coef": 0.01,
            "w_unc": 1.0, "w_sp": 0.5, "w_conn": 1.0, "w_virial": 0.0, "seed": 0}
     rows = evaluate_tta(policy, graphs, MockGNN(), cfg, "cpu", ks=(0, 2))
+    assert requested_steps == [2, 2, 2]
+    assert cfg["tta_steps"] == 3
     assert len(rows) == 2
     assert {r["mode"] for r in rows} == {"frozen", "tta"}
     for r in rows:

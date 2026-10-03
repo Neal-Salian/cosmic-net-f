@@ -52,7 +52,9 @@ def build_results_table(preds_full, preds_policy, preds_gumbel, preds_random,
             "r2": _r2(preds, targets),
             "scatter": _scatter(preds, targets),
             "mean_keep_frac": keep if keep is not None else 1.0,
-            "fidelity": float(np.corrcoef(preds.numpy(), preds_full.numpy())[0, 1]),
+            "fidelity": (float(np.corrcoef(preds.cpu().numpy(), preds_full.cpu().numpy())[0, 1])
+                         if preds.numel() > 1 and preds.std() > 0 and preds_full.std() > 0
+                         else float("nan")),
         })
     return rows
 
@@ -96,6 +98,7 @@ def save_paper_plots(rows, out_dir="outputs/rls"):
     # Pareto: lower keep-fraction is better for sparsity; lower RMSE better.
     order = ["full", "random", "degree", "distance", "mass_ratio",
              "grad_saliency", "pgexplainer", "gumbel", "rl_policy"]
+    order += [name for name in df.method.unique() if name not in order]
     for name in order:
         sub = df[df.method == name]
         if sub.empty:
@@ -139,7 +142,9 @@ def evaluate_tta(policy, graphs, gnn, cfg, device, ks=(0, 5, 10, 20),
                         # (threshold in penalty mode, top-k in topk mode).
                         mask = eval_mask(gd["edge_index"], p, cfg)
                 else:
-                    mask, info = adapt_at_test_time(policy, gd, gnn, cfg, device,
+                    trial_cfg = dict(cfg, tta_steps=k)
+                    unlabeled = {key: value for key, value in gd.items() if key != "y"}
+                    mask, info = adapt_at_test_time(policy, unlabeled, gnn, trial_cfg, device,
                                                     init=init,
                                                     target_sparsity=target_sparsity)
                     steps.append(info["steps_run"])

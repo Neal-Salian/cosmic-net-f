@@ -51,6 +51,13 @@ class CAMELSLoader(BaseDataLoader):
     provides thousands of cosmological simulations with varying parameters.
 
     Data is downloaded from: https://users.flatironinstitute.org/~camels/
+    (verified Sep 2026: host alive; the CATALOG_SUBDIR pattern below was
+    corrected against the live directory listing — the old
+    "Sims/{suite}/{sim}/fof_subhalo_tab_033.hdf5" pattern 404s because real
+    catalogs live under FOF_Subfind/{suite}/{set}/{sim}/groups_{snap}.hdf5,
+    e.g. FOF_Subfind/IllustrisTNG/LH/LH_0/groups_090.hdf5. Verified by
+    downloading that exact file and parsing 15,712 subhalos -> 254 usable
+    halos through load_raw/_parse_all_subhalos/_group_into_halos.)
 
     Supported suites:
     - IllustrisTNG: Same physics as TNG but smaller boxes
@@ -71,9 +78,15 @@ class CAMELSLoader(BaseDataLoader):
     LENGTH_UNIT = 1e-3  # ckpc/h to Mpc
     H_PARAM = 0.6711  # Default CAMELS Hubble parameter
 
-    # CAMELS data URLs
+    # CAMELS data URLs (FIX Sep 2026, verified live against the Flatiron
+    # directory listing + a real 14 MB download of the LH_0 file below).
+    # Catalogs are the Arepo FOF/Subfind group files, NOT Sims/ snapshots:
+    #   FOF_Subfind/{suite}/{sim_set}/{sim}/groups_{snapshot}.hdf5
+    # e.g. FOF_Subfind/IllustrisTNG/LH/LH_0/groups_090.hdf5 (z=0).
+    # sim_set/snapshot come from data.camels config (set defaults to the
+    # simulation name prefix: "LH_0" -> "LH"; snapshot defaults to "090").
     BASE_URL = "https://users.flatironinstitute.org/~camels/"
-    CATALOG_SUBDIR = "Sims/{suite}/{sim}/fof_subhalo_tab_033.hdf5"
+    CATALOG_SUBDIR = "FOF_Subfind/{suite}/{sim_set}/{sim}/groups_{snapshot}.hdf5"
 
     def __init__(self, config: Dict[str, Any]):
         """
@@ -92,6 +105,10 @@ class CAMELSLoader(BaseDataLoader):
         self.base_url = camels_config.get('base_url', self.BASE_URL)
         self.suite = camels_config.get('suite', 'IllustrisTNG')
         self.simulation = camels_config.get('simulation', 'LH_0')
+        # Set level (LH/CV/1P/...) defaults to the simulation prefix ("LH_0"
+        # -> "LH"); snapshot defaults to "090" (z=0 catalog).
+        self.sim_set = camels_config.get('set', self.simulation.split('_')[0])
+        self.snapshot = camels_config.get('snapshot', '090')
         self.cache_dir = Path(camels_config.get('cache_dir', 'data/raw/camels_cache'))
         self.offline = camels_config.get('offline', False)
         self.used_synthetic_fallback = False
@@ -106,7 +123,10 @@ class CAMELSLoader(BaseDataLoader):
 
     def _get_hdf5_url(self) -> str:
         """Get the URL for the HDF5 catalog file."""
-        path = self.CATALOG_SUBDIR.format(suite=self.suite, sim=self.simulation)
+        path = self.CATALOG_SUBDIR.format(suite=self.suite,
+                                          sim_set=self.sim_set,
+                                          sim=self.simulation,
+                                          snapshot=self.snapshot)
         return f"{self.base_url.rstrip('/')}/{path}"
 
     def _get_cache_path(self) -> Path:
