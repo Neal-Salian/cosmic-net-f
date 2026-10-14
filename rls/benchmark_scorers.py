@@ -134,6 +134,7 @@ class PairScorer:
         distance_epsilon: Optional[float] = None,
         distance_unit: Optional[str] = None,
         stellar_mass_unit: Optional[str] = None,
+        historical_training_cost: Optional[Dict[str, Any]] = None,
     ):
         if name not in METHOD_NAMES:
             raise ValueError(
@@ -148,6 +149,7 @@ class PairScorer:
         self.distance_epsilon = distance_epsilon
         self.distance_unit = distance_unit
         self.stellar_mass_unit = stellar_mass_unit
+        self.historical_training_cost = copy.deepcopy(historical_training_cost)
 
     # ---------------- shared validation ----------------
 
@@ -201,6 +203,18 @@ class PairScorer:
         raise ValueError(f'unknown scorer name {self.name!r}')
 
     def training_cost(self) -> Dict[str, Any]:
+        if self.name == 'provided_rl':
+            identity = (model_state_hash(self.policy.state_dict())
+                        if isinstance(self.policy, nn.Module) else None)
+            if self.historical_training_cost is None:
+                return {'total_calls': None, 'reason': 'unknown_artifact_cost',
+                        'model_state_hash': identity}
+            cost = copy.deepcopy(self.historical_training_cost)
+            total = cost.get('total_calls') if isinstance(cost, dict) else None
+            if isinstance(total, bool) or not isinstance(total, numbers.Integral) or total < 0:
+                raise ValueError('historical training total_calls must be a non-negative integer')
+            cost.update(total_calls=int(total), model_state_hash=identity)
+            return cost
         if self.name != 'supervised_raw':
             return {'total_calls': 0}
         _, artifact = self._validated_supervised()

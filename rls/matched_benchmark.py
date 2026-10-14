@@ -217,13 +217,16 @@ def _pearson(xs: List[float], ys: List[float]):
 def _regression_metrics(preds: List[float], targets: List[float]) -> Dict[str, Any]:
     n = len(preds)
     if n == 0:
-        return {'rmse': None, 'rmse_reason': 'no_successes', 'r2': None,
+        return {'rmse': None, 'rmse_reason': 'no_successes',
+                'mae': None, 'mae_reason': 'no_successes', 'r2': None,
                 'r2_reason': 'no_successes', 'bias': None,
                 'bias_reason': 'no_successes', 'std_residual': None,
                 'std_reason': 'no_successes'}
     rmse = _rmse(preds, targets)
     bias = _mean([p - t for p, t in zip(preds, targets)])
-    out = {'rmse': rmse, 'rmse_reason': None, 'bias': bias, 'bias_reason': None,
+    out = {'rmse': rmse, 'rmse_reason': None,
+           'mae': _mean([abs(p - t) for p, t in zip(preds, targets)]),
+           'mae_reason': None, 'bias': bias, 'bias_reason': None,
            'std_residual': None, 'std_reason': None,
            'r2': None, 'r2_reason': None}
     if n < 2:
@@ -1031,6 +1034,19 @@ def _method_summary(rows, method, *, budget, seed, backbone, model_hash,
         hist_reason = 'unknown_artifact_cost'
     hist_idents = sorted({r.get('historical_artifact_identity') for r in own
                           if r.get('historical_artifact_identity')})
+    cost_fields = (
+        'scoring_time_s', 'decoder_time_s', 'prediction_time_s',
+        'full_time_s', 'total_region_time_s', 'scoring_forward_calls',
+        'eval_forward_calls', 'full_forward_calls', 'live_forward_calls',
+        'scoring_graph_evaluations', 'eval_graph_evaluations',
+        'full_graph_evaluations', 'live_graph_evaluations',
+    )
+    inference_totals = {field: sum(r.get(field, 0) for r in own + failed)
+                        for field in cost_fields}
+    mean_times = {
+        'mean_' + field: (_mean([r[field] for r in own]) if own else None)
+        for field in ('scoring_time_s', 'decoder_time_s', 'prediction_time_s', 'full_time_s')
+    }
     return {
         'method': method, 'seed': seed, 'constraint': budget.constraint,
         'decoder': budget.decoder,
@@ -1046,6 +1062,7 @@ def _method_summary(rows, method, *, budget, seed, backbone, model_hash,
         'failures': [{'graph_id': r['graph_id'], 'reason': r.get('reason')}
                      for r in failed],
         'rmse': metrics['rmse'], 'rmse_reason': metrics['rmse_reason'],
+        'mae': metrics['mae'], 'mae_reason': metrics['mae_reason'],
         'r2': metrics['r2'], 'r2_reason': metrics['r2_reason'],
         'bias': metrics['bias'], 'bias_reason': metrics['bias_reason'],
         'std_residual': metrics['std_residual'],
@@ -1054,6 +1071,8 @@ def _method_summary(rows, method, *, budget, seed, backbone, model_hash,
         'common_success_ids': sorted(common_ids), 'common_n': len(common_ids),
         'common_rmse': common_metrics['rmse'],
         'common_rmse_reason': common_metrics['rmse_reason'],
+        'common_mae': common_metrics['mae'],
+        'common_mae_reason': common_metrics['mae_reason'],
         'common_r2': common_metrics['r2'],
         'common_r2_reason': common_metrics['r2_reason'],
         'common_bias': common_metrics['bias'],
@@ -1070,6 +1089,13 @@ def _method_summary(rows, method, *, budget, seed, backbone, model_hash,
         'historical_artifact_cost_map': dict(cost_map),
         'historical_training_total': hist_total,
         'historical_artifact_identities': hist_idents,
+        'inference_cost_totals': inference_totals,
+        'inference_cost_population': 'all_attempts_including_failures',
+        'mean_inference_time_s': (_mean([r['total_region_time_s'] for r in own])
+                                  if own else None),
+        'common_mean_inference_time_s': (_mean([r['total_region_time_s'] for r in common_rows])
+                                         if common_rows else None),
+        **mean_times,
     }
 
 

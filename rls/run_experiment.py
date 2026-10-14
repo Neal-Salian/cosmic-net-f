@@ -66,6 +66,7 @@ TASK3C_SOURCE_FILES = (
     "model/model.py", "graph/graph_builder.py",
     "data/provenance.py", "data/catalog.py", "data/splits.py",
     "data/augmentation.py",
+    "rls/research_workflow.py", "scripts/multiseed_rl.py",
     "data/loaders/base_loader.py", "data/loaders/synthetic_loader.py",
     "data/loaders/tng_loader.py", "data/loaders/camels_loader.py",
 )
@@ -138,19 +139,30 @@ def copy_declared_split_lineage(graphs, group_key):
     return graphs
 
 
-def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False):
+def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False,
+         max_graphs=None, supervised_artifact=None):
     if cfg is None:
         parser = argparse.ArgumentParser()
         parser.add_argument("--config", default="config/config.yaml")
         parser.add_argument("--checkpoint", default=None)
         parser.add_argument("--output-dir", required=True)
         parser.add_argument("--allow-random-backbone", action="store_true")
+        parser.add_argument("--max-graphs", type=int, default=None)
+        parser.add_argument("--supervised-artifact", default=None)
         args = parser.parse_args()
         with open(args.config) as f:
             cfg = yaml.safe_load(f)
         checkpoint = args.checkpoint
         output_dir = args.output_dir
         allow_random_backbone = args.allow_random_backbone
+        max_graphs = args.max_graphs
+        supervised_artifact = args.supervised_artifact
+
+    cfg = copy.deepcopy(cfg)
+    if max_graphs is not None:
+        if isinstance(max_graphs, bool) or not isinstance(max_graphs, int) or max_graphs < 1:
+            raise ValueError("max_graphs must be a positive integer")
+        cfg["rls"]["max_training_graphs"] = max_graphs
 
     if output_dir is None:
         raise ValueError("output_dir must be explicit for research runs.")
@@ -159,25 +171,32 @@ def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False
     from model.model import build_model, load_model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     use_random = bool(checkpoint is None and allow_random_backbone)
+    from rls.research_workflow import (
+        inspect_backbone_checkpoint, validate_backbone_population,
+        guard_loader_fallbacks, validate_loaded_catalog,
+        fixed_budget_validation, train_with_fixed_validation, build_matched_scorers,
+    )
     checkpoint_info = None
     if not use_random:
         if checkpoint is None:
             checkpoint = os.path.join(cfg["training"]["checkpoint_dir"], "best_model.pt")
-        from data.provenance import validate_checkpoint_file
         try:
-            checkpoint_info = validate_checkpoint_file(checkpoint)
+            checkpoint_info = inspect_backbone_checkpoint(checkpoint, cfg)
         except FileNotFoundError as exc:
             raise FileNotFoundError(f"Required checkpoint does not exist: {checkpoint}") from exc
     out = os.fspath(out_path)
-    os.makedirs(out, exist_ok=True)
     seed = cfg.get("seed", 42)
+    split_seed = int(cfg.get("data", {}).get("split_seed", seed))
     torch.manual_seed(seed); np.random.seed(seed)
     rls_cfg = cfg["rls"]
 
     # 1. Data + graphs (strict grouped path vs legacy path).
     from data.loaders.base_loader import get_loader
     from graph.graph_builder import GraphBuilder, build_dataloaders
-    loader = get_loader(cfg)
+    loader_cfg = copy.deepcopy(cfg)
+    loader_cfg["seed"] = split_seed
+    loader = get_loader(loader_cfg)
+    guard_loader_fallbacks(loader, smoke=use_random)
     strict_research = bool(cfg.get("data", {}).get("strict_research", False))
     ratios = (float(cfg.get("data", {}).get("train_ratio", 0.7)),
               float(cfg.get("data", {}).get("val_ratio", 0.15)),
@@ -189,12 +208,20 @@ def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False
         from data.splits import grouped_split
         halos = loader.load()
         train_halos, val_halos, test_halos, grouped_manifest = grouped_split(
-            halos, group_key=group_key, ratios=ratios, seed=int(seed))
+            halos, group_key=group_key, ratios=ratios, seed=split_seed)
         split_manifest = grouped_manifest
     else:
         train_halos, val_halos, test_halos = loader.split_data()
         split_manifest = build_legacy_split_manifest(
-            train_halos, val_halos, test_halos, seed=int(seed), ratios=ratios)
+            train_halos, val_halos, test_halos, seed=split_seed, ratios=ratios)
+    if not train_halos or not val_halos or not test_halos:
+        raise ValueError("research execution requires nonempty train/validation/test splits")
+    research_label = (resolve_random_backbone_label(cfg, True)[0] if use_random
+                      else checkpoint_info["research_label"])
+    contract = validate_loaded_catalog(loader,
+        list(train_halos) + list(val_halos) + list(test_halos),
+        smoke=use_random, research_label=research_label)
+    validate_backbone_population(checkpoint_info, contract, split_manifest)
     train_loader, val_loader, test_loader = build_dataloaders(
         cfg, train_halos, val_halos, test_halos)
 
@@ -212,12 +239,10 @@ def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False
         checkpoint_record = {"status": "untrained_random_backbone",
                              "research_label": research_label}
     else:
-        research_label = cfg.get("data", {}).get(
-            "research_label", "legacy_total_radius")
         gnn = load_model(
             checkpoint, cfg, device, research_label=research_label
         )
-        run_mode = "full"
+        run_mode = ("legacy_reproduction" if research_label.startswith("legacy_") else "full")
         checkpoint_record = {**checkpoint_info,
                              "research_label": research_label}
     gnn.eval()
@@ -229,6 +254,10 @@ def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False
     from rls.train_policy import prepare_graphs
     graphs = prepare_graphs(train_loader, gnn, device)
     val_graphs = prepare_graphs(val_loader, gnn, device)
+    if max_graphs is not None:
+        graphs = graphs[:max_graphs]
+    if not graphs or not val_graphs:
+        raise ValueError("policy training and validation graph populations must be nonempty")
 
     # 4. Policy + value net + policy-gradient trainer
     from rls.policy import build_policy
@@ -238,6 +267,11 @@ def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False
     opt = torch.optim.Adam(policy.parameters(), lr=rls_cfg["lr"])
     vopt = torch.optim.Adam(value_net.parameters(), lr=rls_cfg["lr"])
     trainer = PolicyGradientTrainer(policy, value_net, opt, vopt, rls_cfg)
+    scorers, control_status = build_matched_scorers(policy, cfg,
+        catalog_contract=contract, split_hash=split_manifest["manifest_sha256"],
+        supervised_artifact=supervised_artifact, device=device,
+        train_ids=[str(h.cluster_id) for h in train_halos],
+        heldout_ids=[str(h.cluster_id) for h in list(val_halos) + list(test_halos)])
 
     # 5. GNN adapter for rollouts: given (graph_dict, mask) -> preds.
     #    Honors use_gnn so StageB evaluation never reuses a stale model.
@@ -257,13 +291,15 @@ def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False
         return pred_full.view(-1), pred_pruned.view(-1)
 
     # 6. Train policy (Stage A, legacy repaired decoding explicitly identified)
-    from rls.train_policy import train_policy
     log_rows = []
     def log_fn(epoch, target_sp, loss):
         log_rows.append([epoch, target_sp, float(loss)])
         print(f"[epoch {epoch}] target_sparsity={target_sp:.3f} loss={float(loss):.4f}")
-    losses = train_policy(trainer, graphs, gnns, rls_cfg, device,
-                          epochs=rls_cfg["epochs"], log_fn=log_fn)
+    def validation_fn(candidate):
+        return fixed_budget_validation(candidate, val_graphs, gnns, rls_cfg, device)
+    os.makedirs(out, exist_ok=True)
+    losses = train_with_fixed_validation(trainer, graphs, gnns, rls_cfg, device,
+                                         log_fn=log_fn, validation_fn=validation_fn)
     torch.save(policy.state_dict(), os.path.join(out, "policy.pt"))
     torch.save(value_net.state_dict(), os.path.join(out, "value_net.pt"))
     with open(os.path.join(out, "training_log.csv"), "w", newline="") as f:
@@ -334,23 +370,10 @@ def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False
 
     # 8. Matched-budget evaluation on raw test graphs (frozen primary).
     from rls.matched_benchmark import BudgetSpec, evaluate_matched_budget
-    from rls.benchmark_scorers import PairScorer
     from data.provenance import build_run_provenance, model_state_hash, sha256_file
     keep_q = float(rls_cfg.get("target_sparsity_end", 0.4))
     budget = BudgetSpec(keep_fraction=keep_q, constraint="no_isolates", decoder="direct")
-    edge_feature_names = list(cfg.get("graph", {}).get("edge_features",
-        ["distance", "delta_v", "cos_theta", "mass_ratio", "proj_sep"]))
-    scorers = [PairScorer(name="random"),
-               PairScorer(name="distance"),
-               PairScorer(name="degree"),
-               PairScorer(name="provided_rl", policy=policy,
-                          edge_feature_names=edge_feature_names)]
     # Honest provenance: unknown catalog stays unknown, never inferred real.
-    contract = None
-    try:
-        contract = test_halos[0].metadata.get("catalog_contract") if test_halos else None
-    except Exception:
-        contract = None
     if isinstance(contract, dict) and contract:
         catalog_contract = copy.deepcopy(contract)
         source_files = list(contract.get("source_files", []))
@@ -378,10 +401,18 @@ def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False
         research_label=research_label,
     )
     provenance["rng_roles"] = {"torch_seed": int(seed), "numpy_seed": int(seed),
-                               "cuda_seed": int(seed), "data_loader_seed": int(seed),
+                               "cuda_seed": int(seed), "data_loader_seed": split_seed,
                                "model_init_seed": int(seed)}
     provenance["run_mode"] = run_mode
     provenance["stage_a_decoder"] = "legacy_repaired"
+    provenance["controls"] = control_status
+    provenance["stage_a_validation"] = {
+        "requested_keep_fraction": float(rls_cfg.get("target_sparsity_end", .4)),
+        "decoder_kind": "legacy_repaired", "selection_split": "validation",
+        "selected_epoch": getattr(trainer, "selected_epoch", None),
+        "selected_rmse": getattr(trainer, "selected_validation_rmse", None),
+        "restored_best_policy": True,
+    }
     try:
         provenance["policy_state_hash"] = model_state_hash(policy.state_dict())
     except Exception:
@@ -443,6 +474,7 @@ def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False
         compat.append({
             "method": s["method"],
             "rmse": s.get("rmse"),
+            "mae": s.get("mae"),
             "r2": s.get("r2"),
             "scatter": s.get("std_residual"),
             "mean_keep_frac": mean_keep,
@@ -467,6 +499,8 @@ def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False
                 "checkpoint": checkpoint_record,
                 "split": split_manifest,
                 "budget": budget.config_dict(),
+                "controls": control_status,
+                "stage_a_validation": provenance["stage_a_validation"],
                 "provenance": provenance}
     if accepted:
         prov_out["backbone_finetuned"] = stageb_record

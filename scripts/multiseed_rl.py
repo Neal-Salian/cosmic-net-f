@@ -1,151 +1,143 @@
-"""Multi-seed RL harness (audit P2, Sep 2026): repeat offline policy training +
-evaluation over >=5 seeds; report mean +/- std (and bootstrap CI) for RMSE,
-R2, keep_frac at matched operating points. A script, not notebook cells, so
-the numbers are reproducible outside Kaggle.
+"""Repeat the canonical matched-budget experiment with explicit seed artifacts.
 
-Usage:
-  python scripts/multiseed_rl.py --config config/config.yaml \
-      --seeds 42 43 44 45 46 --epochs 60 --out outputs/rls/multiseed.json
-
-Writes JSON with per-seed rows (each carrying backbone_stage/sha256 and the
-policy.pt md5 per the provenance.json convention) plus summarize_multiseed
-CI records. Compare sparsity_mode=penalty vs topk_scheduled by running twice
-with --rls-override sparsity_mode=topk_scheduled.
+Each seed gets a fresh output directory containing policy weights, provenance,
+and raw per-graph matched rows. The aggregate uses the common-success metrics
+from those artifacts; undefined metrics stay null. A random backbone requires
+--allow-random-backbone and every result remains labelled as smoke evidence.
 """
 import argparse
+import copy
 import hashlib
 import json
+import math
 import os
+from pathlib import Path
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def _md5(path):
-    h = hashlib.md5()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
+    return hashlib.md5(Path(path).read_bytes()).hexdigest()
 
 
-def main():
+def _summaries(rows, *, seed=42, n_bootstrap=1000):
     import numpy as np
-    import torch
+    rng = np.random.default_rng(seed)
+    methods = sorted({row['method'] for row in rows})
+    result = []
+    for method in methods:
+        own = [row for row in rows if row['method'] == method]
+        rec = {'method': method, 'n_seeds': len(own),
+               'population': 'per_seed_common_success',
+               'backbone_stages': sorted({r['backbone_stage'] for r in own}),
+               'backbone_shas': sorted({r['backbone_sha256'] for r in own})}
+        for key in ('rmse', 'mae', 'r2', 'mean_keep_frac'):
+            values = np.array([r[key] for r in own if r.get(key) is not None
+                               and math.isfinite(float(r[key]))], dtype=float)
+            rec[key + '_n_seeds'] = len(values)
+            rec[key + '_reason'] = None if len(values) else 'no_defined_seed_metrics'
+            rec[key + '_mean'] = float(values.mean()) if len(values) else None
+            rec[key + '_std'] = float(values.std(ddof=1)) if len(values) > 1 else None
+            if len(values) > 1:
+                draws = rng.choice(values, size=(n_bootstrap, len(values))).mean(axis=1)
+                rec[key + '_ci95_lo'] = float(np.percentile(draws, 2.5))
+                rec[key + '_ci95_hi'] = float(np.percentile(draws, 97.5))
+            else:
+                rec[key + '_ci95_lo'] = rec[key + '_ci95_hi'] = None
+        result.append(rec)
+    return result
+
+
+def main(argv=None):
     import yaml
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--config", default="config/config.yaml")
-    ap.add_argument("--checkpoint", default=None)
-    ap.add_argument("--seeds", nargs="+", type=int, default=[42, 43, 44, 45, 46])
-    ap.add_argument("--epochs", type=int, default=None)
-    ap.add_argument("--max-graphs", type=int, default=None)
-    ap.add_argument("--rls-override", nargs="*", default=[],
-                    help="KEY=VALUE pairs merged into cfg['rls'], e.g. "
-                         "sparsity_mode=topk_scheduled")
-    ap.add_argument("--out", default="outputs/rls/multiseed.json")
-    args = ap.parse_args()
-
-    with open(args.config) as f:
-        cfg = yaml.safe_load(f)
-    for kv in args.rls_override:
-        k, v = kv.split("=", 1)
-        try:
-            v = yaml.safe_load(v)
-        except Exception:
-            pass
-        cfg["rls"][k] = v
+    from data.provenance import sha256_file
+    from rls.research_workflow import inspect_backbone_checkpoint
+    from rls.run_experiment import main as run_experiment
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--config', default='config/config.yaml')
+    ap.add_argument('--checkpoint', default=None)
+    ap.add_argument('--allow-random-backbone', action='store_true')
+    ap.add_argument('--supervised-artifact', default=None)
+    ap.add_argument('--seeds', nargs='+', type=int, default=[42, 43, 44, 45, 46])
+    ap.add_argument('--epochs', type=int, default=None)
+    ap.add_argument('--max-graphs', type=int, default=None)
+    ap.add_argument('--rls-override', nargs='*', default=[], help='KEY=VALUE overrides for cfg[rls]')
+    ap.add_argument('--out', default='outputs/rls/multiseed.json')
+    ap.add_argument('--runs-dir', default=None)
+    args = ap.parse_args(argv)
+    with open(args.config) as stream:
+        cfg = yaml.safe_load(stream)
+    cfg.setdefault('rls', {})
+    for setting in args.rls_override:
+        if '=' not in setting:
+            raise ValueError('rls overrides require KEY=VALUE')
+        key, value = setting.split('=', 1)
+        cfg['rls'][key] = yaml.safe_load(value)
     if args.epochs is not None:
-        cfg["rls"]["epochs"] = args.epochs
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    from data.loaders.base_loader import get_loader
-    from graph.graph_builder import build_dataloaders
-    from rls.run_experiment import _ensure_graph_builder_works
-    _ensure_graph_builder_works()
-    loader = get_loader(cfg)
-    train_halos, val_halos, test_halos = loader.split_data()
-    train_loader, val_loader, test_loader = build_dataloaders(
-        cfg, train_halos, val_halos, test_halos)
-
-    from model.model import build_model, load_model
-    ckpt = args.checkpoint or os.path.join(
-        cfg["training"]["checkpoint_dir"], "best_model.pt")
-    seed_rows = []
-    for s in args.seeds:
-        torch.manual_seed(s)
-        np.random.seed(s)
-        gnn = (load_model(ckpt, cfg, device) if os.path.exists(ckpt)
-               else build_model(cfg).to(device))
-        gnn.eval()
-        from rls.train_policy import prepare_graphs, train_policy
-        from rls.policy import build_policy
-        from rls.policy_gradient import PolicyGradientTrainer, ValueNet
-        from rls.provenance import record_backbone
-        graphs = prepare_graphs(train_loader, gnn, device)
-        if args.max_graphs is not None:
-            graphs = graphs[:args.max_graphs]
-        test_graphs = prepare_graphs(test_loader, gnn, device)
-        policy = build_policy(cfg, node_emb_dim=gnn.output_dim).to(device)
-        value_net = ValueNet(gnn.output_dim).to(device)
-        opt = torch.optim.Adam(policy.parameters(), lr=cfg["rls"]["lr"])
-        vopt = torch.optim.Adam(value_net.parameters(), lr=cfg["rls"]["lr"])
-        trainer = PolicyGradientTrainer(policy, value_net, opt, vopt, cfg["rls"])
-
-        from torch_geometric.data import Data, Batch
-
-        def gnns(graph, mask, use_gnn=gnn):
-            with torch.no_grad():
-                m = mask.to(device)
-                d_full = Data(x=graph["x"], edge_index=graph["edge_index"],
-                              edge_attr=graph["edge_attr"])
-                pred_full, _ = use_gnn(Batch.from_data_list([d_full]))
-                d_pr = Data(x=graph["x"], edge_index=graph["edge_index"][:, m],
-                            edge_attr=graph["edge_attr"][m])
-                pred_pruned, _ = use_gnn(Batch.from_data_list([d_pr]))
-            return pred_full.view(-1), pred_pruned.view(-1)
-
-        train_policy(trainer, graphs, gnns, cfg["rls"], device,
-                     epochs=cfg["rls"]["epochs"])
-        # evaluate: frozen symmetric policy mask on the test graphs
-        from rls.sparsify import final_symmetric_mask
-        from rls.evaluate import _rmse, _r2
-        pf, pp, ys, keeps = [], [], [], []
-        with torch.no_grad():
-            for g in test_graphs:
-                gd = {k: v.to(device) for k, v in g.items()
-                      if isinstance(v, torch.Tensor)}
-                p = torch.sigmoid(policy(gd["edge_attr"], gd["emb"],
-                                         gd["edge_index"], gd["ctx"])).squeeze(-1)
-                m = final_symmetric_mask(
-                    gd["edge_index"], p, cfg["rls"].get("min_keep_frac", 0.1))
-                full, pruned = gnns(gd, m)
-                pf.append(full.cpu())
-                pp.append(pruned.cpu())
-                ys.append(gd["y"].view(-1).cpu())
-                keeps.append(m.float().mean().item())
-        pf, pp, ys = torch.cat(pf), torch.cat(pp), torch.cat(ys)
-        rec = record_backbone("frozen", gnn)
-        seed_rows.append({
-            "seed": s, "method": "rl_policy",
-            "rmse": _rmse(pp, ys), "r2": _r2(pp, ys),
-            "mean_keep_frac": float(np.mean(keeps)),
-            "full_rmse": _rmse(pf, ys), "full_r2": _r2(pf, ys),
-            "backbone_stage": rec["stage"], "backbone_sha256": rec["sha256"],
-        })
-        print(f"[seed {s}] rmse={seed_rows[-1]['rmse']:.4f} "
-              f"r2={seed_rows[-1]['r2']:.4f} "
-              f"keep={seed_rows[-1]['mean_keep_frac']:.3f}")
-
-    from rls.evaluate import summarize_multiseed
-    summary = summarize_multiseed([[r] for r in seed_rows])
-    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
-    with open(args.out, "w") as f:
-        json.dump({"per_seed": seed_rows, "summary": summary,
-                   "sparsity_mode": cfg["rls"].get("sparsity_mode", "penalty")},
-                  f, indent=2)
-    print(f"WROTE {args.out}")
+        cfg['rls']['epochs'] = args.epochs
+    if len(set(args.seeds)) != len(args.seeds):
+        raise ValueError('seeds must be unique; repeated seeds are not independent replicates')
+    out = Path(args.out)
+    runs_root = Path(args.runs_dir) if args.runs_dir else out.with_name(out.stem + '_runs')
+    if out.exists():
+        raise FileExistsError(f'refusing to overwrite multiseed report: {out}')
+    if runs_root.exists():
+        raise FileExistsError(f'multiseed requires a fresh runs directory: {runs_root}')
+    checkpoint = args.checkpoint
+    if not (checkpoint is None and args.allow_random_backbone):
+        checkpoint = checkpoint or os.path.join(cfg['training']['checkpoint_dir'], 'best_model.pt')
+        try:
+            inspect_backbone_checkpoint(checkpoint, cfg)
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(f'Required checkpoint does not exist: {checkpoint}') from exc
+    # Model/policy replicate seeds must not silently change the data split.
+    cfg.setdefault('data', {}).setdefault('split_seed', int(cfg.get('seed', 42)))
+    per_seed, runs = [], []
+    for seed in args.seeds:
+        run_cfg = copy.deepcopy(cfg)
+        run_cfg['seed'] = seed
+        seed_dir = runs_root / f'seed_{seed}'
+        run_experiment(run_cfg, checkpoint=checkpoint, output_dir=seed_dir,
+            allow_random_backbone=args.allow_random_backbone,
+            max_graphs=args.max_graphs, supervised_artifact=args.supervised_artifact)
+        provenance = json.loads((seed_dir / 'provenance.json').read_text())
+        matched = json.loads((seed_dir / 'matched_summary.json').read_text())
+        raw = json.loads((seed_dir / 'matched_rows.json').read_text())
+        policy_path = seed_dir / 'policy.pt'
+        backbone = provenance['backbone_frozen']
+        runs.append({'seed': seed, 'output_dir': str(seed_dir.resolve()),
+                     'provenance': sha256_file(seed_dir / 'provenance.json'),
+                     'matched_rows': sha256_file(seed_dir / 'matched_rows.json'),
+                     'matched_summary': sha256_file(seed_dir / 'matched_summary.json')})
+        for summary in matched:
+            if summary.get('backbone_stage') != 'frozen':
+                continue
+            common_ids = set(summary.get('common_success_ids', []))
+            population = [r for r in raw if r.get('backbone_stage') == 'frozen'
+                and r['method'] == summary['method'] and r['status'] == 'success'
+                and r['graph_id'] in common_ids and r.get('available_pair_count')]
+            keeps = [r['final_pair_count'] / r['available_pair_count'] for r in population]
+            per_seed.append({**summary, 'seed': seed,
+                'population': 'common_success',
+                'rmse': summary.get('common_rmse'), 'mae': summary.get('common_mae'),
+                'r2': summary.get('common_r2'),
+                'mean_keep_frac': sum(keeps) / len(keeps) if keeps else None,
+                'backbone_stage': backbone['stage'], 'backbone_sha256': backbone['sha256'],
+                'policy_sha256': sha256_file(policy_path)['sha256'],
+                'policy_md5': _md5(policy_path), 'run_mode': provenance['run_mode'],
+                'research_label': provenance['research_label'],
+                'output_dir': str(seed_dir.resolve())})
+        print(f'[seed {seed}] wrote matched evaluation -> {seed_dir}')
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open('w') as stream:
+        json.dump({'per_seed': per_seed, 'summary': _summaries(per_seed),
+                   'runs': runs, 'split_seed': cfg['data']['split_seed'],
+                   'sparsity_mode': cfg['rls'].get('sparsity_mode', 'penalty')},
+                  stream, indent=2, allow_nan=False)
+    print(f'WROTE {out}')
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     raise SystemExit(main())
