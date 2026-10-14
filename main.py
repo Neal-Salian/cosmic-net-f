@@ -109,10 +109,9 @@ def train(config: Dict[str, Any]) -> None:
     test_source = config.get('training', {}).get('test_source', 'synthetic')
 
     if train_source != test_source:
-        logger.info(f"Cross-simulation experiment: train on {train_source}, test on {test_source}")
-        train_loader_obj, test_loader_obj = get_train_test_loaders(config)
-        train_halos, val_halos, _ = train_loader_obj.split_data()
-        _, _, test_halos = test_loader_obj.split_data()
+        raise ValueError("Legacy cross-simulation training cannot certify compatible targets, "
+                         "units or independent splits. Use the audited astronomy baseline "
+                         "and evaluation workflow with explicit catalog contracts.")
     else:
         # Standard single-source experiment
         loader = get_loader(config)

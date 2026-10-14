@@ -144,10 +144,8 @@ python main.py full
 # data:
 #   source: tng  # or camels, camels_hf
 
-# Cross-simulation experiment
-# training:
-#   train_source: tng
-#   test_source: camels
+# For controlled real-catalog experiments, use the audited baseline workflow:
+# docs/audited_baseline.md
 ```
 
 ### API Server
@@ -228,12 +226,12 @@ symbolic:
 ```
 
 ### Cross-Simulation Experiments
-```yaml
-training:
-  train_source: tng
-  test_source: camels
-```
-Automatically tagged as "cross_sim" in W&B for filtering results.
+
+The legacy `main.py` cross-source training route is rejected because it cannot
+certify compatible mass targets, units or independent splits. Use the
+[audited astronomy baseline](docs/audited_baseline.md) and its provenance-bound
+evaluation workflow. Cross-dataset scientific results still require compatible,
+audited real catalogs and controlled experiments.
 
 ## Project Structure
 
