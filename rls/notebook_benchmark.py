@@ -140,13 +140,36 @@ def matched_notebook_rows(model, graphs, context, fractions, *, policy=None,
             budget, seed=context["seed"], provenance=notebook_provenance(context), backbone="frozen")
         for row in summaries:
             own = [r for r in raw if r["method"] == row["method"] and r["status"] == "success"]
-            keep = sum(r["stored_retention"] for r in own) / len(own) if own else None
+            common_ids = set(row["common_success_ids"])
+            common = [r for r in own if r["graph_id"] in common_ids]
+
+            def mean_retention(records, field):
+                values = [r[field] for r in records if r.get(field) is not None]
+                return sum(values) / len(values) if values else None
+
+            keep = mean_retention(common, "physical_retention")
+            # Preserve the evaluator's method-population evidence before
+            # exposing every headline metric on the common graph population.
+            for field in ("rmse", "rmse_reason", "mae", "mae_reason", "r2", "r2_reason",
+                          "bias", "bias_reason", "std_residual", "std_reason",
+                          "fidelity_full_pred", "fidelity_reason"):
+                row["method_population_" + field] = row[field]
+                row[field] = row["common_" + field]
+            for field in ("scoring_time_s", "decoder_time_s", "prediction_time_s", "full_time_s"):
+                row["method_population_mean_" + field] = row["mean_" + field]
+                row["mean_" + field] = (sum(r[field] for r in common) / len(common)
+                                        if common else None)
             row.update(frac=q, keep_frac=keep, mean_keep_frac=keep,
                        backbone_sha256=row["model_state_hash"], run_mode=context["run_mode"],
-                       method_population_rmse=row["rmse"], method_population_r2=row["r2"],
-                       rmse=row["common_rmse"], r2=row["common_r2"], mae=row["common_mae"],
-                       fidelity=row["common_fidelity_full_pred"],
-                       mean_inference_region_time_s=(sum(r["total_region_time_s"] for r in own) / len(own) if own else None),
+                       population="common_success", count_population="method_attempts",
+                       retention_units="distinct_nonself_physical_pairs",
+                       mean_stored_keep_frac=mean_retention(common, "stored_retention"),
+                       method_population_mean_keep_frac=mean_retention(own, "physical_retention"),
+                       method_population_mean_stored_keep_frac=mean_retention(own, "stored_retention"),
+                       fidelity=row["fidelity_full_pred"], scatter=row["std_residual"],
+                       mean_inference_region_time_s=row["common_mean_inference_time_s"],
+                       method_population_mean_inference_region_time_s=row["mean_inference_time_s"],
+                       mean_inference_time_s=row["common_mean_inference_time_s"],
                        timing_scope="scoring_including_embedding_and_policy+decoder+prediction; graph construction separate")
         rows.extend(summaries)
         per_example.extend(raw)

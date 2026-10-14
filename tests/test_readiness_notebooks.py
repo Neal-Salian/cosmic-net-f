@@ -143,3 +143,52 @@ def test_matched_notebook_boundary_moves_graphs_to_predictor_device(monkeypatch)
                "research_label": "fixture_smoke", "source_identity": "test", "run_mode": "smoke"}
     benchmark.matched_notebook_rows(model, [original], context, [.5])
     assert original.x.device.type == "cpu"  # Do not mutate caller graph storage.
+
+
+def test_notebook_headline_retention_and_timing_use_common_physical_population():
+    from rls.notebook_benchmark import matched_notebook_rows
+    class Predictor(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.weight = torch.nn.Parameter(torch.ones(()))
+        def forward(self, batch):
+            return batch.edge_attr.sum() * self.weight
+    cycle = torch.tensor([[0, 1, 1, 2, 2, 3, 3, 0, 0, 1, 2, 3],
+                          [1, 0, 2, 1, 3, 2, 0, 3, 0, 1, 2, 3]])
+    triangle = torch.tensor([[0, 1, 0, 2, 1, 2], [1, 0, 2, 0, 2, 1]])
+    star = torch.tensor([[0, 1, 0, 2, 0, 3], [1, 0, 2, 0, 3, 0]])
+    graphs = []
+    for cid, edges, nodes, target in (
+            ("common-a", cycle, 4, 0.), ("common-b", cycle, 4, 2.),
+            ("missing-position", triangle, 3, 100.),
+            ("infeasible-budget", star, 4, 0.)):
+        g = Data(x=torch.ones(nodes, 1), edge_index=edges,
+            edge_attr=torch.ones(edges.shape[1], 1), stellar_mass=torch.ones(nodes),
+            y=torch.tensor([target]), cluster_id=cid)
+        if cid != "missing-position":
+            g.pos = torch.arange(nodes, dtype=torch.float32).reshape(-1, 1)
+        graphs.append(g)
+    context = {"config_used": {"graph": {"edge_features": ["distance"]}, "rls": {}},
+               "split_cluster_ids": {}, "dataset": {}, "seed": 1,
+               "research_label": "fixture_smoke", "source_identity": "test", "run_mode": "smoke"}
+    summaries, raw = matched_notebook_rows(Predictor(), graphs, context, [.5])
+    for summary in summaries:
+        assert summary["common_success_ids"] == ["common-a", "common-b"]
+        common = [r for r in raw if r["method"] == summary["method"]
+                  and r["graph_id"] in summary["common_success_ids"]]
+        assert summary["comparison_population"] == "common_success"
+        expected_keep = 1. if summary["method"] == "full" else .5
+        assert summary["mean_keep_frac"] == summary["keep_frac"] == expected_keep
+        assert summary["retention_units"] == "distinct_nonself_physical_pairs"
+        assert summary["mae"] == summary["common_mae"]
+        assert summary["std_residual"] == summary["common_std_residual"]
+        assert summary["mean_inference_region_time_s"] == pytest.approx(
+            sum(r["total_region_time_s"] for r in common) / len(common))
+        assert summary["mean_inference_time_s"] == summary["mean_inference_region_time_s"]
+        for field in ("scoring_time_s", "decoder_time_s", "prediction_time_s", "full_time_s"):
+            assert summary["mean_" + field] == pytest.approx(
+                sum(r[field] for r in common) / len(common), rel=1e-12)
+    degree = next(r for r in summaries if r["method"] == "degree")
+    assert degree["mean_stored_keep_frac"] == pytest.approx(2 / 3)
+    assert degree["method_population_mean_keep_frac"] == pytest.approx(5 / 9)
+    assert degree["method_population_mae"] != degree["mae"]

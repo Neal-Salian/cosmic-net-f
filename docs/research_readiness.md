@@ -67,7 +67,11 @@ final budget, constraint and independent tie marks. Reciprocal/duplicate
 stored copies share membership; loops do not consume the physical budget.
 Failures and the intersection of successful graph IDs are saved. Headline
 RMSE, MAE and R² use that common population; method-only population values
-remain separately named. A full reference is stored per budget stratum.
+remain separately named. Notebook plot retention uses distinct physical pairs
+on the common population, with stored-column retention separately named.
+Primary mean inference times use those same graphs; attempt/failure counts and
+total costs retain their explicitly labelled method/attempt populations.
+A full reference is stored per budget stratum.
 
 Controls are random, distance, degree, stellar binding proxy, edge-feature
 gradient×input and a **trained raw selector distilling train-only saliency**.
