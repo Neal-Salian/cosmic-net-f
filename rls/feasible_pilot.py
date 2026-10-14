@@ -93,7 +93,7 @@ def decode(layout, scores, k, method, pair_marks=None, generator=None,
                                 method=method, sample=sample,
                                 pair_marks=marks, generator=generator)
         chosen, logp = selected.selected, selected.log_probability
-        sampled_count = int(chosen.sum())
+        sampled_count = int(selected.order.numel())
         scaffold_count = int(selected.scaffold.sum())
         likelihood_kind = 'ordered_action_conditional_on_marks'
         limits = {'no_residual_zero_gradient': bool(method == 'scaffold' and k == report['minimum_pairs'])}
@@ -528,7 +528,7 @@ def _validate_method(scorer, method, k, examples, oracle, full_predictions,
             time.perf_counter() - scorer_start)
         example_seed = int(hashlib.sha256(row['graph_id'].encode()).hexdigest()[:8], 16)
         marks = make_pair_marks(layout, generator=torch.Generator().manual_seed(
-            500000 + seed * 100000 + k * 1000 + epoch * 100 + example_seed))
+            500000 + seed * 100000 + k * 1000 + example_seed))
         start = time.perf_counter()
         decoded = decode(layout, scores, k, method, pair_marks=marks,
                          constraint=config['constraint'], sample=False,

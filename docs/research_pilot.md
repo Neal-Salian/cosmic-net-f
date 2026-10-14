@@ -44,6 +44,12 @@ objective and regret, signed/absolute prediction error, requested and final
 physical retention, and selected versus available stored-edge retention.
 Per-epoch curves report mean objective, mean squared error, and RMSE.
 
+The readiness fix freezes validation pair marks across epochs and counts only
+residual stochastic actions in the scaffold's sampled count. The archived
+`capped-20260923-1b0c92c` outputs retain their original protocol (epoch-varying
+marks and scaffold-inclusive sampled diagnostics); they have not been rerun or
+edited. A future run of the corrected protocol needs a new output directory.
+
 For the capped run, expected calls are 23,040 training graph forwards across
 all methods, 2,880 validation forwards, 816 shared exhaustive-oracle forwards,
 and 24 full-graph reference forwards. Oracle outputs are diagnostic only and
