@@ -4,6 +4,7 @@ The legacy intrinsic-feature policy is intentionally separate from projected
 observations: a projected checkpoint needs its own supported policy/reward path.
 """
 import copy
+import json
 import math
 import re
 
@@ -228,3 +229,54 @@ def build_matched_scorers(policy, cfg, *, catalog_contract, split_hash,
             'model_state_hash': artifact['model_state_hash'],
             'label_predictor_calls': artifact['label_provenance']['total_calls']}
     return scorers, controls
+
+
+def comparison_csv_rows(summaries, matched_rows):
+    """Export comparable headlines while retaining method-population evidence.
+
+    The full reference may succeed on graphs where the requested sparse budget
+    is infeasible. Every headline, including retention, therefore uses exactly
+    the evaluator's common-success IDs. ID columns contain JSON for CSV readers.
+    """
+    records = []
+    metric_fields = {'rmse': 'rmse', 'mae': 'mae', 'r2': 'r2',
+                     'scatter': 'std_residual', 'fidelity': 'fidelity_full_pred'}
+    reason_fields = {'rmse': 'rmse_reason', 'mae': 'mae_reason', 'r2': 'r2_reason',
+                     'scatter': 'std_reason', 'fidelity': 'fidelity_reason'}
+    for summary in summaries:
+        stage = summary.get('backbone_stage')
+        own = [row for row in matched_rows if row['method'] == summary['method']
+               and row['status'] == 'success'
+               and row.get('backbone_stage') == stage]
+        common_ids = sorted(summary['common_success_ids'])
+        common_set = set(common_ids)
+        common = [row for row in own if row['graph_id'] in common_set]
+
+        def retention(rows):
+            fractions = [row['final_pair_count'] / row['available_pair_count']
+                         for row in rows if row.get('available_pair_count')]
+            return sum(fractions) / len(fractions) if fractions else None
+
+        record = {
+            'method': summary['method'], 'backbone_stage': stage,
+            'research_label': summary.get('research_label'),
+            'comparison_population': 'common_success',
+            'common_n': summary['common_n'],
+            'common_success_ids': json.dumps(common_ids),
+            'n_success': summary['common_n'],
+            'mean_keep_frac': retention(common),
+            'method_population_mean_keep_frac': retention(own),
+            'method_population_n_requested': summary.get('n_requested'),
+            'method_population_n_success': summary.get('n_success'),
+            'method_population_n_failed': summary.get('n_failed'),
+            'method_population_success_ids': json.dumps(summary.get('success_graph_ids', [])),
+            'headline_comparison_allowed': summary.get('headline_comparison_allowed'),
+            'headline_comparison_reason': summary.get('headline_comparison_reason'),
+        }
+        for column, metric in metric_fields.items():
+            record[column] = summary.get('common_' + metric)
+            record[column + '_reason'] = summary.get('common_' + reason_fields[column])
+            record['method_population_' + column] = summary.get(metric)
+            record['method_population_' + column + '_reason'] = summary.get(reason_fields[column])
+        records.append(record)
+    return records

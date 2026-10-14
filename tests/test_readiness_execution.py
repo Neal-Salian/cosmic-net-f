@@ -214,3 +214,53 @@ def test_inference_summary_includes_scoring_decoding_and_embedding_calls():
     rl = next(s for s in summaries if s['method'] == 'provided_rl')
     assert rl['historical_training_calls'] is None
     assert rl['mae'] == 2.
+
+
+def test_comparison_csv_uses_common_population_after_real_budget_and_scorer_failures():
+    from data.provenance import build_run_provenance
+    from rls.benchmark_scorers import PairScorer
+    from rls.matched_benchmark import BudgetSpec, evaluate_matched_budget
+    from rls.research_workflow import comparison_csv_rows
+    class Predictor(nn.Module):
+        def forward(self, batch):
+            return batch.edge_attr.sum()
+    pair = torch.tensor([[0, 1], [1, 0]])
+    triangle = torch.tensor([[0, 1, 0, 2, 1, 2], [1, 0, 2, 0, 2, 1]])
+    star = torch.tensor([[0, 1, 0, 2, 0, 3], [1, 0, 2, 0, 3, 0]])
+    graphs = []
+    for cid, edge_index, n_nodes, edge_value, target in (
+            ('common-a', pair, 2, 1., 0.), ('common-b', pair, 2, 2., 2.),
+            ('missing-position', triangle, 3, 1., 100.),
+            ('infeasible-budget', star, 4, 1., 0.)):
+        graph = Data(x=torch.ones(n_nodes, 1), edge_index=edge_index,
+            edge_attr=torch.full((edge_index.shape[1], 1), edge_value),
+            y=torch.tensor([target]), cluster_id=cid)
+        if cid != 'missing-position':
+            graph.pos = torch.arange(n_nodes, dtype=torch.float32).reshape(-1, 1)
+        graphs.append(graph)
+    provenance = build_run_provenance(source_files=[], catalog_contract={},
+        split_manifest={'manifest_sha256': 'split'}, resolved_config={},
+        source_revision='test', graph={}, augmentation_manifest=None,
+        research_label='synthetic')
+    summaries, matched = evaluate_matched_budget(Predictor(), graphs,
+        [PairScorer('distance'), PairScorer('degree')],
+        BudgetSpec(keep_fraction=.5, constraint='no_isolates'), seed=3,
+        provenance=provenance, backbone='frozen')
+    assert any(row['graph_id'] == 'infeasible-budget' and row['method'] == 'degree'
+               and row['status'] == 'failed' for row in matched)
+    records = {row['method']: row for row in comparison_csv_rows(summaries, matched)}
+    for row in records.values():
+        assert row['rmse'] == 2.
+        assert row['mae'] == 2.
+        assert row['r2'] == -3.
+        assert row['scatter'] == 0.
+        assert row['fidelity'] == pytest.approx(1.)
+        assert row['mean_keep_frac'] == 1.
+        assert row['comparison_population'] == 'common_success'
+        assert row['common_n'] == 2
+        assert json.loads(row['common_success_ids']) == ['common-a', 'common-b']
+    assert records['full']['method_population_rmse'] > 2.
+    assert records['degree']['method_population_mae'] > 2.
+    assert records['degree']['method_population_mean_keep_frac'] == pytest.approx(8 / 9)
+    assert records['degree']['method_population_n_success'] == 3
+    assert records['full']['method_population_n_success'] == 4

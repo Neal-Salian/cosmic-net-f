@@ -131,10 +131,12 @@ def matched_notebook_rows(model, graphs, context, fractions, *, policy=None,
     if policy is not None:
         scorers.append(PairScorer("provided_rl", policy=policy, edge_feature_names=names))
     rows, per_example = [], []
+    device = next(model.parameters()).device
+    evaluation_graphs = [as_data(g).clone().to(device) for g in graphs]
     cfg = context["config_used"].get("rls", {})
     for q in sorted(set(fractions)):
         budget = BudgetSpec(keep_fraction=q, constraint=cfg.get("evaluation_constraint", "no_isolates"))
-        summaries, raw = evaluate_matched_budget(model, [as_data(g) for g in graphs], scorers,
+        summaries, raw = evaluate_matched_budget(model, evaluation_graphs, scorers,
             budget, seed=context["seed"], provenance=notebook_provenance(context), backbone="frozen")
         for row in summaries:
             own = [r for r in raw if r["method"] == row["method"] and r["status"] == "success"]

@@ -210,3 +210,50 @@ def test_richness_rejection_requires_nonempty_ic_splits_before_output(tmp_path):
     with pytest.raises(ValueError, match="independent|nonempty"):
         run_baseline(config, output_dir=output)
     assert not output.exists()
+
+
+@pytest.mark.parametrize("selected_member_count", [0, 1])
+def test_raw_heldout_membership_survives_observation_richness_rejection(tmp_path, selected_member_count):
+    """Removing a halo from model graphs must not erase its held-out membership."""
+    from rls.astronomy_evaluation import _membership_check
+
+    config = _config(tmp_path)
+    # Keep one eligible halo per IC while making the other empty/too poor for
+    # min_richness=2. Every IC can then be inspected as a possible held-out IC.
+    for index in range(4):
+        path = tmp_path / f"fixture-{index}.h5"
+        with h5py.File(path, "a") as h5:
+            h5["Subhalo/SubhaloMassType"][selected_member_count:3, 4] = 0.
+    def refresh_hashes(payload):
+        for entry in payload["catalogs"]:
+            path = Path(entry["source"]["path"])
+            entry["source"]["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    _rewrite_manifest(config, refresh_hashes)
+    output = tmp_path / "raw-membership"
+    result = run_baseline(config, output_dir=output)
+    assert result["research_label"] == "fixture_smoke"
+    assert result["scientific_result"] is False
+    split, _ = _read_split_manifest(output / "split_manifest.json")
+    manifest = load_astronomy_manifest(config["data"]["manifest_path"])
+    audit = audit_astronomy_manifest(manifest)
+    predictions = json.loads((output / "heldout_predictions.json").read_text())
+    rejected = json.loads((output / "rejected_halos.json").read_text())
+    reports = json.loads((output / "observation_reports.json").read_text())
+    rejected_by_id = {row["halo_id"]: row for row in rejected}
+    assert len(rejected) == 4
+    for name in ("val", "test"):
+        section = split["splits"][name]
+        catalog_id = section["cluster_ids"][0].split(":group:")[0]
+        raw_halos = load_audited_catalog(manifest, audit, catalog_id, allow_synthetic_fixture=True)
+        # This is the evaluator's exact pre-transform population boundary.
+        membership = _membership_check(raw_halos, split, "development", {})
+        all_ids = {f"{halo.catalog_id}:group:{halo.group_index}" for halo in raw_halos}
+        assert set(membership["evaluation_halo_ids"]) == all_ids == set(section["cluster_ids"])
+        rejected_id, survivor_id = f"{catalog_id}:group:0", f"{catalog_id}:group:1"
+        assert rejected_id in section["parent_ids"]
+        assert rejected_by_id[rejected_id]["split"] == name
+        assert rejected_by_id[rejected_id]["initial_condition_id"] in section["group_ids"]
+        assert {row["cluster_id"] for row in predictions[name]} == {survivor_id}
+        report = next(row for row in reports if row["halo_id"] == rejected_id)
+        assert report["split"] == name
+        assert report["initial_condition_id"] in section["group_ids"]

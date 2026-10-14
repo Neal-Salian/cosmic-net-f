@@ -457,35 +457,13 @@ def main(cfg=None, checkpoint=None, output_dir=None, allow_random_backbone=False
         json.dump(_json_safe(all_summaries), f, indent=2, allow_nan=False)
     with open(os.path.join(out, "matched_rows.json"), "w") as f:
         json.dump(_json_safe(all_rows), f, indent=2, allow_nan=False)
-    # Compatibility results_table.csv from actual summary only (no fake numbers).
+    # Headline CSV uses the same graph population for full and every scorer.
     import pandas as pd
-    compat = []
-    rows_by_method = {}
-    for r in rows_frozen:
-        rows_by_method.setdefault((r["method"],), []).append(r)
-    for s in summary_frozen:
-        method_rows = [r for r in rows_frozen if r["method"] == s["method"] and r["status"] == "success"]
-        if method_rows:
-            retains = [r["final_pair_count"] / r["available_pair_count"]
-                       for r in method_rows if r.get("available_pair_count")]
-            mean_keep = float(np.mean(retains)) if retains else None
-        else:
-            mean_keep = None
-        compat.append({
-            "method": s["method"],
-            "rmse": s.get("rmse"),
-            "mae": s.get("mae"),
-            "r2": s.get("r2"),
-            "scatter": s.get("std_residual"),
-            "mean_keep_frac": mean_keep,
-            "fidelity": s.get("fidelity_full_pred"),
-            "backbone_stage": "frozen",
-            "backbone_sha256": frozen_record["sha256"],
-            "research_label": research_label,
-            "run_mode": run_mode,
-            "n_success": s.get("n_success"),
-            "n_failed": s.get("n_failed"),
-        })
+    from rls.research_workflow import comparison_csv_rows
+    compat = comparison_csv_rows(summary_frozen, rows_frozen)
+    for record in compat:
+        record.update(backbone_sha256=frozen_record["sha256"],
+                      research_label=research_label, run_mode=run_mode)
     pd.DataFrame(compat).to_csv(os.path.join(out, "results_table.csv"), index=False)
     prov_out = {"backbone_frozen": frozen_record,
                 "stageb": {k: v for k, v in stageb_info.items()

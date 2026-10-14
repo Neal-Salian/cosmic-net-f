@@ -115,3 +115,31 @@ def test_completion_rejects_changed_inputs_before_publishing(tmp_path):
     data.write_text("changed")
     with pytest.raises(ValueError, match="input changed"):
         complete_stage(tmp_path / "outputs", "A", context, [])
+
+
+def test_non_smoke_checkout_requires_an_immutable_source_pin():
+    import os
+    import sys
+    path = next((ROOT / "notebooks").glob("notebook_A*"))
+    cells = {c["id"]: "".join(c["source"]) for c in json.loads(path.read_text())["cells"]}
+    namespace = {"Path": Path, "subprocess": subprocess, "os": os, "sys": sys,
+        "REPO_DIR": ROOT, "REPO_URL": "unused", "REPO_BRANCH": "fix/research-pipeline-readiness",
+        "SYNC_REPO": False, "SMOKE_TEST": False, "EXPECTED_REPO_COMMIT": None}
+    with pytest.raises(ValueError, match="EXPECTED_REPO_COMMIT"):
+        exec(compile(cells["checkout"], "checkout", "exec"), namespace)
+
+
+def test_matched_notebook_boundary_moves_graphs_to_predictor_device(monkeypatch):
+    import rls.notebook_benchmark as benchmark
+    model = torch.nn.Linear(4, 1).to("meta")
+    original = Data(**graph())
+    def checked(model, graphs, *args, **kwargs):
+        assert graphs[0].x.device == next(model.parameters()).device
+        assert graphs[0].edge_index.device == next(model.parameters()).device
+        return [], []
+    monkeypatch.setattr(benchmark, "evaluate_matched_budget", checked)
+    context = {"config_used": {"graph": {"edge_features": ["distance"]}, "rls": {}},
+               "split_cluster_ids": {}, "dataset": {}, "seed": 1,
+               "research_label": "fixture_smoke", "source_identity": "test", "run_mode": "smoke"}
+    benchmark.matched_notebook_rows(model, [original], context, [.5])
+    assert original.x.device.type == "cpu"  # Do not mutate caller graph storage.

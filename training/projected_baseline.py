@@ -9,6 +9,7 @@ import json
 import math
 from pathlib import Path
 import subprocess
+from types import SimpleNamespace
 
 import numpy as np
 import torch
@@ -176,13 +177,12 @@ def _prepare(config, graph_config, observation_config):
             raise ValueError(f"catalog {catalog_id!r} contains no halos")
         contracts[catalog_id] = loaded[0].metadata["catalog_contract"]
         for halo in loaded:
-            observed, report = observe_astronomy_halo(halo, observation_config)
-            reports.append(report)
-            if observed is None:
-                rejected.append({"halo_id": report["halo_id"], "reason": report.get("rejection_reason", "richness_selection")})
-                continue
-            observed.metadata[data["split_group_key"]] = observed.metadata["initial_condition_id"]
-            halos.append(observed)
+            # A membership-only view gives the shared splitter its stable ID
+            # without manufacturing any physical fields on the partial record.
+            halos.append(SimpleNamespace(
+                cluster_id=f"{halo.catalog_id}:group:{halo.group_index}",
+                metadata={**halo.metadata, data["split_group_key"]: halo.metadata["initial_condition_id"]},
+                raw_halo=halo))
     ratios = tuple(data.get(f"{name}_ratio", default) for name, default in zip(("train", "val", "test"), (.7, .15, .15)))
     train, val, test, split = grouped_split(halos, group_key=data["split_group_key"], ratios=ratios, seed=config["seed"])
     if not train or not val or not test:
@@ -191,12 +191,22 @@ def _prepare(config, graph_config, observation_config):
     graphs = {}
     for name, rows in (("train", train), ("val", val), ("test", test)):
         graphs[name] = []
-        for halo in rows:
-            graph = build_projected_graph(halo, graph_config)
+        for item in rows:
+            observed, report = observe_astronomy_halo(item.raw_halo, observation_config)
+            report.update(split=name, initial_condition_id=item.metadata["initial_condition_id"])
+            reports.append(report)
+            if observed is None:
+                rejected.append({"halo_id": item.cluster_id, "catalog_id": item.raw_halo.catalog_id,
+                    "split": name, "initial_condition_id": item.metadata["initial_condition_id"],
+                    "reason": report.get("rejection_reason", "richness_selection")})
+                continue
+            graph = build_projected_graph(observed, graph_config)
             # Keep rich provenance outside batches: PyG collates mapping values
             # recursively, which is unsuitable for variable-length audit reports.
             graphs[name].append(Data(**{key: graph[key] for key in (
                 "x", "edge_index", "edge_attr", "y", "pos", "vel", "cluster_id", "num_nodes")}))
+        if not graphs[name]:
+            raise ValueError(f"baseline requires nonempty observed graph splits after richness selection; {name} is empty")
     contracts_list = list(contracts.values())
     combined = deepcopy(contracts_list[0])
     for contract in contracts_list[1:]:
