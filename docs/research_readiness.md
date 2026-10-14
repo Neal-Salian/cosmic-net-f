@@ -28,7 +28,8 @@ fixtures establish execution contracts, not astrophysical performance.
    old source even when their clone cell fetches newer code.
 2. Record the exact final commit and set `EXPECTED_REPO_COMMIT` in every
    notebook. Use `REPO_BRANCH="fix/research-pipeline-readiness"` (or the
-   actual reviewed branch after integration). Restart each kernel.
+   actual reviewed branch after integration). A non-smoke run refuses an
+   unset pin or a checkout with a different commit. Restart each kernel.
 3. Attach the actual `best_model_augmented.pt` and exactly one matching CSV
    folder, or set `INPUT_DIR` explicitly. An LFS pointer is not a checkpoint.
    Ambiguous or missing inputs stop execution.
@@ -113,7 +114,8 @@ as nonperiodic: use independently verified unwrapped halo coordinates with
 a content-audited preparation record, or implement minimum-image geometry.
 Legacy TNG API conversion supports snapshot 99 only. Raw API mass conversion
 occurs once before grouping. Legacy TNG/CAMELS targets are not interchangeable;
-C/D refuse the old GroupMass transfer route.
+C/D refuse the old GroupMass transfer route, and `main.py` refuses legacy
+cross-source training before loading catalogs.
 
 Remaining blockers include audited real catalog procurement, compatible
 provenance-complete trained projected policy artifacts and a supported
