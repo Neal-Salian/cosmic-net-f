@@ -24,7 +24,7 @@ from data.provenance import (hash_payload, model_state_hash, sha256_file,
 from rls.matched_benchmark import BudgetSpec
 
 
-def _load_artifact(path, artifact_type, state_key):
+def _load_artifact(path, artifact_type, state_key, *, evaluation_mode="scientific"):
     file_record = validate_checkpoint_file(path)
     try:
         artifact = torch.load(path, map_location="cpu", weights_only=True)
@@ -38,7 +38,9 @@ def _load_artifact(path, artifact_type, state_key):
     provenance = artifact.get("provenance")
     if not isinstance(provenance, dict):
         raise ValueError(f"{artifact_type} artifact is missing positive provenance")
-    if provenance.get("research_label") != "corrected_research":
+    fixture_only = (evaluation_mode == "fixture_smoke"
+                    and provenance.get("research_label") == "fixture_smoke")
+    if provenance.get("research_label") != "corrected_research" and not fixture_only:
         raise ValueError(f"{artifact_type} provenance must identify corrected_research data")
     code_files = provenance.get("source_code_files")
     if not isinstance(code_files, list) or not code_files:
@@ -53,7 +55,8 @@ def _load_artifact(path, artifact_type, state_key):
         if not provenance.get(name):
             raise ValueError(f"{artifact_type} provenance is missing {name}")
     validate_run_provenance(provenance, model_state=state)
-    contract = CatalogContract.from_mapping(provenance["catalog_contract"]).validate(strict_research=True)
+    contract = CatalogContract.from_mapping(provenance["catalog_contract"]).validate(
+        strict_research=not fixture_only)
     return artifact, state, provenance, contract, file_record
 
 
@@ -156,9 +159,9 @@ def preflight_astronomy(*, manifest_path, catalog_id, expected_role,
 
     split, split_file = _read_split_manifest(split_manifest_path)
     backbone, backbone_state, backbone_prov, training_contract, backbone_file = _load_artifact(
-        checkpoint_path, "projected_backbone", "model_state_dict")
+        checkpoint_path, "projected_backbone", "model_state_dict", evaluation_mode=evaluation_mode)
     policy, policy_state, policy_prov, policy_contract, policy_file = _load_artifact(
-        policy_path, "projected_policy", "policy_state_dict")
+        policy_path, "projected_policy", "policy_state_dict", evaluation_mode=evaluation_mode)
     validate_inference_compatibility(training_contract.to_dict(), evaluation_contract.to_dict())
     validate_inference_compatibility(training_contract.to_dict(), policy_contract.to_dict())
 

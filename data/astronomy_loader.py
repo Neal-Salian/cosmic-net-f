@@ -53,8 +53,14 @@ def _validate_dataset(h5, spec, logical):
     return _finite_array(data, path)
 
 
-def load_audited_catalog(manifest, audit_report, catalog_id):
-    """Load one explicitly selected catalog after audit and a fresh SHA-256 check."""
+def load_audited_catalog(manifest, audit_report, catalog_id, *, allow_synthetic_fixture=False):
+    """Load a content-audited catalog, preserving its explicitly partial schema.
+
+    The fixture opt-in is for integration tests only. Fixture contracts remain
+    synthetic and cannot pass the default strict scientific artifact boundary.
+    """
+    if type(allow_synthetic_fixture) is not bool:
+        raise ValueError("allow_synthetic_fixture must be explicitly boolean")
     if not isinstance(audit_report, AuditReport):
         raise TypeError("audit_report must be an AuditReport from audit_astronomy_manifest")
     audit_report.require_content_verified()
@@ -79,9 +85,10 @@ def load_audited_catalog(manifest, audit_report, catalog_id):
         if evidence[0].get(key) != catalog[key]:
             raise ValueError(f"content audit {key} evidence disagrees with catalog declaration")
     source = catalog["source"]
-    if source["kind"] == "synthetic_fixture":
+    is_fixture = source["kind"] == "synthetic_fixture"
+    if is_fixture and not allow_synthetic_fixture:
         raise ValueError("strict scientific loading rejects source.kind=synthetic_fixture")
-    if source["kind"] != "local_hdf5":
+    if source["kind"] != "local_hdf5" and not is_fixture:
         raise ValueError(f"unsupported strict source kind {source['kind']!r}")
     path = Path(source["path"])
     digest = sha256_file(path)
@@ -148,7 +155,7 @@ def load_audited_catalog(manifest, audit_report, catalog_id):
 
     file_record = {**digest}
     contract = CatalogContract.from_mapping({
-        "research_label": "corrected_research", "source": f"{catalog['suite']}/{catalog['simulation']}/{catalog['snapshot']}",
+        "research_label": "synthetic" if is_fixture else "corrected_research", "source": f"{catalog['suite']}/{catalog['simulation']}/{catalog['snapshot']}",
         "suite": catalog["suite"], "simulation": catalog["simulation"], "snapshot": catalog["snapshot"],
         "volume_or_ic_group": catalog["initial_condition_id"], "target_field": "Group_M_Crit200",
         "target_definition": "log10(M200c/M_sun)", "mass_units": "M_sun",
@@ -156,11 +163,11 @@ def load_audited_catalog(manifest, audit_report, catalog_id):
         "velocity_units": "peculiar_km_per_s", "coordinate_frame": "physical_proper",
         "velocity_convention": "peculiar_km_per_s", "hubble_param": h, "scale_factor": a,
         "radius_source_field": "SubhaloHalfmassRadType[4]",
-        "radius_semantic": "stellar_half_mass_radius_type4", "synthetic": False, "fallback": False,
+        "radius_semantic": "stellar_half_mass_radius_type4", "synthetic": is_fixture, "fallback": False,
         "source_files": [file_record], "field_mapping": {name: spec["path"] for name, spec in fields.items()},
         "conversion_record": {"mass": "raw*1e10/h", "position_radius": "raw*a/(1000*h)",
                               "velocity": "unchanged peculiar km/s"},
-    }).validate(strict_research=True).to_dict()
+    }).validate(strict_research=not is_fixture).to_dict()
 
     output = []
     for group_index, (mass, log_mass) in enumerate(zip(group_mass_msun, target_log10_msun)):

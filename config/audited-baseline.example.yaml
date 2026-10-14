@@ -1,0 +1,62 @@
+# Supply a private manifest and genuinely independent development IC catalogs.
+seed: 42
+data:
+  source: audited_astronomy
+  strict_research: true
+  manifest_path: /absolute/path/to/astronomy-manifest.yaml
+  catalog_ids: [development-ic-001, development-ic-002, development-ic-003, development-ic-004]
+  split_group_key: initial_condition_id
+  train_ratio: 0.5
+  val_ratio: 0.25
+  test_ratio: 0.25
+  batch_size: 16
+  num_workers: 0
+observation:
+  line_of_sight: z
+  seed: 42
+  realization_id: baseline-clean-v1
+  min_richness: 3
+  missing_fraction: 0.0
+  position_noise_mpc: 0.0
+  los_velocity_noise_kms: 0.0
+  stellar_mass_noise_dex: 0.0
+graph:
+  method: radius
+  radius_mpc: 2.0
+  k_neighbors: 10
+  self_loops: true
+  node_features: [sky_position_1, sky_position_2, los_velocity, log_stellar_mass_proxy]
+  edge_features: [projected_distance, los_delta_v, mass_ratio]
+  position_scale_mpc: 1.0
+  velocity_scale_kms: 1000.0
+  stellar_mass_reference_msun: 10000000000.0
+model:
+  node_features: 4
+  hidden_dim: 64
+  output_dim: 64
+  num_layers: 3
+  dropout: 0.05
+  residual: true
+  activation: leaky_relu
+  pooling: mean
+  mc_dropout: false
+training:
+  # Use fixture_smoke for explicitly synthetic integration fixtures.
+  evidence_mode: scientific
+  device: cpu
+  epochs: 100
+  early_stopping_patience: 20
+  learning_rate: 0.001
+  optimizer: adamw
+  weight_decay: 0.0001
+  grad_clip: 1.0
+  lr_scheduler: cosine
+  lr_scheduler_settings:
+    T_max: 100
+    eta_min: 0.000001
+physics:
+  use_virial_loss: false
+augmentation:
+  enabled: false
+wandb:
+  enabled: false

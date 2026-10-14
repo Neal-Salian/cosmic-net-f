@@ -90,14 +90,15 @@ def run_baseline(config, *, output_dir, smoke=False, allow_physics_proxy=False):
     config = deepcopy(config)
     data_config = config.setdefault("data", {})
     if not smoke:
-        if not data_config.get("strict_research") or not data_config.get(
-                "catalog_contract"):
+        if data_config.get("source") != "audited_astronomy":
             raise ValueError(
-                "corrected non-smoke baselines require strict_research=true "
-                "and an explicit catalog_contract"
+                "corrected non-smoke baselines require data.source=audited_astronomy "
+                "with an explicit audited manifest; a catalog_contract alone "
+                "cannot enable an unsupported loader"
             )
-        contract = CatalogContract.from_mapping(data_config["catalog_contract"])
-        contract.validate(strict_research=True)
+        from training.projected_baseline import run_projected_baseline
+        return run_projected_baseline(
+            config, output_dir=output_dir, allow_physics_proxy=allow_physics_proxy)
 
     output = Path(output_dir)
     if output.exists():
