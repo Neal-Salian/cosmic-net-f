@@ -13,6 +13,7 @@ Config keys: physics.G, physics.virial_coefficient, physics.use_virial_loss,
 """
 
 import logging
+import math
 from typing import Dict, Any, Tuple, Optional
 import torch
 import torch.nn as nn
@@ -36,8 +37,13 @@ class VirialLoss(nn.Module):
     We compute:
         virial_ratio = 2 * KE / |PE|
 
-    For virialized systems, virial_ratio ≈ 1.
-    The virial loss penalizes deviations from this equilibrium.
+    The penalty is the existing (virial_ratio - 1)^2 proxy. It combines
+    stellar kinetic energy with predicted halo potential energy and mean
+    subhalo radius; it is not a calibrated halo equilibrium measurement.
+    Forward evaluates energies in log space and clips ln(virial_ratio) to
+    +/- physics.virial_log_ratio_bound (default 20, maximum 30). This
+    deliberately saturates the penalty and its gradient in numerical tails.
+    Logged KE/PE are also clipped to exp(+/- 70) for finite diagnostics.
 
     This is computed per-cluster (after pooling node features),
     not per-node, as the virial theorem applies to the whole system.
@@ -63,6 +69,14 @@ class VirialLoss(nn.Module):
 
         # Whether to use virial loss
         self.use_virial = self.physics_config.get('use_virial_loss', True)
+
+        self.log_ratio_bound = self.physics_config.get('virial_log_ratio_bound', 20.0)
+        for name, value in [('G', self.G), ('virial_coefficient', self.virial_coeff),
+                            ('virial_log_ratio_bound', self.log_ratio_bound)]:
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+                raise ValueError(f"physics.{name} must be finite and positive")
+        if self.log_ratio_bound > 30:
+            raise ValueError("physics.virial_log_ratio_bound must be <= 30 for finite float32 squared penalties")
 
         logger.info(f"VirialLoss initialized: G={self.G}, use_virial={self.use_virial}")
 
@@ -181,15 +195,19 @@ class VirialLoss(nn.Module):
             virial_loss: Tensor [1] - Mean virial violation
             loss_dict: Dictionary with detailed loss components
         """
-        loss_dict = {}
+        if isinstance(lambda_weight, bool) or not isinstance(lambda_weight, (int, float)) or not math.isfinite(lambda_weight) or lambda_weight < 0:
+            raise ValueError("lambda_weight must be finite and nonnegative")
 
-        if not self.use_virial:
-            loss_dict['virial_loss'] = torch.tensor(0.0, device=predictions.device)
-            loss_dict['virial_ratio_mean'] = torch.tensor(1.0, device=predictions.device)
-            return torch.tensor(0.0, device=predictions.device), loss_dict
+        if not self.use_virial or lambda_weight == 0:
+            # No physics observations are required by a disabled term. Keep a
+            # differentiable zero so standalone loss.backward() remains valid.
+            zero = (predictions * 0.0).sum()
+            return zero, {'virial_loss': zero, 'virial_ratio_mean': zero + 1.0,
+                          'virial_ratio_std': zero, 'ke_mean': zero, 'pe_mean': zero,
+                          'virial_ratio_clipped_fraction': zero}
 
-        # Convert log10(M_halo) to linear mass
-        halo_masses_pred = 10 ** predictions
+        if predictions.ndim != 1 or predictions.numel() == 0 or not torch.isfinite(predictions).all():
+            raise ValueError("physics predictions must be a nonempty finite vector of log10 halo masses")
 
         # Get physical quantities from batch
         stellar_masses = batch_data.stellar_mass
@@ -197,28 +215,37 @@ class VirialLoss(nn.Module):
         half_mass_radii = batch_data.half_mass_r
         batch = batch_data.batch
 
-        # Compute kinetic energy per cluster
-        ke = self.compute_kinetic_energy(stellar_masses, vel_dispersions, batch)
+        for name, values in [('stellar_mass', stellar_masses), ('vel_disp', vel_dispersions),
+                             ('half_mass_r', half_mass_radii)]:
+            if values.ndim != 1 or values.shape != batch.shape or not torch.isfinite(values).all() or (values <= 0).any():
+                raise ValueError(f"physics {name} must be a positive finite vector matching batch assignments")
+        if batch.dtype not in (torch.int32, torch.int64) or (batch < 0).any() or (batch >= len(predictions)).any():
+            raise ValueError("physics batch assignments must index the predicted clusters")
 
-        # Compute potential energy per cluster
-        pe = self.compute_potential_energy(halo_masses_pred, half_mass_radii, batch)
+        # Double precision in log space avoids forming 10**prediction or M**2.
+        # The only exponentials used for the objective are explicitly bounded.
+        log_ke_nodes = math.log(.5) + stellar_masses.double().log() + 2 * vel_dispersions.double().log()
+        log_ke, log_radius = [], []
+        for i in range(len(predictions)):
+            mask = batch == i
+            if not mask.any():
+                raise ValueError(f"physics cluster {i} has no observations")
+            log_ke.append(torch.logsumexp(log_ke_nodes[mask], dim=0))
+            log_radius.append(half_mass_radii[mask].double().mean().clamp_min(1e-6).log())
+        log_ke = torch.stack(log_ke)
+        log_pe = math.log(self.G) + 2 * math.log(10) * predictions.double() - torch.stack(log_radius)
+        log_ratio = math.log(self.virial_coeff) + log_ke - log_pe
+        virial_ratio = log_ratio.clamp(-self.log_ratio_bound, self.log_ratio_bound).exp()
+        virial_loss = (virial_ratio - 1.0).square().mean()
 
-        # Compute virial ratio
-        virial_ratio = self.compute_virial_ratio(ke, pe)
-
-        # Virial loss: penalize deviation from equilibrium (ratio = 1)
-        # Use squared deviation: (virial_ratio - 1)²
-        virial_violation = (virial_ratio - 1.0) ** 2
-
-        # Mean over clusters
-        virial_loss = virial_violation.mean()
-
-        # Store components for logging
-        loss_dict['virial_loss'] = virial_loss
-        loss_dict['virial_ratio_mean'] = virial_ratio.mean()
-        loss_dict['virial_ratio_std'] = virial_ratio.std() if len(virial_ratio) > 1 else torch.tensor(0.0)
-        loss_dict['ke_mean'] = ke.mean()
-        loss_dict['pe_mean'] = pe.mean()
+        # Components retain float64 precision and finite, explicitly bounded
+        # diagnostic values even when the prediction lies far outside training.
+        loss_dict = {'virial_loss': virial_loss,
+                     'virial_ratio_mean': virial_ratio.mean(),
+                     'virial_ratio_std': virial_ratio.std() if len(virial_ratio) > 1 else predictions.new_zeros(()),
+                     'ke_mean': log_ke.clamp(-70, 70).exp().mean(),
+                     'pe_mean': log_pe.clamp(-70, 70).exp().mean(),
+                     'virial_ratio_clipped_fraction': (log_ratio.abs() > self.log_ratio_bound).double().mean()}
 
         return lambda_weight * virial_loss, loss_dict
 

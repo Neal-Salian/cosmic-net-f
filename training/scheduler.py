@@ -39,6 +39,12 @@ class LambdaScheduler:
 
     Gradual annealing allows the model to first fit the data (low λ),
     then progressively enforce physics constraints (high λ).
+
+    training.warmup_epochs holds lambda at zero before the ramp. The ramp
+    starts at lambda_start on that epoch and reaches lambda_end after
+    lambda_epochs additional epochs. Root warmup_epochs/lambda_end are read
+    only when explicitly supplied and their training counterparts are absent;
+    they retain the old ramp-to-training.epochs endpoint for compatibility.
     """
 
     def __init__(self, config: Dict[str, Any]):
@@ -54,17 +60,34 @@ class LambdaScheduler:
         # Schedule type
         self.schedule_type = training_config.get('lambda_schedule', 'cosine')
 
-        # Annealing parameters
-        self.lambda_start = training_config.get('lambda_start', 0.02)
-        self.lambda_end = training_config.get('lambda_end', 1.0)
-        self.lambda_epochs = training_config.get('lambda_epochs', 50)
+        # Explicit training settings always win over historical root keys.
+        legacy_root = any(key in config and key not in training_config
+                          for key in ('warmup_epochs', 'lambda_end'))
+        self.warmup_epochs = training_config.get('warmup_epochs', config.get('warmup_epochs', 0))
+        self.lambda_start = training_config.get('lambda_start', 0.0)
+        self.lambda_end = training_config.get('lambda_end', config.get('lambda_end', 1.0))
+        default_ramp = max(1, training_config.get('epochs', 200) - self.warmup_epochs) if legacy_root else 50
+        self.lambda_epochs = training_config.get('lambda_epochs', default_ramp)
 
         # Fixed value (when schedule_type is 'fixed')
         self.lambda_fixed = training_config.get('lambda_fixed', 0.5)
 
+        if self.schedule_type not in {'fixed', 'linear', 'cosine'}:
+            raise ValueError(f"unknown training.lambda_schedule: {self.schedule_type!r}")
+        for name in ('lambda_start', 'lambda_end', 'lambda_fixed'):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+                raise ValueError(f"training.{name} must be finite and nonnegative")
+        for name, minimum in [('warmup_epochs', 0), ('lambda_epochs', 1)]:
+            value = getattr(self, name)
+            if type(value) is not int or value < minimum:
+                raise ValueError(f"training.{name} must be an integer >= {minimum}")
+        if legacy_root:
+            logger.warning("Using explicitly supplied legacy root lambda settings; prefer training.warmup_epochs/training.lambda_end")
+
         # Current state
         self.current_epoch = 0
-        self.current_lambda = self.lambda_start
+        self.current_lambda = 0.0 if self.warmup_epochs else (self.lambda_fixed if self.schedule_type == 'fixed' else self.lambda_start)
 
         logger.info(f"LambdaScheduler initialized: type={self.schedule_type}, "
                    f"start={self.lambda_start}, end={self.lambda_end}, "
@@ -81,9 +104,14 @@ class LambdaScheduler:
             Current lambda value
         """
         if epoch is not None:
+            if type(epoch) is not int or epoch < 0:
+                raise ValueError("lambda scheduler epoch must be a nonnegative integer")
             self.current_epoch = epoch
 
-        if self.schedule_type == 'fixed':
+        if self.current_epoch < self.warmup_epochs:
+            self.current_lambda = 0.0
+
+        elif self.schedule_type == 'fixed':
             self.current_lambda = self.lambda_fixed
 
         elif self.schedule_type == 'linear':
@@ -109,10 +137,11 @@ class LambdaScheduler:
         Returns:
             Current lambda value
         """
-        if self.current_epoch >= self.lambda_epochs:
+        ramp_epoch = self.current_epoch - self.warmup_epochs
+        if ramp_epoch >= self.lambda_epochs:
             return self.lambda_end
 
-        progress = self.current_epoch / max(self.lambda_epochs, 1)
+        progress = ramp_epoch / self.lambda_epochs
         return self.lambda_start + progress * (self.lambda_end - self.lambda_start)
 
     def _cosine_schedule(self) -> float:
@@ -124,17 +153,13 @@ class LambdaScheduler:
         Returns:
             Current lambda value
         """
-
-        effective_start = max(self.lambda_start, 0.01) 
-
-        if self.current_epoch >= self.lambda_epochs:
-
+        ramp_epoch = self.current_epoch - self.warmup_epochs
+        if ramp_epoch >= self.lambda_epochs:
             return self.lambda_end
 
-        progress = self.current_epoch / max(self.lambda_epochs, 1)
-
+        progress = ramp_epoch / self.lambda_epochs
         cosine_factor = 0.5 * (1 - math.cos(math.pi * progress))
-        return effective_start + cosine_factor * (self.lambda_end - effective_start)
+        return self.lambda_start + cosine_factor * (self.lambda_end - self.lambda_start)
 
     def get_lambda(self) -> float:
         """Get current lambda value without stepping."""
@@ -149,7 +174,8 @@ class LambdaScheduler:
             'lambda_start': self.lambda_start,
             'lambda_end': self.lambda_end,
             'lambda_epochs': self.lambda_epochs,
-            'lambda_fixed': self.lambda_fixed
+            'lambda_fixed': self.lambda_fixed,
+            'warmup_epochs': self.warmup_epochs
         }
 
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:

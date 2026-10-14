@@ -30,6 +30,7 @@ from dotenv import load_dotenv
 from model.model import CosmicNetGNN, build_model
 from model.physics_loss import PhysicsInformedLoss, MetricsComputer
 from training.scheduler import (
+    LambdaScheduler,
     build_optimizer,
     build_lr_scheduler,
     EarlyStopping,
@@ -117,19 +118,7 @@ class Trainer:
         self.optimizer = build_optimizer(self.model, config)
         self.lr_scheduler = build_lr_scheduler(self.optimizer, config)
         
-        # --- NEW: Inject the custom Cosine Scheduler here ---
-        # Pull parameters from the root config, with fail-safes
-        warmup = config.get('warmup_epochs', 75)
-        l_end = config.get('lambda_end', 0.005)
-        epochs = self.training_config.get('epochs', 500)
-        
-        self.lambda_scheduler = CosineLambdaScheduler(
-            warmup_epochs=warmup, 
-            lambda_end=l_end, 
-            total_epochs=epochs
-        )
-        logger.info(f"Initialized CosineLambdaScheduler: Warmup={warmup}, MaxLambda={l_end}")
-        # ----------------------------------------------------
+        self.lambda_scheduler = LambdaScheduler(config)
 
         # Early stopping
         patience = self.training_config.get('early_stopping_patience', 20)

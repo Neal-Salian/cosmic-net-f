@@ -103,11 +103,9 @@ def _validate_catalog(c, manifest_dir):
     if not isinstance(conventions.get("periodic_box"), bool):
         raise ValueError("conventions.periodic_box must be explicitly boolean")
     if conventions["periodic_box"]:
-        box = _require_mapping(conventions.get("box_size"), "conventions.box_size")
-        _reject_unknown_keys(box, MAPPING_KEYS["box_size"], "conventions.box_size")
-        _positive_number(box.get("value"), "box_size.value")
-        if box.get("unit") not in {"ckpc_per_h", "cMpc_per_h", "Mpc"}:
-            raise ValueError("unknown box size unit")
+        raise ValueError("periodic catalogs require minimum-image geometry, which is not implemented; "
+                         "supply a separately verified nonperiodic catalog with unwrapped halo coordinates "
+                         "and declare periodic_box: false only for that prepared catalog")
     fields = _require_mapping(c.get("fields"), "fields")
     unknown = set(fields) - set(REQUIRED_FIELDS)
     missing = set(REQUIRED_FIELDS) - set(fields)

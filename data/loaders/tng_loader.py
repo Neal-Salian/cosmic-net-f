@@ -62,12 +62,25 @@ class TNGLoader(BaseDataLoader):
     for the matched reference subhalo). Consumers that assume stellar radii
     (e.g. model/physics_loss.py's R_half scale) get the total radius when fed
     from the CSV path.
+
+    All parsing/grouping consumes linear Msun and physical Mpc internally.
+    API conversions occur once at ingestion (the supported historical API
+    convention is snapshot 99, a=1). Unmarked clustered CSVs use explicit
+    historical defaults: log10 stellar Msun, linear halo Msun, ckpc/h positions
+    and total radii. Override data.tng.clustered_units for other known inputs:
+    position/radius: 'ckpc_per_h' or 'Mpc'; stellar_mass/halo_mass: 'log10_Msun'
+    or 'M_sun'. No field's units are inferred from its magnitude. Saved API
+    expansions carry the cosmic_net_units='physical_mpc_msun_v1' marker.
+    These conversions do not certify legacy target or radius semantics.
     """
 
     # TNG unit conversions
     MASS_UNIT = 1e10  # TNG mass unit to M_sun (1e10 M_sun / h, assume h=0.6774)
     LENGTH_UNIT = 1e-3  # TNG length unit to Mpc (ckpc/h to Mpc)
     H_PARAM = 0.6774  # Hubble parameter for TNG100
+    NORMALIZED_UNITS = 'physical_mpc_msun_v1'
+    LEGACY_CLUSTERED_UNITS = {'position': 'ckpc_per_h', 'radius': 'ckpc_per_h',
+                              'stellar_mass': 'log10_Msun', 'halo_mass': 'M_sun'}
 
     # Required subhalo fields from API
     SUBHALO_FIELDS = [
@@ -110,6 +123,14 @@ class TNGLoader(BaseDataLoader):
         # Local CSV file paths (new)
         self.raw_file = tng_config.get('raw_file', None)
         self.clustered_file = tng_config.get('clustered_file', None)
+        self.clustered_units = tng_config.get('clustered_units')
+        if self.clustered_units is not None:
+            if not isinstance(self.clustered_units, dict) or set(self.clustered_units) != set(self.LEGACY_CLUSTERED_UNITS):
+                raise ValueError("data.tng.clustered_units must explicitly declare position, radius, stellar_mass, halo_mass")
+            for name, unit in self.clustered_units.items():
+                allowed = {'Mpc', 'ckpc_per_h'} if name in {'position', 'radius'} else {'M_sun', 'log10_Msun'}
+                if unit not in allowed:
+                    raise ValueError(f"unsupported data.tng.clustered_units.{name}: {unit!r}")
         self._catalog_origin = "unresolved"
 
         # API key from environment
@@ -259,9 +280,6 @@ class TNGLoader(BaseDataLoader):
         """
         Load pre-clustered data from CSV.
         """
-        H = 0.6774
-        CKPC_TO_MPC = 1e-3 / H
-
         df = pd.read_csv(filepath)
         logger.info(f"Loaded {len(df)} subhalos from {filepath}")
 
@@ -269,36 +287,33 @@ class TNGLoader(BaseDataLoader):
         if 'vel_dispersion' in df.columns and 'velocity_dispersion' not in df.columns:
             df = df.rename(columns={'vel_dispersion': 'velocity_dispersion'})
 
-        # Fix positions: ckpc/h → Mpc
-        if df['pos_x'].abs().max() > 100:
-            df['pos_x'] = df['pos_x'] * CKPC_TO_MPC
-            df['pos_y'] = df['pos_y'] * CKPC_TO_MPC
-            df['pos_z'] = df['pos_z'] * CKPC_TO_MPC
-            logger.info("Converted positions from ckpc/h to Mpc")
-
-        # Fix stellar_mass: log10 → linear
-        if df['stellar_mass'].between(6, 16).all():
-            df['stellar_mass'] = 10 ** df['stellar_mass']
-            logger.info("Converted stellar_mass from log10 to linear")
-
-        # Fix half_mass_radius: ckpc/h → Mpc
-        if df['half_mass_radius'].abs().max() > 1.0:
-            df['half_mass_radius'] = df['half_mass_radius'] * CKPC_TO_MPC
-            logger.info("Converted half_mass_radius from ckpc/h to Mpc")
+        units = self.clustered_units or self.LEGACY_CLUSTERED_UNITS
+        if 'cosmic_net_units' in df:
+            if set(df['cosmic_net_units'].dropna().unique()) != {self.NORMALIZED_UNITS} or df['cosmic_net_units'].isna().any():
+                raise ValueError("clustered CSV has unknown or mixed cosmic_net_units markers")
+            marked_units = {'position': 'Mpc', 'radius': 'Mpc', 'stellar_mass': 'M_sun', 'halo_mass': 'M_sun'}
+            if self.clustered_units is not None and self.clustered_units != marked_units:
+                raise ValueError("data.tng.clustered_units contradicts normalized CSV units marker")
+            units = marked_units
+        if units['position'] == 'ckpc_per_h':
+            df[['pos_x', 'pos_y', 'pos_z']] *= self.LENGTH_UNIT / self.H_PARAM
+        if units['radius'] == 'ckpc_per_h':
+            df['half_mass_radius'] *= self.LENGTH_UNIT / self.H_PARAM
+        if units['stellar_mass'] == 'log10_Msun':
+            df['stellar_mass'] = np.power(10., df['stellar_mass'])
 
         # Add linear halo_mass column if missing
         if 'halo_mass' not in df.columns:
             df['halo_mass'] = 10 ** df['halo_mass_log']
             logger.info("Created halo_mass from halo_mass_log")
-        elif df['halo_mass'].between(10, 20).all():
-            df['halo_mass'] = 10 ** df['halo_mass']
-            logger.info("Fixed halo_mass from log to linear scale")
+        elif units['halo_mass'] == 'log10_Msun':
+            df['halo_mass'] = np.power(10., df['halo_mass'])
 
         # Build groups dict
         groups = {}
         for group_id, group_df in df.groupby('group_id'):
             groups[int(group_id)] = {
-                'Group_M_Crit200': float(group_df['halo_mass'].iloc[0]),
+                'halo_mass_msun': float(group_df['halo_mass'].iloc[0]),
                 'GroupNsubs': len(group_df)
             }
 
@@ -317,6 +332,7 @@ class TNGLoader(BaseDataLoader):
         Returns:
             Tuple of (subhalos_df, groups_dict)
         """
+        self._require_supported_api_epoch()
         df = pd.read_csv(filepath)
         logger.info(f"Loaded {len(df)} central subhalos from {filepath}")
 
@@ -343,14 +359,14 @@ class TNGLoader(BaseDataLoader):
             try:
                 # Fetch group info
                 group_data = self._api_get(f"snapshots/{self.snapshot}/groups/{group_id}/")
-                groups[group_id] = group_data
+                groups[group_id] = self._normalize_api_group(group_data)
 
                 # Fetch all subhalos in this group (no primary_flag filter!)
                 subhalos = self._fetch_group_subhalos(group_id)
 
                 for sub in subhalos:
                     sub['group_id'] = group_id
-                    sub['halo_mass'] = group_data.get('Group_M_Crit200', 1e12) * self.MASS_UNIT / self.H_PARAM
+                    sub['halo_mass'] = groups[group_id]['halo_mass_msun']
                 all_subhalos.extend(subhalos)
 
             except Exception as e:
@@ -411,6 +427,7 @@ class TNGLoader(BaseDataLoader):
         Returns:
             Tuple of (subhalos_df, groups_dict)
         """
+        self._require_supported_api_epoch()
         # Get most massive groups
         endpoint = f"snapshots/{self.snapshot}/groups/"
         params = {'limit': self.n_halos, 'order_by': '-Group_M_Crit200'}
@@ -424,7 +441,7 @@ class TNGLoader(BaseDataLoader):
 
         for i, group in enumerate(top_groups):
             group_id = group.get('id', i)
-            groups[group_id] = group
+            groups[group_id] = self._normalize_api_group(group)
 
             if i % 50 == 0:
                 logger.info(f"Processing group {i+1}/{len(top_groups)}...")
@@ -433,13 +450,26 @@ class TNGLoader(BaseDataLoader):
             subhalos = self._fetch_group_subhalos(group_id)
             for sub in subhalos:
                 sub['group_id'] = group_id
-                sub['halo_mass'] = group.get('Group_M_Crit200', 1e12) * self.MASS_UNIT / self.H_PARAM
+                sub['halo_mass'] = groups[group_id]['halo_mass_msun']
             all_subhalos.extend(subhalos)
 
         result_df = self._subhalos_to_dataframe(all_subhalos)
         logger.info(f"Fetched {len(result_df)} subhalos in {len(groups)} groups")
 
         return result_df, groups
+
+    def _require_supported_api_epoch(self) -> None:
+        """The legacy API path has no audited scale-factor conversion."""
+        if str(self.snapshot) != '99':
+            raise ValueError("TNG API ingestion supports only snapshot 99 (a=1); "
+                             "use an audited astronomy manifest for other epochs")
+
+    def _normalize_api_group(self, group: Dict[str, Any]) -> Dict[str, Any]:
+        """Keep raw API metadata and name the converted target's units explicitly."""
+        mass = float(group['Group_M_Crit200'])
+        if not np.isfinite(mass) or mass <= 0:
+            raise ValueError("TNG Group_M_Crit200 must be finite and positive in 1e10 Msun/h")
+        return {**group, 'halo_mass_msun': mass * self.MASS_UNIT / self.H_PARAM}
 
     def _subhalos_to_dataframe(self, subhalos: List[Dict[str, Any]]) -> pd.DataFrame:
         """
@@ -516,7 +546,9 @@ class TNGLoader(BaseDataLoader):
     def _save_clustered_csv(self, df: pd.DataFrame, filepath: str) -> None:
         """Save clustered DataFrame to CSV."""
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)
-        df.to_csv(filepath, index=False)
+        normalized = df.copy()
+        normalized['cosmic_net_units'] = self.NORMALIZED_UNITS
+        normalized.to_csv(filepath, index=False)
         logger.info(f"Saved clustered data to {filepath}")
 
     def _parse_subhalo(self, raw_record: pd.Series) -> SubhaloData:
@@ -529,18 +561,11 @@ class TNGLoader(BaseDataLoader):
         Returns:
             SubhaloData object
         """
-        H = 0.6774
-        CKPC_TO_MPC = 1e-3 / H
-
         position = np.array([
             raw_record.get('pos_x', 0.0),
             raw_record.get('pos_y', 0.0),
             raw_record.get('pos_z', 0.0)
         ], dtype=np.float32)
-
-        # Convert positions from ckpc/h to Mpc if still in raw units
-        if np.abs(position).max() > 100:
-            position = position * CKPC_TO_MPC
 
         velocity = np.array([
             raw_record.get('vel_x', 0.0),
@@ -548,12 +573,8 @@ class TNGLoader(BaseDataLoader):
             raw_record.get('vel_z', 0.0)
         ], dtype=np.float32)
 
-        # Stellar mass — CSV stores log10 scale (8-16), need linear
-        raw_sm = float(raw_record.get('stellar_mass', 10.0))
-        if 6 <= raw_sm <= 16:
-            stellar_mass = 10 ** raw_sm
-        else:
-            stellar_mass = max(raw_sm, 1e6)
+        # Ingestion has already normalized units, including low stellar masses.
+        stellar_mass = float(raw_record['stellar_mass'])
 
         # Velocity dispersion — try both column name variants
         vel_disp = float(raw_record.get(
@@ -561,12 +582,7 @@ class TNGLoader(BaseDataLoader):
             raw_record.get('velocity_dispersion', 100.0)
         ))
 
-        # Half mass radius — convert ckpc/h to Mpc if needed
-        raw_hmr = float(raw_record.get('half_mass_radius', 0.001))
-        if raw_hmr > 1.0:
-            half_mass_radius = raw_hmr * CKPC_TO_MPC
-        else:
-            half_mass_radius = max(raw_hmr, 1e-6)
+        half_mass_radius = max(float(raw_record['half_mass_radius']), 1e-6)
 
         # Metallicity
         metallicity = float(raw_record.get('metallicity', 0.02))
@@ -598,12 +614,14 @@ class TNGLoader(BaseDataLoader):
         df, _ = raw_data
 
         subhalos = []
-        for _, row in df.iterrows():
+        for index, row in df.iterrows():
             try:
                 subhalo = self._parse_subhalo(row)
                 subhalos.append(subhalo)
             except Exception as e:
-                logger.warning(f"Failed to parse subhalo: {e}")
+                # Skipping here would shift the zip with dataframe rows in
+                # _group_into_halos and attach later galaxies to wrong groups.
+                raise ValueError(f"invalid TNG subhalo row {index}: {e}") from e
 
         return subhalos
 
@@ -648,7 +666,7 @@ class TNGLoader(BaseDataLoader):
             # Get halo mass
             if group_id in groups:
                 group = groups[group_id]
-                halo_mass = group.get('Group_M_Crit200', group.get('mass', 1e12))
+                halo_mass = group['halo_mass_msun']
 
             else:
                 # Get from first subhalo's halo_mass
