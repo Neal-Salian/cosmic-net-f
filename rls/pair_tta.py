@@ -63,6 +63,11 @@ def adapt_pair_policy(policy, graph, gnn, cfg, device, target_sparsity=None, log
         mask, _, _, order = policy_action(pol.eval(),g,cfg,keep=q)
     report = legacy_repair_report(g["edge_index"], mask, keep_fraction=q, order=order,
                                   num_nodes=len(g["x"]))
+    if cfg.get("evaluation_decoder") == "direct":
+        from rls.notebook_benchmark import exact_policy_mask
+        inference_graph = dict(g, cluster_id=graph.get("cluster_id", "unidentified"))
+        mask, _, report = exact_policy_mask(pol.eval(), inference_graph, cfg, q)
+        report["adaptation_action_decoder"] = LEGACY_DECODER_KIND
     info = dict(reward_hist=history,steps_run=len(history),best_r=best if history else None,
                 step_diag=diagnostics)
     info.update(report)

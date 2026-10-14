@@ -135,7 +135,7 @@ def test_rls_imports_resolve():
 def test_clone_cells_pin_fix_branch():
     for nb in NOTEBOOKS:
         joined = "\n".join(_code_cells(nb))
-        assert "fix/rl-pruning-symmetry" in joined, (
-            f"{nb}: clone cell does not pin fix/rl-pruning-symmetry")
+        assert 'REPO_BRANCH = "fix/research-pipeline-readiness"' in joined, (
+            f"{nb}: clone cell does not pin the readiness implementation")
         assert 'REPO_BRANCH = "feature/rl-pipeline"' not in joined, (
             f"{nb}: stale feature/rl-pipeline pin remains")

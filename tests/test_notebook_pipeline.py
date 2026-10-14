@@ -26,6 +26,8 @@ def run_notebook(stage, tmp_path, **overrides):
         INPUT_ROOT=tmp_path / "input", DEVICE="cpu", GRAPH_BACKEND="torch",
         SMOKE_TEST=True, SMOKE_GRAPHS_PER_SPLIT=2, OUTPUT_DIR=tmp_path / stage,
         GUMBEL_EPOCHS=1, POLICY_EPOCHS=1, STAGEB_EPOCHS=1,
+        LEARNED_EPOCHS=1,
+        LEGACY_CSV_UNITS={"position": "Mpc", "radius": "Mpc", "stellar_mass": "log10_Msun", "halo_mass": "M_sun"},
         TTA_KS=[0, 1, 2], COVERAGE_SAMPLES=2,
         A_ARTIFACT_DIR=tmp_path / "A/smoke", B_ARTIFACT_DIR=tmp_path / "B/smoke")
     namespace.update(overrides)
@@ -65,13 +67,17 @@ def test_full_pipeline(tmp_path, monkeypatch, small_inputs, single_thread):
     assert set(d["tta_df"].K) == set(d["gate_df"].loc[d["gate_df"].enabled, "K"])
     assert b["gnn"] is not b["stageb_model"]
     assert b["backbone_record"] == c["backbone_record"] == d["backbone_record"]
-    gumbel = c["results_df"].query("method == 'gumbel'").iloc[0]
-    assert gumbel.backbone_stage == "gumbel_joint"
-    assert gumbel.backbone_sha256 == a["gumbel_record"]["sha256"]
-    assert len(c["results_df"]) == len(a["baseline_df"]) + 1 + (2 if b["stageb_info"].get("accepted") else 0)
+    assert "supervised_raw" in set(c["results_df"].method)
+    assert "provided_rl" in set(c["results_df"].method)
+    assert len(c["results_df"]) == len(a["baseline_df"]) + len(a["FRACTIONS"])
+    raw = c["comparison_per_example"]
+    for fraction in a["FRACTIONS"]:
+        for graph_id in {r["graph_id"] for r in raw}:
+            selected = [r for r in raw if r["graph_id"] == graph_id and r["requested_keep_fraction"] == fraction and r["method"] != "full"]
+            assert len({r["final_pair_count"] for r in selected}) == 1
+            assert all(r["budget_satisfied"] and r["constraint_satisfied"] for r in selected)
     assert set(c["coverage_df"].method) == {"full", "rl_policy"}
-    # Exercise optional OOD cells with a tiny catalog-format fixture. These
-    # are smoke-test artifacts only, never scientific CAMELS results.
+    # Legacy OOD cells must refuse incompatible GroupMass targets.
     import h5py
     catalog = tmp_path / "camels_fixture.hdf5"
     with h5py.File(catalog, "w") as stream:
@@ -87,9 +93,8 @@ def test_full_pipeline(tmp_path, monkeypatch, small_inputs, single_thread):
         stream.create_dataset("Group/GroupMass", data=[100., 200.])
     for stage, namespace in (("C", c), ("D", d)):
         namespace.update(RUN_CAMELS=True, CAMELS_HDF5=catalog)
-        execute(notebook_sources(stage)["camels"], namespace)
-        execute(notebook_sources(stage)["provenance"], namespace)
-        assert namespace["dependencies"]["CAMELS"]["sha256"] == workflow.file_info(catalog)["sha256"]
+        with pytest.raises(ValueError, match="incompatible"):
+            execute(notebook_sources(stage)["camels"], namespace)
     for stage in "BCD":
         folder = tmp_path / stage / "smoke"
         manifest = json.loads((folder / "provenance.json").read_text())[stage]
@@ -97,7 +102,7 @@ def test_full_pipeline(tmp_path, monkeypatch, small_inputs, single_thread):
         assert manifest["run_mode"] == "smoke"
         for name in manifest["artifacts"]:
             workflow.checked_artifact(folder, manifest, name)
-        assert (folder.parent / f"notebook_{stage}_smoke_outputs.zip").is_file()
+        assert (folder / f"notebook_{stage}_smoke_outputs.zip").is_file()
     # Run the gate again with a deterministic rejection, then execute the
     # actual test cell: no disallowed test-time adaptation may be attempted.
     monkeypatch.setattr(workflow, "tta_should_enable", lambda *args: False)

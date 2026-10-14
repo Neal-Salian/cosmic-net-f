@@ -19,7 +19,28 @@ from rls.sparsify import eval_mask
 from rls.train_policy import prepare_graphs
 from rls.tta import adapt_at_test_time, tta_should_enable
 from rls.pair_policy import policy_action, pair_stats, pair_mask
-from data.provenance import sha256_file
+from data.provenance import sha256_file, hash_payload
+
+
+def fresh_output_directory(path):
+    """A new campaign directory is mandatory; never overwrite historical runs."""
+    path = Path(path)
+    path.mkdir(parents=True, exist_ok=False)
+    return path
+
+
+def source_identity():
+    root = Path(__file__).resolve().parents[1]
+    paths = []
+    for directory in ("rls", "data", "model", "graph", "training"):
+        paths.extend((root / directory).rglob("*.py"))
+    records = {str(p.relative_to(root)): file_info(p)["sha256"] for p in sorted(paths)}
+    records["config/config.yaml"] = file_info(root / "config/config.yaml")["sha256"]
+    for path in sorted((root / "notebooks").glob("notebook_[ABCD]*.ipynb")):
+        notebook = json.loads(path.read_text())
+        records[str(path.relative_to(root))] = hash_payload(
+            [c["source"] for c in notebook["cells"] if c["cell_type"] == "code"])
+    return hash_payload(records)
 
 
 def file_info(path):
@@ -33,6 +54,11 @@ def run_context(cfg, csv, checkpoint, graphs, backbone, smoke):
         "split_cluster_ids": {name: [g.cluster_id for g in items]
                               for name, items in graphs.items()},
         "backbone": backbone, "run_mode": "smoke" if smoke else "full",
+        "research_label": "fixture_smoke" if smoke else "legacy_total_radius",
+        "source_identity": source_identity(),
+        "evaluation_protocol": {"decoder": "direct", "constraint": cfg.get("rls", {}).get("evaluation_constraint", "no_isolates"),
+            "clustered_units": cfg.get("data", {}).get("tng", {}).get("clustered_units"),
+            "target": "legacy_uncertified"},
     }
 
 
@@ -61,7 +87,7 @@ def source_artifacts(explicit, root, stage, filename, context):
     manifest = json.loads(path.read_text()).get(stage, {}) if path.is_file() else {}
     if manifest.get("status") != "complete":
         raise ValueError(f"Notebook {stage} outputs are incomplete or from the old workflow; rerun Notebook {stage}.")
-    for key in ("run_mode", "seed", "split_cluster_ids", "backbone"):
+    for key in ("run_mode", "seed", "split_cluster_ids", "backbone", "source_identity", "evaluation_protocol"):
         if manifest.get(key) != context[key]:
             raise ValueError(f"Notebook {stage} {key} does not match this run. Use the same inputs and settings in A–D.")
     for key in ("tng_csv", "checkpoint"):
@@ -78,8 +104,10 @@ def load_saved_policy(folder, manifest, cfg, gnn, device):
     cfg["rls"] = copy.deepcopy(manifest["config_used"]["rls"])
     quality = manifest.get("policy_validation", {})
     if (cfg["rls"].get("sparsity_mode") != "pair_pl" or quality.get("verdict") not in ("PASS", "FAIL")
-            or (quality.get("verdict") != "PASS" and manifest.get("run_mode") != "smoke")):
-        raise ValueError("Policy is not validated under the repaired pair objective. Rerun Notebook B; diagnostic/rejected policies cannot be used downstream.")
+            or not quality.get("budget_comparable")):
+        raise ValueError("Policy lacks a budget-comparable validation record. Rerun Notebook B.")
+    # FAIL means no improvement over the validation control, not an invalid
+    # artifact. Retain negative results in C instead of selecting winners only.
     policy = build_policy(cfg, node_emb_dim=gnn.output_dim).to(device)
     path = checked_artifact(folder, manifest, "policy.pt")
     policy.load_state_dict(torch.load(path, map_location=device, weights_only=True), strict=True)
@@ -135,6 +163,13 @@ def policy_masks(policy, graphs, cfg, target_sparsity=None, return_diagnostics=F
     masks, probabilities, diagnostics = [], [], []
     with torch.no_grad():
         for graph in graphs:
+            if cfg.get("evaluation_decoder") == "direct":
+                from rls.notebook_benchmark import exact_policy_mask
+                mask, probs, diag = exact_policy_mask(policy, graph, cfg, q)
+                masks.append(mask)
+                probabilities.append(probs)
+                diagnostics.append(diag)
+                continue
             probs = torch.sigmoid(policy(graph["edge_attr"], graph["emb"],
                                          graph["edge_index"], graph["ctx"])).squeeze(-1)
             if not torch.isfinite(probs).all():
@@ -172,6 +207,9 @@ def result_rows(result, backbone, run_mode):
     require_backbone_label(rows, backbone)
     for row in rows:
         row.update(run_mode=run_mode, keep_frac=row["mean_keep_frac"])
+        for key, value in list(row.items()):
+            if isinstance(value, float) and not np.isfinite(value):
+                row[key] = None
     return rows
 
 
@@ -189,7 +227,10 @@ def policy_metrics(policy, graphs, gnn, cfg, target_sparsity=None):
     row.update(physical_pair_keep=float(np.mean([s["physical_pair_keep"] for s in stats])),
                total_edge_keep=row["mean_keep_frac"], physical_isolates=sum(s["physical_isolates"] for s in stats),
                requested_keep_fraction=q, decoder_kind=diagnostics[0]["decoder_kind"] if diagnostics else "legacy_repaired",
-               budget_tag="stageA_legacy_repaired")
+               final_pair_counts=[d["final_pair_count"] for d in diagnostics],
+               requested_pair_counts=[d["requested_pair_count"] for d in diagnostics],
+               graph_ids=[g.get("cluster_id") for g in graphs],
+               budget_tag="exact_direct" if cfg.get("evaluation_decoder") == "direct" else "stageA_legacy_repaired")
     return row
 
 
@@ -204,11 +245,26 @@ def random_pair_reference(graphs, gnn, cfg, seeds=range(10), target_sparsity=Non
             torch.manual_seed(seed)
             for graph in graphs:
                 scores = torch.zeros(graph["edge_index"].shape[1], device=graph["edge_index"].device)
-                masks.append(pair_mask(graph["edge_index"], scores, q, sample=True)[0])
+                if cfg.get("evaluation_decoder") == "direct":
+                    from rls.constraints import PhysicalPairLayout, pair_budget
+                    from rls.constrained_policy import select_pairs
+                    from rls.notebook_benchmark import fixed_marks
+                    layout = PhysicalPairLayout.from_edge_index(graph["edge_index"], len(graph["x"]))
+                    k = pair_budget(layout, q)
+                    selected = select_pairs(layout, torch.rand(len(layout.pairs), device=scores.device), k,
+                        cfg.get("evaluation_constraint", "no_isolates"), method="direct", sample=False,
+                        pair_marks=fixed_marks(layout, cfg.get("seed", 42), graph.get("cluster_id", "unknown")))
+                    masks.append(layout.expand(selected.selected))
+                else:
+                    masks.append(pair_mask(graph["edge_index"], scores, q, sample=True)[0])
         row = result_rows(evaluate_masks(gnn, graphs, masks), record_backbone("frozen", gnn), "full")[1]
         row.update(seed=seed, requested_keep_fraction=q,
-                   decoder_kind="legacy_repaired",
+                   decoder_kind="exact_direct" if cfg.get("evaluation_decoder") == "direct" else "legacy_repaired",
                    budget_tag="stageA_legacy_repaired")
+        if cfg.get("evaluation_decoder") == "direct":
+            from rls.constraints import PhysicalPairLayout
+            row.update(final_pair_counts=[int(PhysicalPairLayout.from_edge_index(g["edge_index"], len(g["x"])).collapse(m).sum()) for g,m in zip(graphs,masks)],
+                       graph_ids=[g.get("cluster_id") for g in graphs])
         rows.append(row)
     if len(rows) < 2:
         raise ValueError("Random reference requires at least two seeds.")
@@ -221,9 +277,13 @@ def policy_validation(metrics, random_rows):
     rqs = [r.get("requested_keep_fraction") for r in random_rows]
     budgets_known = mq is not None and all(q is not None for q in rqs)
     comparable = budgets_known and all(q == mq for q in rqs)
+    if metrics.get("decoder_kind") == "exact_direct":
+        comparable = comparable and all(r.get("decoder_kind") == "exact_direct"
+            and r.get("final_pair_counts") == metrics.get("final_pair_counts")
+            and r.get("graph_ids") == metrics.get("graph_ids") for r in random_rows)
     passed = (comparable and np.isfinite(metrics["rmse"])
               and metrics["rmse"] < random_mean and metrics["physical_isolates"] == 0)
-    criterion = ("Validation RMSE below random-pair mean at the same requested budget; "
+    criterion = ("Validation RMSE below random-pair mean at the same budget and graph population; "
                  "no physical isolates.")
     if not budgets_known:
         criterion += " Requested-budget metadata missing: comparability unknown."
@@ -235,34 +295,30 @@ def policy_validation(metrics, random_rows):
 
 
 def merge_baselines(rows, folder, manifest):
-    import pandas as pd
-    frame = pd.read_csv(checked_artifact(folder, manifest, "baselines.csv"))
-    required = {"method", "rmse", "r2", "keep_frac", "backbone_stage", "backbone_sha256", "run_mode"}
-    if not required.issubset(frame.columns):
-        raise ValueError("A's table lacks model provenance; rerun the updated Notebook A.")
-    full = frame[frame.method == "full"]
-    if len(full) != 1 or not np.isclose(full.iloc[0].rmse, rows[0]["rmse"], rtol=1e-4, atol=1e-6):
-        raise ValueError("A and C full-graph results differ; check the split, checkpoint and graph backend.")
-    baseline_rows = frame[frame.method != "full"].copy()
-    baseline_rows["mean_keep_frac"] = baseline_rows["keep_frac"]
-    # Preserve every source field, particularly the jointly trained Gumbel backbone.
-    return rows + baseline_rows.to_dict(orient="records")
+    raise ValueError("Legacy table concatenation does not establish matched budgets or populations. "
+                     "Use matched_notebook_rows to evaluate every method together.")
 
 
 def physics_diagnostics(graphs, probabilities, masks):
     from scipy.stats import mannwhitneyu, spearmanr
     rows = []
     for graph, probs, mask in zip(graphs, probabilities, masks):
-        u, v = graph["edge_index"]
-        real = u != v
-        binding = (graph["stellar_mass"][u] * graph["stellar_mass"][v] /
-                   (graph["pos"][u] - graph["pos"][v]).norm(dim=1).clamp(min=1e-6))[real].cpu().numpy()
-        p, kept = probs[real].detach().cpu().numpy(), mask[real].cpu().numpy()
+        from rls.constraints import PhysicalPairLayout
+        layout = PhysicalPairLayout.from_edge_index(graph["edge_index"], len(graph["stellar_mass"]))
+        chosen = layout.collapse(mask)
+        if not torch.equal(layout.expand(chosen)[layout.real], mask[layout.real]):
+            raise ValueError("Physics statistics require symmetric physical-pair masks")
+        u, v = layout.pairs.T
+        binding = (graph["stellar_mass"][u].double() * graph["stellar_mass"][v].double() /
+                   (graph["pos"][u] - graph["pos"][v]).double().norm(dim=1).clamp(min=1e-6)).cpu().numpy()
+        sums = probs.new_zeros(len(layout.pairs)).index_add(0, layout.inverse, probs[layout.real])
+        counts = probs.new_zeros(len(layout.pairs)).index_add(0, layout.inverse, torch.ones_like(probs[layout.real]))
+        p, kept = (sums / counts.clamp_min(1)).detach().cpu().numpy(), chosen.cpu().numpy()
         rho = float(spearmanr(p, binding).statistic) if len(p) > 1 and np.ptp(p) > 0 and np.ptp(binding) > 0 else None
         pvalue = float(mannwhitneyu(binding[kept], binding[~kept]).pvalue) if kept.any() and (~kept).any() else None
         rows.append({"cluster_id": graph.get("cluster_id"), "spearman_rho": rho,
                      "binding_mannwhitney_p": pvalue, "physical_edges": len(binding),
-                     "note": "undefined statistics left empty" if rho is None or pvalue is None else ""})
+                     "note": "descriptive within-graph pair statistic; no independent graph-level significance claim"})
     return rows
 
 
@@ -287,13 +343,25 @@ def coverage_rows(model, graphs, masks, n_samples):
 
 
 def adaptation_trial(policy, graphs, gnn, cfg, device, k, target_sparsity=None):
+    import time
     from rls.budget_accounting import LEGACY_DECODER_KIND, resolve_requested_keep
     if not isinstance(k, int) or isinstance(k, bool) or k < 0:
         raise ValueError("TTA K must be a nonnegative integer.")
     q = resolve_requested_keep(cfg, explicit=target_sparsity)
     dev = torch.device(device) if isinstance(device, str) else device
-    masks, histories = [], []
+    masks, histories, elapsed = [], [], []
     for index, graph in enumerate(graphs):
+        if dev.type == "cuda":
+            torch.cuda.synchronize(dev)
+        start = time.perf_counter()
+        graph = dict(graph)
+        # Include a fresh full-backbone embedding pass in per-instance timing.
+        if hasattr(gnn, "get_embeddings"):
+            with torch.no_grad():
+                graph["emb"] = gnn.get_embeddings(masked_batch(graph,
+                    torch.ones(graph["edge_index"].shape[1], dtype=torch.bool,
+                               device=graph["edge_index"].device), dev), embedding_point="pre_pooling")
+                graph["ctx"] = graph["emb"].mean(dim=0)
         # Comparable reproducible random streams across K; never pass labels.
         with torch.random.fork_rng(devices=[dev.index or 0] if dev.type == "cuda" else []):
             torch.manual_seed(int(cfg.get("seed", 42)) + index)
@@ -307,7 +375,7 @@ def adaptation_trial(policy, graphs, gnn, cfg, device, k, target_sparsity=None):
                     torch.cuda.synchronize()
             else:
                 trial_cfg = dict(cfg, tta_steps=k)
-                unlabeled = {key: value for key, value in graph.items() if key not in ("y", "cluster_id")}
+                unlabeled = {key: value for key, value in graph.items() if key != "y"}
                 if torch.cuda.is_available():
                     torch.cuda.synchronize()
                 mask, info = adapt_at_test_time(policy, unlabeled, gnn, trial_cfg, device,
@@ -315,7 +383,12 @@ def adaptation_trial(policy, graphs, gnn, cfg, device, k, target_sparsity=None):
                 if torch.cuda.is_available():
                     torch.cuda.synchronize()
         masks.append(mask)
-        histories.append(dict(cluster_id=graph.get("cluster_id"), **info))
+        # Include the retained-graph prediction; aggregate accuracy is evaluated below.
+        predict_graph(gnn, graph, mask)
+        if dev.type == "cuda":
+            torch.cuda.synchronize(dev)
+        elapsed.append(time.perf_counter() - start)
+        histories.append(dict(cluster_id=graph.get("cluster_id"), inference_time_s=elapsed[-1], **info))
     result = evaluate_masks(gnn, graphs, masks)
     row = result_rows(result, record_backbone("frozen", gnn), "full")[1]
     req = [h["requested_pair_count"] for h in histories if h.get("requested_pair_count") is not None]
@@ -323,7 +396,10 @@ def adaptation_trial(policy, graphs, gnn, cfg, device, k, target_sparsity=None):
     final = [h["final_pair_count"] for h in histories if h.get("final_pair_count") is not None]
     row.update(K=k, mode="frozen" if k == 0 else "tta",
                mean_steps=float(np.mean([h["steps_run"] for h in histories])),
-               requested_keep_fraction=q, decoder_kind=LEGACY_DECODER_KIND,
+               requested_keep_fraction=q, decoder_kind="exact_direct" if cfg.get("evaluation_decoder") == "direct" else LEGACY_DECODER_KIND,
+               mean_time_s=float(np.mean(elapsed)),
+               timing_scope="full embedding+policy/adaptation+decoder+retained prediction; graph construction separate",
+               final_pair_counts=final, graph_ids=[g.get("cluster_id") for g in graphs],
                requested_pair_count=float(np.mean(req)) if req else None,
                sampled_pair_count=float(np.mean(samp)) if samp else None,
                final_pair_count=float(np.mean(final)) if final else None,
@@ -342,7 +418,9 @@ def validation_gates(policy, graphs, gnn, cfg, device, ks):
     rows = []
     for k in sorted(set([0] + list(ks))):
         row, _ = adaptation_trial(policy, graphs, gnn, cfg, device, k)
-        row["enabled"] = k == 0 or tta_should_enable(rows[0]["rmse"], row["rmse"], cfg.get("tta_val_tol", 0.02))
+        comparable = k == 0 or row["final_pair_counts"] == rows[0]["final_pair_counts"]
+        row["budget_comparable"] = comparable
+        row["enabled"] = k == 0 or (comparable and tta_should_enable(rows[0]["rmse"], row["rmse"], cfg.get("tta_val_tol", 0.02)))
         rows.append(row)
     selected = min((row for row in rows if row["enabled"]), key=lambda row: (row["rmse"], row["K"]))["K"]
     return rows, selected
@@ -351,7 +429,12 @@ def validation_gates(policy, graphs, gnn, cfg, device, ks):
 def complete_stage(out, stage, context, artifacts, **extra):
     out = Path(out)
     path = out / "provenance.json"
+    for record in context["dataset"].values():
+        if not Path(record["path"]).is_file() or file_info(record["path"])["sha256"] != record["sha256"]:
+            raise ValueError("Campaign input changed during execution; no completion is published")
     provenance = json.loads(path.read_text()) if path.exists() else {}
+    if provenance.get(stage, {}).get("status") == "complete":
+        raise FileExistsError("Completed notebook outputs are immutable; select a fresh OUTPUT_DIR")
     provenance[stage] = dict(context, stage=stage, status="complete",
         timestamp_utc=datetime.now(timezone.utc).isoformat(),
         artifacts={name: file_info(out / name) for name in artifacts}, **extra)
@@ -371,7 +454,9 @@ def complete_stage(out, stage, context, artifacts, **extra):
     temporary.replace(path)
     # Archive only this run's declared outputs; stale optional artifacts stay out.
     import zipfile
-    archive = out.parent / f"notebook_{stage}_{context['run_mode']}_outputs.zip"
+    archive = out / f"notebook_{stage}_{context['run_mode']}_outputs.zip"
+    if archive.exists():
+        raise FileExistsError(f"Refusing to overwrite archive {archive}")
     with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
         for name in ["provenance.json"] + list(artifacts):
             bundle.write(out / name, name)

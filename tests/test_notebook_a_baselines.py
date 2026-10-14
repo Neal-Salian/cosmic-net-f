@@ -63,6 +63,8 @@ def test_run_all_and_reruns(tmp_path, monkeypatch, small_inputs, device_name):
     namespace.update(REPO_DIR=ROOT, SYNC_REPO=False, INSTALL_MISSING=False,
                      INPUT_ROOT=tmp_path / "input", DEVICE=device_name,
                      GRAPH_BACKEND="torch", SMOKE_TEST=True, GUMBEL_EPOCHS=1,
+                     LEARNED_EPOCHS=1,
+                     LEGACY_CSV_UNITS={"position": "Mpc", "radius": "Mpc", "stellar_mass": "log10_Msun", "halo_mass": "M_sun"},
                      SMOKE_GRAPHS_PER_SPLIT=2, OUTPUT_DIR=tmp_path / "output")
     monkeypatch.chdir(tmp_path)
     threads = torch.get_num_threads()
@@ -72,12 +74,11 @@ def test_run_all_and_reruns(tmp_path, monkeypatch, small_inputs, device_name):
             if name != "settings":
                 execute(source, namespace, f"Notebook A: {name}")
         results = namespace["baseline_df"]
-        assert len(results) == 6 * 6 + 2
+        assert len(results) == len(namespace["FRACTIONS"]) * 7
         assert np.isfinite(results[["rmse", "r2", "keep_frac"]]).all().all()
-        assert namespace["mask"].device == namespace["g"].edge_index.device
         assert namespace["gnn"].hidden_dim == 8
         assert all(p.grad is None for p in namespace["gnn"].parameters())
-        assert any(p.grad is not None for p in namespace["gumbel_gnn"].parameters())
+        assert namespace["learned_artifact"]["training_settings"]["epochs"] == 1
         out = tmp_path / "output" / "smoke"
         provenance = json.loads((out / "provenance.json").read_text())["A"]
         assert provenance["status"] == "complete"
@@ -85,11 +86,12 @@ def test_run_all_and_reruns(tmp_path, monkeypatch, small_inputs, device_name):
         assert provenance["full_split_sizes"] == {"train": 11, "val": 2, "test": 3}
         assert provenance["graph_backend"] == "portable_torch"
         assert provenance["dataset"]["checkpoint"]["path"] == str(small_inputs / "best_model_augmented.pt")
-        assert provenance["backbone"]["sha256"] != provenance["gumbel_backbone"]["sha256"]
+        assert provenance["learned_control"] == "train_only_saliency_distillation"
         assert not (tmp_path / "output" / "baselines.csv").exists()
         saved = pd.read_csv(out / "baselines.csv")
-        execute(sources["gumbel-evaluate"], namespace)
-        pd.testing.assert_frame_equal(saved, pd.read_csv(out / "baselines.csv"))
+        assert (out / "learned_control.pt").is_file()
+        raw = json.loads((out / "baseline_per_example.json").read_text())
+        assert all(r["budget_satisfied"] and r["constraint_satisfied"] for r in raw if r["status"] == "success" and r["method"] != "full")
         execute(sources["device-check"], namespace)
         execute(sources["attention-smoke"], namespace)
     finally:

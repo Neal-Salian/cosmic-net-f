@@ -49,6 +49,7 @@ def build_results_table(preds_full, preds_policy, preds_gumbel, preds_random,
         rows.append({
             "method": name,
             "rmse": _rmse(preds, targets),
+            "mae": float((preds - targets).abs().mean().item()),
             "r2": _r2(preds, targets),
             "scatter": _scatter(preds, targets),
             "mean_keep_frac": keep if keep is not None else 1.0,
@@ -108,7 +109,9 @@ def save_paper_plots(rows, out_dir="outputs/rls"):
     ax[0].set_ylabel("RMSE (dex)")
     ax[0].set_xlim(1.05, -0.05)
     ax[0].legend()
-    ax[1].bar(df.method, df.fidelity, color="steelblue")
+    # Undefined correlations (constant predictions or empty populations) stay
+    # missing; they are not zero fidelity and must not crash the plotter.
+    ax[1].bar(df.method, pd.to_numeric(df.fidelity, errors="coerce"), color="steelblue")
     ax[1].axhline(0.98, color="r", ls="--", label="0.98 fidelity")
     ax[1].set_ylabel("fidelity (Pearson)")
     ax[1].legend()

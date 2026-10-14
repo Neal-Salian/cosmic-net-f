@@ -284,7 +284,7 @@ def train_policy(trainer, graphs, gnns, cfg, device="cpu", epochs=60, log_fn=Non
                 keep_hist, target_hist, tol=0.1, patience=5,
                 anneal_epochs=cfg.get("sparsity_anneal_epochs", 40)):
             msg = (f"[rls] CURRICULUM DIVERGENCE at epoch {epoch}: "
-                   f"mean keep {keep_hist[-1]:.3f} vs target {target_sp:.3f} " 
+                   f"mean keep {keep_hist[-1]:.3f} vs target {target_sp:.3f} "
                    f"(|keep-target| > 0.1 for 5+ epochs past half anneal). "
                    f"See sparsity_mode={cfg.get('sparsity_mode', 'penalty')}.")
             if warn_fn is not None:
