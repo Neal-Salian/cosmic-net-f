@@ -6,83 +6,17 @@
 
 **Physics-Informed Graph Neural Network for Dark Matter Halo Mass Prediction**
 
-Cosmic-Net is a research-grade GNN that predicts dark matter halo masses from galaxy/subhalo distributions, then distills the learned representations into human-readable mathematical equations using symbolic regression. Based on [HaloGraphNet](https://arxiv.org/abs/2204.07077) (Villanueva-Domingo et al., 2022).
+Cosmic-Net is a research prototype for halo-mass prediction and constrained graph pruning, based on [HaloGraphNet](https://arxiv.org/abs/2204.07077) (Villanueva-Domingo et al., 2022).
 
-## Key Features
+## Current evidence and research workflow
 
-- **Physics-Informed Loss**: Virial theorem constraint (2·KE + PE ≈ 0) as soft penalty
-- **Edge-Conditioned Convolution**: NNConv with 5 physics-motivated edge features
-- **Uncertainty Quantification**: MC-Dropout with configurable N samples for confidence intervals
-- **Cross-Simulation Generalization**: Train on TNG, test on CAMELS (or any combination)
-- **Symbolic Regression**: Distill GNN into interpretable equations via PySR
-- **Dimensional Analysis**: Post-filter discovered equations for physical consistency
-- **Ablation-Ready**: Every architectural choice is a config flag
+The historical full-GNN test result is **R² 0.9075, RMSE 0.1167 dex, MAE 0.0921 dex** on 82 legacy graphs. The saved RL experiment reduces stored edges to 47.91% but increases RMSE to **0.134322 dex**. Matched real-data superiority, practical speedup and CAMELS/SIMBA transfer have not been demonstrated.
 
-## RL Edge Sparsification (RL-Cosmic-Net)
+See [controlled campaign instructions](docs/research_readiness.md) and [audited projected baseline](docs/audited_baseline.md) before running experiments. A–D now use `fix/research-pipeline-readiness`, require explicitly acknowledged legacy inputs, preserve historical outputs, and reject stale handoffs and existing output directories. Their source edits do not constitute new execution evidence.
 
-A frozen-backbone, physics-informed policy-gradient policy (`rls/`) prunes
-task-irrelevant edges before GNN inference — the pruned graph *is* the
-explanation. REINFORCE with a learned baseline + entropy bonus (one-step MDP;
-honestly NOT PPO) and a relative-RMSE + sparsity-curriculum + virial-consistency
-reward; baselines: random/degree/distance/mass-ratio/gradient-saliency/
-PGExplainer/attention-topk/Gumbel-softmax. Stage-B GNN fine-tune closes the
-train/test distribution shift. See `rl-implementation-plan.md`.
+A evaluates random, distance, degree, binding and saliency plus an actual train-only saliency-distilled selector. B restores the best validation policy at a fixed budget and retains negative results. C re-evaluates all methods together at exact physical-pair budgets on common graph populations. D applies validation-gated label-free adaptation with exact final budgets and measured inference regions. A → B → C/D; attach complete stage folders including manifests. Untrained attention and feature-scaling Gumbel controls are excluded from primary comparisons.
 
-### Kaggle notebook workflow
-
-Run the updated notebooks in order **A → B → C → D**, each top to bottom in
-a fresh kernel. All use the `fix/rl-pruning-symmetry` branch and the attached
-`tng100_clustered.csv` / `best_model_augmented.pt` pair. Setup skips Git LFS
-downloads, retains Kaggle's PyTorch installation and supports radius/kNN graph
-construction without native PyG extensions.
-
-| Notebook | Inputs beyond the dataset/checkpoint | Outputs |
-| --- | --- | --- |
-| A | None | Baseline table, Gumbel models, provenance |
-| B | None | Trained policy, optional Stage B model, provenance |
-| C | A and B output folders | Combined results, physics diagnostics, full/pruned calibration |
-| D | B output folder | Validation gates, eligible TTA results, selected K, adaptation histories |
-
-Attach complete output folders, including `provenance.json`, to downstream
-notebooks. B–D create a ZIP archive and print its location in the final cell.
-In C/D, `A_ARTIFACT_DIR` (C only) and `B_ARTIFACT_DIR` can point explicitly to
-the folders containing the artifact files. Otherwise discovery searches
-`/kaggle/input` and requires exactly one completed source run. Old B outputs
-must be regenerated: the updated workflow verifies file checksums, backbone,
-graph configuration and split IDs, and restores B's entire policy configuration.
-
-Notebook B now uses `pair_pl`: ordered Plackett–Luce samples over physical
-pairs with their exact action likelihood and a leave-one-out rollout baseline.
-Normalization statistics and the reward error scale are fitted on training data
-only. The reward is bounded; the critic uses Huber loss and both optimizers have
-gradient clipping. Validation selects the best checkpoint at the final pair
-budget, against a fixed multi-seed random-pair reference.
-
-`policy.pt` is published only when validation RMSE beats the random reference
-and no nodes are physically isolated. Failed full runs save
-`policy_diagnostic.pt`; C/D reject them. Smoke artifacts bypass the statistical
-quality threshold only within other smoke runs. The old deterministic
-`topk_scheduled` training objective is rejected; old policies must be retrained.
-Physical connectivity means no isolated nodes, not necessarily a single
-connected component. Deterministic repair may exceed the requested pair budget;
-physical-pair and total-edge keep fractions are reported separately.
-
-Set `SMOKE_TEST=True` in **all** stages for a small pipeline check; smoke and
-full artifacts cannot be mixed. Leave it false for the full experiment. B's
-optional fine-tuning preserves the original frozen GNN used for policy
-embeddings. In C, `EVALUATE_STAGE_B=True` adds results from B's saved fine-tuned
-model. Stage B trains with both pruned and full-graph losses and requires a
-pruned-validation improvement without more than 2% full-validation regression.
-If no epoch passes, the original backbone is restored and no
-`finetuned_gnn.pt` is published. A's jointly trained Gumbel backbone retains its
-own labels in C's table.
-
-D evaluates each `TTA_KS` value on validation first. Failed settings are skipped
-on test; the selected K comes from validation alone. K=0 uses the unchanged
-offline policy. Pair-policy TTA uses the same sampled actions with a label-free
-reward; its validation gate still applies. The obsolete penalty ablation is
-disabled. To enable CAMELS in C/D, attach a real z=0 group catalog and set
-`CAMELS_HDF5` and `RUN_CAMELS=True`; no synthetic fallback is used.
+The GNN uses NNConv and supports MC dropout. Physics loss is an explicitly bounded stellar/halo virial **proxy**. Interval calibration and astrophysical validity require experiments. Symbolic regression and interpretability modules are exploratory; dimensional checking and true PGExplainer training remain incomplete. Legacy CAMELS GroupMass cannot be treated as the TNG target. The audited projected path uses explicit catalog/feature contracts and cannot reuse legacy weights merely because dimensions match.
 
 ## Installation
 
@@ -120,7 +54,7 @@ cp .env.example .env
 
 ##  Results & Visualizations
 
-Our Augmented Model significantly improves over the Baseline when generalizing to higher complexities. Below are standard astrophysical evaluations:
+The following plots are preserved historical exploratory outputs. They do not establish controlled generalization or RL superiority.
 
 ### Model Performance: Predictions vs. True Mass
 ![Predictions Scatter](outputs/research_paper_plots/6_predictions_scatter.png)
@@ -132,12 +66,7 @@ Our Augmented Model significantly improves over the Baseline when generalizing t
 ![Binned Bias and Scatter](outputs/research_paper_plots/8_binned_bias_scatter.png)
 
 ### Explainable AI (Physics-Informed Saliency Mapping) - Subhalo Kinematics Importance
-*Note on XAI Methodology: While structural masking methods like PGExplainer or GNNExplainer are standard for discrete topology tasks (e.g., molecule classification), they artificially break the continuous spatial manifold in astrophysics datasets by simulating 'dropped' edges. We instead utilized **Input × Gradient Saliency Mapping**, a rigorous evaluation of the physics-informed model's smooth sensitivity to continuous kinematic scalars (velocity, mass). This measures impact without violating spatial graph integrity.*
-
-The table and chart below illustrate the internal gradient mapping across physical edge interactions in the local graphs. This reveals exactly which kinematic properties of neighboring subhalos are driving the GNN\'s cluster mass prediction:
-
-*   **Baseline Model** relies disproportionately on geometric alignment (**Cos_theta**, 39.61%) to deduce total mass boundaries—effectively memorizing coordinate shapes rather than internal dynamics.
-*   **Augmented Model** distributes feature importance much more robustly across actual physical kinematics, primarily balancing relative velocity interactions (**Delta_V**, 26.78%) and mass differentials (**Mass_Ratio**, 26.59%). This signifies a deeper, generalization-ready understanding of subhalo gravitational dynamics.
+The historical plot generator sums absolute raw input gradients, not Input × Gradient. Its percentages depend on feature units and scaling. They describe local sensitivity and do not establish physical understanding, coordinate memorization or generalization. The new pruning saliency control is separately implemented as edge-feature gradient × input.
 
 | Model     | Distance   | Delta_v   | Cos_theta   | Mass_Ratio   | Proj_Sep   |
 |-----------|------------|-----------|-------------|--------------|------------|
@@ -160,7 +89,7 @@ The table and chart below illustrate the internal gradient mapping across physic
 Each galaxy/subhalo is a **Node**. The 4 features must be in this exact order and take the form of $\log_{10}$ values:
 1. `log_10(stellar_mass)` (in $M_\odot$)
 2. `log_10(velocity_dispersion)` (in km/s)
-3. `log_10(half_mass_radius)` (in kpc)
+3. `log_10(half_mass_radius)` (in Mpc in the core training path; the separate legacy backend has an unresolved unit mismatch)
 4. `log_10(metallicity)`
 
 ### 3. Edge Features
@@ -358,7 +287,7 @@ The loss term penalizes predictions that violate virial equilibrium:
 ```
 L_total = MSE(M_pred, M_true) + λ · (virial_ratio - 1)²
 ```
-Lambda (λ) is annealed via cosine schedule from 0 → 1 over training.
+Lambda (λ) follows the explicit `training.lambda_schedule`, start/end, ramp and warmup configuration. The squared-ratio proxy is numerically bounded; see the campaign limitations.
 
 ### Edge Features
 Each edge encodes 5 physics-motivated features:
@@ -381,7 +310,7 @@ After training, PySR discovers equations like:
 M_halo ≈ c₁ · R_half · σ² + c₂  (Virial-like)
 M_halo ≈ c · σ⁴                  (Faber-Jackson-like)
 ```
-Dimensional analysis filters physically inconsistent equations.
+Dimensional filtering is currently incomplete; do not treat generated equations as dimensionally certified.
 
 ## Experiment Tracking
 

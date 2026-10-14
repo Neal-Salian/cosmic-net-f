@@ -45,12 +45,4 @@ provenance also retains `release`,
 
 ## Astronomy loader integration boundary
 
-The current strict catalog loader emits immutable `AstronomyHalo` and
-`AstronomyMember` records with only target, position, velocity, stellar mass
-and radius. The current `observe_halo` API accepts legacy `HaloData` with
-additional required intrinsic fields. This adapter deliberately does not
-manufacture those unavailable fields to bridge the two types. Until a
-partial-observation transform entry point is added, audited astronomy loader
-records cannot enter the Task 5b observation-to-graph pipeline directly. This
-is a Task 5c integration item; it must preserve only declared observables and
-must not create substitute intrinsic measurements.
+The strict catalog loader emits immutable partial `AstronomyHalo`/`AstronomyMember` records. `data.astronomy_observations.observe_astronomy_halo` transforms these records into declared observables without inventing dispersion or metallicity. The audited projected baseline trains on this graph schema; see `audited_baseline.md`. Legacy intrinsic-feature policy rewards remain unsupported for these partial records until an explicit projected reward/training design is implemented.
