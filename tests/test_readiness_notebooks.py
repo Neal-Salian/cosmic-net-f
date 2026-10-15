@@ -63,7 +63,7 @@ def test_notebooks_preserve_archival_outputs_and_pin_readiness_branch():
         old_outputs = [(c.get("execution_count"), c.get("outputs", [])) for c in old["cells"] if c["cell_type"] == "code"]
         assert new_outputs == old_outputs
         settings = next("".join(c["source"]) for c in new["cells"] if c.get("id") == "settings")
-        assert 'REPO_BRANCH = "fix/research-pipeline-readiness"' in settings
+        assert 'REPO_BRANCH = "codex/fix-stageb-budget-feasibility"' in settings
         assert "ACKNOWLEDGE_LEGACY_INPUTS = False" in settings
         assert "historical" in "".join(new["cells"][0]["source"]).lower()
 

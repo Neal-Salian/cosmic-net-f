@@ -73,15 +73,29 @@ def notebook_provenance(context):
 def fit_learned_control(model, split_graphs, context, fractions, *, epochs, hidden_dim=16):
     """Train a raw selector on train-only gradient×input labels with exact costs."""
     train = [as_data(g).to(next(model.parameters()).device) for g in split_graphs["train"]]
-    train_ids = [g.cluster_id for g in train]
+    requested_train_ids = [g.cluster_id for g in train]
     heldout = [g.cluster_id for name in ("val", "test") for g in split_graphs[name]]
     split_hash = hash_payload(context["split_cluster_ids"])
+    # Validate the original split before exclusions, so an empty-pair graph
+    # cannot conceal an overlapping or duplicated training identity.
+    RawBudgetPairScorer._validate_id_lists(requested_train_ids, heldout, split_hash)
+    trainable, excluded = [], []
+    for graph in train:
+        layout = PhysicalPairLayout.from_edge_index(graph.edge_index, len(graph.x))
+        if not len(layout.pairs):
+            excluded.append(dict(graph_id=graph.cluster_id, reason="no_nonself_physical_pairs",
+                                 available_pair_count=0))
+        else:
+            trainable.append((graph, layout))
+    if not trainable:
+        raise ValueError("Learned control has no training graphs with non-self physical pairs")
+    train = [graph for graph, _ in trainable]
+    train_ids = [g.cluster_id for g in train]
     names = list(context["config_used"]["graph"]["edge_features"])
     meter = MeteredPredictor(model)
     teacher = PairScorer("edge_feature_grad_x_input")
     examples = []
-    for graph in train:
-        layout = PhysicalPairLayout.from_edge_index(graph.edge_index, len(graph.x))
+    for graph, layout in trainable:
         budgets = sorted({pair_budget(layout, q) for q in fractions})
         # One measured gradient forward per training graph, reused across budgets.
         labels = teacher.score(graph, layout, budgets[0], meter=meter).scores.detach()
@@ -103,6 +117,9 @@ def fit_learned_control(model, split_graphs, context, fractions, *, epochs, hidd
                                      hidden_dim=hidden_dim)
     artifact["predictor_state_hash"] = meter.model_state_hash()
     artifact["label_meter"] = meter.snapshot()
+    artifact["training_cohort"] = dict(population="train_graphs_with_nonself_physical_pairs",
+        requested_train_ids=requested_train_ids, train_ids=train_ids, heldout_ids=heldout,
+        excluded_graphs=excluded, split_hash=split_hash)
     return scorer, artifact
 
 
