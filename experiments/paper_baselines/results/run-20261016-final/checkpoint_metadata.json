@@ -1,0 +1,11 @@
+{
+  "keys": [
+    "config",
+    "epoch",
+    "metrics",
+    "model_state_dict"
+  ],
+  "has_provenance": false,
+  "training_split_certified": false,
+  "research_label": "legacy_total_radius"
+}

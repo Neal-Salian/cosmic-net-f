@@ -1,0 +1,254 @@
+{
+  "status": "executed",
+  "created_utc": "2026-10-16T04:55:42.569654+00:00",
+  "base_commit": "c825bf57652005c80faff79cf4dfd58e3a9baa14",
+  "branch": "codex/paper-baseline-robustness",
+  "sources": [
+    {
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/A-v1-terminal-001/artifacts/cosmic-net-runs/notebook_A/provenance.json",
+      "size_bytes": 29291,
+      "sha256": "d70b36b97c8c5553ab62199e467568a1801c697c6ce03ca743d7d3660390a7c4"
+    },
+    {
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/provenance.json",
+      "size_bytes": 482355,
+      "sha256": "a775f072fa1a103517b72e611d75b95a00edf78ae594d7cbf99d3a4351049016"
+    },
+    {
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/provenance.json",
+      "size_bytes": 30258,
+      "sha256": "44410f959bce77f56db28a26104cda722dca8f1f2a5409ef048e80614cd2fdbd"
+    },
+    {
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/matched_per_example.json",
+      "size_bytes": 46561764,
+      "sha256": "91b4c2fe7d729c72d0d75cbbaa254e6d27d696f9ad5fc2cc233bc980735e9cc7"
+    },
+    {
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/results_table.csv",
+      "size_bytes": 153164,
+      "sha256": "36e262609de4fffa1ee8b6aaa0506d3b7079d3629f7ce19c377fd2faff795257"
+    },
+    {
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/budget_eligibility.json",
+      "size_bytes": 46621,
+      "sha256": "972c9e2c5092e85d2652c3ca8bf3c6f1ba1af377d6f7a6fd1dda5472a4fee277"
+    },
+    {
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/A-v1-terminal-001/artifacts/cosmic-net-runs/notebook_A/learned_control.pt",
+      "size_bytes": 500021,
+      "sha256": "ea4702d33ff5571262f76043507d49ae0f0c19d4ec717361522432823aa16933"
+    },
+    {
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/policy.pt",
+      "size_bytes": 106909,
+      "sha256": "b1f41771c102bec644e0f84b0c002a228e5514321c768d8919e8beae3379f81d"
+    },
+    {
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/recovered-notebook-B-358545025/inputs/v3/tng100_clustered.csv",
+      "size_bytes": 1068424,
+      "sha256": "6c148f2cae68abac7bc5c34d370ff0130a647b49e79c32880bcf36ecc0ab4d53"
+    },
+    {
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/recovered-notebook-B-358545025/inputs/v3/best_model_augmented.pt",
+      "size_bytes": 3349165,
+      "sha256": "42764f0db204863b28672d6ec6e207443602de16dcfa926765a0429b3451c63f"
+    },
+    {
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/recovered_training/training_checkpoint.json",
+      "size_bytes": 37151,
+      "sha256": "f27f035c84f8af6850e8580bc20b8df869451b38216ff17f57e358a61b1ff983"
+    }
+  ],
+  "experiment_source_sha256": {
+    "experiments/paper_baselines/analyze.py": "d8c571fadc400dbfa6d20d1b275d61ed89c3b9d5b796fbc2ad5c772b101a5ce9",
+    "experiments/paper_baselines/audit.py": "3250cf9778dd9b2e8937a39301c26c31fde4950f69ddcaaa78b488a682465947",
+    "experiments/paper_baselines/run.py": "afde373d0e74c692346ab470b85711b25be75a2d55e4331ba1e94a068edf0b2d",
+    "experiments/paper_baselines/selectors.py": "2ef94a79c898013ef9cb59aeaca39f14d75a4249d9e216834fe8be3aaef0fbcd"
+  },
+  "environment": {
+    "python": "3.13.3 (v3.13.3:6280bb54784, Apr  8 2025, 10:47:54) [Clang 15.0.0 (clang-1500.3.9.4)]",
+    "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+    "torch": "2.13.0",
+    "numpy": "2.5.2",
+    "device": "cpu",
+    "torch_threads": 1
+  },
+  "seeds": {
+    "policy_training_seeds_available": [
+      42
+    ],
+    "random_mask_seeds": [
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109
+    ],
+    "policy_sampling_seeds": [
+      200,
+      201,
+      202,
+      203,
+      204,
+      205,
+      206,
+      207,
+      208,
+      209
+    ],
+    "tie_mark_seeds": [
+      300,
+      301,
+      302
+    ],
+    "bootstrap_seed": 20261016,
+    "bootstrap_resamples": 10000
+  },
+  "prediction_counts": {
+    "historical_replay": 2624,
+    "new_test": 9184,
+    "new_validation": 486
+  },
+  "execution_registry": [
+    {
+      "experiment": "saved benchmark audit/replay",
+      "status": "executed"
+    },
+    {
+      "experiment": "repeated random masks, ten seeds/four budgets",
+      "status": "executed"
+    },
+    {
+      "experiment": "validation-tuned geometry/hybrid, physics proxy, alternative gradients",
+      "status": "executed"
+    },
+    {
+      "experiment": "policy PL sampling and tie marks, same trained policy",
+      "status": "executed"
+    },
+    {
+      "experiment": "deterministic sigmoid probability rank",
+      "status": "executed; duplicate-mask control"
+    },
+    {
+      "experiment": "independent policy training seeds",
+      "status": "not_executed",
+      "reason": "only seed 42 trained artifact; no retraining authorized/needed"
+    },
+    {
+      "experiment": "certified corrected-astronomy or external population",
+      "status": "not_executed",
+      "reason": "legacy checkpoint lacks target/training provenance; no matching certified weights"
+    },
+    {
+      "experiment": "new GPU latency measurement",
+      "status": "not_executed",
+      "reason": "local CPU execution; no cross-device speedup claims"
+    }
+  ],
+  "meter": {
+    "scoring": {
+      "forward_calls": 82,
+      "graph_evaluations": 82,
+      "elapsed_seconds": 0.10996891898685135
+    },
+    "training_label": {
+      "forward_calls": 0,
+      "graph_evaluations": 0,
+      "elapsed_seconds": 0.0
+    },
+    "shared_full": {
+      "forward_calls": 82,
+      "graph_evaluations": 82,
+      "elapsed_seconds": 0.110652833012864
+    },
+    "evaluation": {
+      "forward_calls": 11966,
+      "graph_evaluations": 11966,
+      "elapsed_seconds": 13.711027441000624
+    },
+    "training": {
+      "forward_calls": 0,
+      "graph_evaluations": 0,
+      "elapsed_seconds": 0.0
+    },
+    "oracle": {
+      "forward_calls": 0,
+      "graph_evaluations": 0,
+      "elapsed_seconds": 0.0
+    }
+  },
+  "outputs": {
+    "probability_ranking_checks.csv": {
+      "path": "experiments/paper_baselines/results/run-20261016-final/probability_ranking_checks.csv",
+      "size_bytes": 16368,
+      "sha256": "7bd2a2287c58d44ee5572b8daf799480c96d2aacd9e24c7db89c4cefd0ecaca4"
+    },
+    "audit.json": {
+      "path": "experiments/paper_baselines/results/run-20261016-final/audit.json",
+      "size_bytes": 1474,
+      "sha256": "f09d7beeeb24b5226145f44caf2274935cdad339bcdfb2c5df500b6ea7b08de3"
+    },
+    "checkpoint_metadata.json": {
+      "path": "experiments/paper_baselines/results/run-20261016-final/checkpoint_metadata.json",
+      "size_bytes": 192,
+      "sha256": "cfa7b193a242db168afe397e396e1ce594160ea2eb6f6bc676656d7d3e7c8f6c"
+    },
+    "validation_predictions.csv": {
+      "path": "experiments/paper_baselines/results/run-20261016-final/validation_predictions.csv",
+      "size_bytes": 164643,
+      "sha256": "751054fdfea272fccc01f2dfcc3b283d89b274598bbb1bba129ef529a7d76e45"
+    },
+    "config.json": {
+      "path": "experiments/paper_baselines/results/run-20261016-final/config.json",
+      "size_bytes": 1136,
+      "sha256": "b39ee3547c71b10d098970f46777c113c7ba66ab0f7dadef10e1519f73c00242"
+    },
+    "masks.jsonl.gz": {
+      "path": "experiments/paper_baselines/results/run-20261016-final/masks.jsonl.gz",
+      "size_bytes": 2548123,
+      "sha256": "4f4b7ad46987f665f1a880de0acdbf11289816de46c6b1265ee6fd69f7055e5b"
+    },
+    "historical_timing.json": {
+      "path": "experiments/paper_baselines/results/run-20261016-final/historical_timing.json",
+      "size_bytes": 2087,
+      "sha256": "090b354f1d0ec12c8b739a00e8eef5d839cd3f29d90056d51f27ae06600fc534"
+    },
+    "split_ids.json": {
+      "path": "experiments/paper_baselines/results/run-20261016-final/split_ids.json",
+      "size_bytes": 11953,
+      "sha256": "0b834ae1a1ec68e4c51899c72d338d8850f246b6c65026ea0d11556f209b3d32"
+    },
+    "halo_properties.csv": {
+      "path": "experiments/paper_baselines/results/run-20261016-final/halo_properties.csv",
+      "size_bytes": 46830,
+      "sha256": "e5102d426771b84d232685ef373e070b5df43099b0d387b01fd7bdacab6396ef"
+    },
+    "hyperparameters.json": {
+      "path": "experiments/paper_baselines/results/run-20261016-final/hyperparameters.json",
+      "size_bytes": 338,
+      "sha256": "7de2a7bb5432116dae9477ea341359aff9f868f7a3bcfbfa9b6995622e9dabb1"
+    },
+    "new_predictions.csv": {
+      "path": "experiments/paper_baselines/results/run-20261016-final/new_predictions.csv",
+      "size_bytes": 3192365,
+      "sha256": "97c8ef31fc2fd5ac778dcf709b2e0480d00b321fdb2ee09cd54c82b159128957"
+    },
+    "historical_replay.csv": {
+      "path": "experiments/paper_baselines/results/run-20261016-final/historical_replay.csv",
+      "size_bytes": 530689,
+      "sha256": "dc278f9dc887a200e5b8093a52a400e593aa8f6e90cd9ba6f07717996d6e2301"
+    },
+    "eligibility.json": {
+      "path": "experiments/paper_baselines/results/run-20261016-final/eligibility.json",
+      "size_bytes": 71,
+      "sha256": "dc6ec175bd1b94cdf60966781f930818df0855efffab0138f07278e1f2af97ec"
+    }
+  }
+}
