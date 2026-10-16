@@ -1,0 +1,43 @@
+         121575 function calls (121318 primitive calls) in 0.039 seconds
+
+   Ordered by: cumulative time
+   List reduced from 156 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.039    0.039 profile_reference.py:36(decode)
+        1    0.000    0.000    0.039    0.039 constrained_policy.py:68(select_pairs)
+        8    0.000    0.000    0.038    0.005 constrained_policy.py:46(_candidates)
+      125    0.000    0.000    0.038    0.000 constraints.py:131(feasible_budget)
+      125    0.001    0.000    0.036    0.000 constraints.py:104(minimum_additions)
+  503/502    0.001    0.000    0.026    0.000 backends.py:541(_call_if_no_backends_installed)
+      125    0.000    0.000    0.026    0.000 <class 'networkx.utils.decorators.argmap'> compilation 10:1(argmap_max_weight_matching_5)
+      125    0.004    0.000    0.025    0.000 matching.py:318(max_weight_matching)
+     1150    0.001    0.000    0.009    0.000 reportviews.py:856(__iter__)
+     4596    0.002    0.000    0.008    0.000 <frozen _collections_abc>:897(__iter__)
+      251    0.001    0.000    0.007    0.000 constraints.py:96(_graph)
+      124    0.001    0.000    0.006    0.000 matching.py:884(verifyOptimum)
+     5912    0.002    0.000    0.004    0.000 coreviews.py:300(<genexpr>)
+     8324    0.003    0.000    0.003    0.000 coreviews.py:354(new_node_ok)
+      251    0.002    0.000    0.003    0.000 graph.py:986(add_edges_from)
+     2500    0.001    0.000    0.002    0.000 coreviews.py:351(__getitem__)
+1538/1409    0.001    0.000    0.002    0.000 matching.py:513(assignLabel)
+     2306    0.001    0.000    0.002    0.000 coreviews.py:302(__getitem__)
+      502    0.000    0.000    0.002    0.000 matching.py:508(slack)
+      251    0.001    0.000    0.002    0.000 graph.py:584(add_nodes_from)
+6955/6829    0.001    0.000    0.001    0.000 {built-in method builtins.len}
+      726    0.000    0.000    0.001    0.000 graph.py:1344(neighbors)
+    13762    0.001    0.000    0.001    0.000 {method 'get' of 'dict' objects}
+       43    0.000    0.000    0.001    0.000 matching.py:575(addBlossom)
+      125    0.000    0.000    0.001    0.000 graph.py:1794(subgraph)
+     2247    0.001    0.000    0.001    0.000 coreviews.py:293(__iter__)
+    14224    0.001    0.000    0.001    0.000 filters.py:70(__call__)
+      250    0.001    0.000    0.001    0.000 {built-in method builtins.__build_class__}
+     8685    0.001    0.000    0.001    0.000 {method 'update' of 'dict' objects}
+      125    0.000    0.000    0.001    0.000 graphviews.py:136(subgraph_view)
+      603    0.000    0.000    0.001    0.000 functools.py:1010(__get__)
+      502    0.000    0.000    0.001    0.000 graph.py:509(__getitem__)
+      976    0.000    0.000    0.001    0.000 {built-in method builtins.iter}
+      125    0.000    0.000    0.001    0.000 {built-in method builtins.any}
+      376    0.000    0.000    0.001    0.000 graph.py:349(__init__)
+
+

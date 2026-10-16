@@ -1,0 +1,40 @@
+........................................................................ [  8%]
+...................................s.s.s.s.s............................ [ 17%]
+.............s.s........................................................ [ 25%]
+.......................s................................................ [ 34%]
+.............................................................s.......... [ 43%]
+.................s.....s................................................ [ 51%]
+........................................................................ [ 60%]
+........................................................................ [ 69%]
+...........................................ss........................... [ 77%]
+........................................................................ [ 86%]
+........................................................................ [ 95%]
+.........................................                                [100%]
+=============================== warnings summary ===============================
+../../../../../../Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/torch/jit/_script.py:1488
+../../../../../../Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/torch/jit/_script.py:1488
+  /Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_astronomy_evaluation.py: 112 warnings
+tests/test_benchmark_predictor.py: 10 warnings
+tests/test_cross_sim.py: 30 warnings
+tests/test_full_graph_baseline.py: 30 warnings
+tests/test_inference_efficiency.py: 20 warnings
+tests/test_matched_benchmark.py: 10 warnings
+tests/test_notebook_a_baselines.py: 40 warnings
+tests/test_notebook_pipeline.py: 50 warnings
+tests/test_notebook_resume_path.py: 30 warnings
+tests/test_provenance_foundation.py: 240 warnings
+tests/test_readiness_strict_baseline.py: 50 warnings
+tests/test_run_experiment.py: 60 warnings
+tests/test_train_policy.py: 30 warnings
+  /Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/torch_geometric/inspector.py:433: DeprecationWarning: Failing to pass a value to the 'type_params' parameter of 'typing._eval_type' is deprecated, as it leads to incorrect behaviour when calling typing._eval_type on a stringified annotation that references a PEP 695 type parameter. It will be disallowed in Python 3.15.
+    return typing._eval_type(value, _globals, None)  # type: ignore
+
+tests/test_train_policy.py::test_prepare_graphs_real_pyg_data
+  /Users/nealsalian/.codex/worktrees/paper-inference-efficiency/cosmic-net/tests/test_train_policy.py:59: UserWarning: 'data.DataLoader' is deprecated, use 'loader.DataLoader' instead
+    loader = DataLoader(datalist, batch_size=2)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+820 passed, 13 skipped, 715 warnings in 195.69s (0:03:15)

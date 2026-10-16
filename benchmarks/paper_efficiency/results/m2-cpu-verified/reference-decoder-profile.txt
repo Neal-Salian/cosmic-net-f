@@ -1,0 +1,43 @@
+         645904 function calls (644453 primitive calls) in 0.321 seconds
+
+   Ordered by: cumulative time
+   List reduced from 154 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.001    0.001    0.321    0.321 run.py:285(<lambda>)
+        1    0.000    0.000    0.320    0.320 constrained_policy.py:68(select_pairs)
+       18    0.003    0.000    0.317    0.018 constrained_policy.py:46(_candidates)
+      658    0.004    0.000    0.313    0.000 constraints.py:131(feasible_budget)
+      658    0.005    0.000    0.300    0.000 constraints.py:104(minimum_additions)
+2635/2634    0.003    0.000    0.184    0.000 backends.py:541(_call_if_no_backends_installed)
+      658    0.001    0.000    0.183    0.000 <class 'networkx.utils.decorators.argmap'> compilation 10:1(argmap_max_weight_matching_5)
+      658    0.023    0.000    0.180    0.000 matching.py:318(max_weight_matching)
+     1317    0.009    0.000    0.090    0.000 constraints.py:96(_graph)
+     7614    0.009    0.000    0.075    0.000 reportviews.py:856(__iter__)
+    20692    0.014    0.000    0.063    0.000 <frozen _collections_abc>:897(__iter__)
+     1317    0.041    0.000    0.059    0.000 graph.py:986(add_edges_from)
+      360    0.009    0.000    0.050    0.000 matching.py:884(verifyOptimum)
+    25995    0.013    0.000    0.038    0.000 coreviews.py:300(<genexpr>)
+    56544    0.027    0.000    0.037    0.000 coreviews.py:354(new_node_ok)
+    16095    0.006    0.000    0.018    0.000 coreviews.py:302(__getitem__)
+      221    0.004    0.000    0.014    0.000 matching.py:575(addBlossom)
+52750/52091    0.006    0.000    0.013    0.000 {built-in method builtins.len}
+    85916    0.013    0.000    0.013    0.000 {method 'update' of 'dict' objects}
+     2307    0.002    0.000    0.012    0.000 matching.py:508(slack)
+     1317    0.009    0.000    0.011    0.000 graph.py:584(add_nodes_from)
+      658    0.001    0.000    0.011    0.000 graph.py:1794(subgraph)
+    74646    0.011    0.000    0.011    0.000 {method 'get' of 'dict' objects}
+     1316    0.008    0.000    0.009    0.000 {built-in method builtins.__build_class__}
+     7236    0.007    0.000    0.009    0.000 coreviews.py:351(__getitem__)
+    70420    0.008    0.000    0.008    0.000 filters.py:70(__call__)
+4504/3714    0.006    0.000    0.008    0.000 matching.py:513(assignLabel)
+      658    0.003    0.000    0.007    0.000 graphviews.py:136(subgraph_view)
+     2307    0.001    0.000    0.006    0.000 graph.py:509(__getitem__)
+     1975    0.004    0.000    0.006    0.000 graph.py:349(__init__)
+     1837    0.001    0.000    0.006    0.000 graph.py:1344(neighbors)
+     2640    0.003    0.000    0.005    0.000 _tensor.py:1179(__len__)
+     5947    0.005    0.000    0.005    0.000 coreviews.py:293(__iter__)
+     2052    0.002    0.000    0.005    0.000 functools.py:1010(__get__)
+     2307    0.002    0.000    0.005    0.000 coreviews.py:81(__getitem__)
+
+

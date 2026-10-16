@@ -1,0 +1,836 @@
+{
+  "test_graphs": 82,
+  "all_equal": true,
+  "records": [
+    {
+      "graph_id": "tng100_0000001",
+      "nodes": 10,
+      "pairs": 42,
+      "final_pairs": 17,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000013",
+      "nodes": 10,
+      "pairs": 30,
+      "final_pairs": 12,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000020",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000021",
+      "nodes": 10,
+      "pairs": 25,
+      "final_pairs": 10,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000034",
+      "nodes": 10,
+      "pairs": 41,
+      "final_pairs": 17,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000049",
+      "nodes": 10,
+      "pairs": 30,
+      "final_pairs": 12,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000050",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000052",
+      "nodes": 10,
+      "pairs": 41,
+      "final_pairs": 17,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000053",
+      "nodes": 10,
+      "pairs": 15,
+      "final_pairs": 6,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000054",
+      "nodes": 10,
+      "pairs": 43,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000058",
+      "nodes": 10,
+      "pairs": 44,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000071",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000080",
+      "nodes": 10,
+      "pairs": 19,
+      "final_pairs": 8,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000087",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000088",
+      "nodes": 10,
+      "pairs": 44,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000091",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000099",
+      "nodes": 10,
+      "pairs": 40,
+      "final_pairs": 16,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000102",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000105",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000106",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000121",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000130",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000134",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000160",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000166",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000169",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000174",
+      "nodes": 10,
+      "pairs": 44,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000187",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000189",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000191",
+      "nodes": 10,
+      "pairs": 44,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000205",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000214",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000241",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000243",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000252",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000259",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000263",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000264",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000270",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000273",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000276",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000306",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000308",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000309",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000313",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000315",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000319",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000328",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000330",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000339",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000343",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000345",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000360",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000364",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000367",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000373",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000386",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000388",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000391",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000418",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000427",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000437",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000441",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000446",
+      "nodes": 8,
+      "pairs": 28,
+      "final_pairs": 12,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000458",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000460",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000470",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000475",
+      "nodes": 9,
+      "pairs": 36,
+      "final_pairs": 15,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000476",
+      "nodes": 7,
+      "pairs": 21,
+      "final_pairs": 9,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000481",
+      "nodes": 8,
+      "pairs": 28,
+      "final_pairs": 12,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000484",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000495",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000496",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000507",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000511",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000514",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000536",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000543",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000561",
+      "nodes": 9,
+      "pairs": 36,
+      "final_pairs": 15,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000569",
+      "nodes": 9,
+      "pairs": 36,
+      "final_pairs": 15,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000581",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    },
+    {
+      "graph_id": "tng100_0000595",
+      "nodes": 10,
+      "pairs": 45,
+      "final_pairs": 18,
+      "physical_isolates": 0,
+      "mask_equal": true,
+      "order_equal": true,
+      "prediction_absolute_difference": 0.0
+    }
+  ],
+  "inputs": {
+    "data/raw/tng100_clustered.csv": "6c148f2cae68abac7bc5c34d370ff0130a647b49e79c32880bcf36ecc0ab4d53",
+    "kaggle/best_model_augmented.pt": "42764f0db204863b28672d6ec6e207443602de16dcfa926765a0429b3451c63f",
+    "benchmarks/paper_efficiency/inputs/policy.pt": "b1f41771c102bec644e0f84b0c002a228e5514321c768d8919e8beae3379f81d",
+    "benchmarks/paper_efficiency/inputs/context.json": "cf2a481b71142398d12386ce866b20fc6cca3fdf51a1c55f13e1ddd89d14e38e"
+  },
+  "source_sha256": {
+    "rls/inference_efficiency.py": "30b6f6cf2281003a02d5cef0335977478497abfdcf5c16ca65be8595d81a577c",
+    "benchmarks/paper_efficiency/validate.py": "1a5a00956efbcf3e419fce8b526f1a1f103f9a2b133b20b4890961ad5aa78382"
+  }
+}

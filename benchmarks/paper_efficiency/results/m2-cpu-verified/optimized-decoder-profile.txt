@@ -1,0 +1,43 @@
+         375 function calls (372 primitive calls) in 0.000 seconds
+
+   Ordered by: cumulative time
+   List reduced from 76 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.000    0.000 run.py:286(<lambda>)
+        1    0.000    0.000    0.000    0.000 inference_efficiency.py:57(select_pairs_fast)
+        1    0.000    0.000    0.000    0.000 constraints.py:151(selection_diagnostics)
+        1    0.000    0.000    0.000    0.000 constraints.py:96(_graph)
+        1    0.000    0.000    0.000    0.000 constraints.py:74(pair_marks)
+        2    0.000    0.000    0.000    0.000 {built-in method builtins.sum}
+        1    0.000    0.000    0.000    0.000 graph.py:986(add_edges_from)
+    96/95    0.000    0.000    0.000    0.000 {built-in method builtins.len}
+        2    0.000    0.000    0.000    0.000 {built-in method torch.isfinite}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+      3/2    0.000    0.000    0.000    0.000 backends.py:541(_call_if_no_backends_installed)
+        1    0.000    0.000    0.000    0.000 _tensor.py:1065(unique)
+        1    0.000    0.000    0.000    0.000 <class 'networkx.utils.decorators.argmap'> compilation 15:1(argmap_number_connected_components_11)
+        1    0.000    0.000    0.000    0.000 constraints.py:45(expand)
+      2/1    0.000    0.000    0.000    0.000 _jit_internal.py:627(fn)
+        1    0.000    0.000    0.000    0.000 connected.py:93(number_connected_components)
+        8    0.000    0.000    0.000    0.000 _tensor.py:1179(__len__)
+        1    0.000    0.000    0.000    0.000 functional.py:1090(_return_output)
+        2    0.000    0.000    0.000    0.000 {method 'argsort' of 'torch._C.TensorBase' objects}
+        1    0.000    0.000    0.000    0.000 functional.py:803(_unique_impl)
+        2    0.000    0.000    0.000    0.000 connected.py:149(<genexpr>)
+        2    0.000    0.000    0.000    0.000 connected.py:16(connected_components)
+        1    0.000    0.000    0.000    0.000 {built-in method torch._unique2}
+        1    0.000    0.000    0.000    0.000 graph.py:584(add_nodes_from)
+        1    0.000    0.000    0.000    0.000 connected.py:267(_plain_bfs)
+        2    0.000    0.000    0.000    0.000 {method 'all' of 'torch._C.TensorBase' objects}
+       11    0.000    0.000    0.000    0.000 constraints.py:156(<genexpr>)
+       48    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}
+        1    0.000    0.000    0.000    0.000 graph.py:349(__init__)
+       18    0.000    0.000    0.000    0.000 {method 'difference' of 'set' objects}
+       18    0.000    0.000    0.000    0.000 inference_efficiency.py:45(_can_complete)
+        1    0.000    0.000    0.000    0.000 {built-in method torch.tensor}
+        2    0.000    0.000    0.000    0.000 constraints.py:53(validate_selection)
+        2    0.000    0.000    0.000    0.000 {built-in method builtins.isinstance}
+        1    0.000    0.000    0.000    0.000 {built-in method torch.zeros}
+
+

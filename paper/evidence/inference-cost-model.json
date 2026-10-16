@@ -1,0 +1,177 @@
+{
+  "scope": "CPU service costs; resident input graph; frozen backbone; fixed reusable mask",
+  "full_s": 0.00347078835,
+  "pruned_s": 0.0026695376875,
+  "setup_s": 0.005614105579166667,
+  "reference_setup_s": 0.12786425765,
+  "optimized_break_even_reuses": 8,
+  "reference_break_even_reuses": 160,
+  "one_shot_measured_s": 0.007912161087500001,
+  "one_shot_additive_model_s": 0.008283643266666668,
+  "per_graph": [
+    {
+      "graph_id": "tng100_0000476",
+      "setup_s": 0.003411903,
+      "full_s": 0.0019475442666666669,
+      "pruned_s": 0.0017574612,
+      "break_even_reuses": 18
+    },
+    {
+      "graph_id": "tng100_0000569",
+      "setup_s": 0.0032053586000000004,
+      "full_s": 0.0020045668,
+      "pruned_s": 0.0016512917333333338,
+      "break_even_reuses": 10
+    },
+    {
+      "graph_id": "tng100_0000099",
+      "setup_s": 0.005351397400000001,
+      "full_s": 0.002636577866666666,
+      "pruned_s": 0.0022902556000000004,
+      "break_even_reuses": 16
+    },
+    {
+      "graph_id": "tng100_0000058",
+      "setup_s": 0.0119849414,
+      "full_s": 0.003918472133333334,
+      "pruned_s": 0.0028269583333333332,
+      "break_even_reuses": 11
+    },
+    {
+      "graph_id": "tng100_0000071",
+      "setup_s": 0.005417686266666667,
+      "full_s": 0.004682227666666667,
+      "pruned_s": 0.0030810612,
+      "break_even_reuses": 4
+    },
+    {
+      "graph_id": "tng100_0000106",
+      "setup_s": 0.005391452733333333,
+      "full_s": 0.003446910933333333,
+      "pruned_s": 0.0033062887333333334,
+      "break_even_reuses": 39
+    },
+    {
+      "graph_id": "tng100_0000166",
+      "setup_s": 0.005505477466666667,
+      "full_s": 0.0033748666666666666,
+      "pruned_s": 0.002702772266666667,
+      "break_even_reuses": 9
+    },
+    {
+      "graph_id": "tng100_0000241",
+      "setup_s": 0.005730039333333332,
+      "full_s": 0.003495358400000001,
+      "pruned_s": 0.0028406777333333335,
+      "break_even_reuses": 9
+    },
+    {
+      "graph_id": "tng100_0000264",
+      "setup_s": 0.005370202933333334,
+      "full_s": 0.0034629222000000007,
+      "pruned_s": 0.002892333333333333,
+      "break_even_reuses": 10
+    },
+    {
+      "graph_id": "tng100_0000309",
+      "setup_s": 0.005481774933333333,
+      "full_s": 0.0060373416,
+      "pruned_s": 0.002894188866666667,
+      "break_even_reuses": 2
+    },
+    {
+      "graph_id": "tng100_0000330",
+      "setup_s": 0.005366310866666666,
+      "full_s": 0.0033911055333333334,
+      "pruned_s": 0.0027319806,
+      "break_even_reuses": 9
+    },
+    {
+      "graph_id": "tng100_0000364",
+      "setup_s": 0.005501664066666667,
+      "full_s": 0.0033463304666666673,
+      "pruned_s": 0.002694872133333333,
+      "break_even_reuses": 9
+    },
+    {
+      "graph_id": "tng100_0000418",
+      "setup_s": 0.005335216733333334,
+      "full_s": 0.0034641888666666664,
+      "pruned_s": 0.0028064306,
+      "break_even_reuses": 9
+    },
+    {
+      "graph_id": "tng100_0000460",
+      "setup_s": 0.005523386266666667,
+      "full_s": 0.0034391945333333337,
+      "pruned_s": 0.0027595695333333336,
+      "break_even_reuses": 9
+    },
+    {
+      "graph_id": "tng100_0000511",
+      "setup_s": 0.005558277533333334,
+      "full_s": 0.0034064110000000002,
+      "pruned_s": 0.0027067111333333336,
+      "break_even_reuses": 8
+    },
+    {
+      "graph_id": "tng100_0000595",
+      "setup_s": 0.005690599733333334,
+      "full_s": 0.0034785946666666665,
+      "pruned_s": 0.00276975,
+      "break_even_reuses": 9
+    }
+  ],
+  "reuse_scenarios": [
+    {
+      "reuses": 1,
+      "full_total_s": 0.00347078835,
+      "optimized_total_s": 0.008283643266666668,
+      "reference_total_s": 0.1305337953375
+    },
+    {
+      "reuses": 2,
+      "full_total_s": 0.0069415767,
+      "optimized_total_s": 0.010953180954166667,
+      "reference_total_s": 0.133203333025
+    },
+    {
+      "reuses": 4,
+      "full_total_s": 0.0138831534,
+      "optimized_total_s": 0.016292256329166668,
+      "reference_total_s": 0.1385424084
+    },
+    {
+      "reuses": 8,
+      "full_total_s": 0.0277663068,
+      "optimized_total_s": 0.026970407079166668,
+      "reference_total_s": 0.14922055915000002
+    },
+    {
+      "reuses": 16,
+      "full_total_s": 0.0555326136,
+      "optimized_total_s": 0.04832670857916667,
+      "reference_total_s": 0.17057686065
+    },
+    {
+      "reuses": 32,
+      "full_total_s": 0.1110652272,
+      "optimized_total_s": 0.09103931157916667,
+      "reference_total_s": 0.21328946365
+    },
+    {
+      "reuses": 64,
+      "full_total_s": 0.2221304544,
+      "optimized_total_s": 0.17646451757916667,
+      "reference_total_s": 0.29871466965000004
+    },
+    {
+      "reuses": 128,
+      "full_total_s": 0.4442609088,
+      "optimized_total_s": 0.34731492957916665,
+      "reference_total_s": 0.46956508165
+    }
+  ],
+  "per_halo_topology_cache_s": 0.0005049609291666666,
+  "feature_generation_s": 0.0003136757333333333
+}
