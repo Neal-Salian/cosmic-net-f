@@ -11,5 +11,8 @@
     "target_pair_keep": 0.4,
     "entropy": 0.4156109780546219
   },
+  "reward_min_all_epochs": -7.638052940368652,
+  "reward_max_all_epochs": 2.369048595428467,
+  "zero_isolate_epochs": 60,
   "note": "Logged accuracy omits w_acc (which is 1); logged reward includes connectivity and clipping."
 }

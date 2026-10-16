@@ -25,6 +25,8 @@ python -m experiments.paper_ablations.package_source --output /tmp/cosmic-rl-abl
 
 This exports committed Git blobs, verifies their equality to working files, records the exact commit, and refuses overwrite. It excludes raw data, model weights, and result files. `ABLATION_SOURCE.json` is the authoritative commit pin for the exported source. Upload this ZIP as a Kaggle dataset attachment along with the three inputs above. This does not require pushing the branch.
 
+A ready-to-attach [source ZIP](kaggle-source-38b6509.zip) is included, pinned to executable commit `38b650999d1dec3e7e3a0dc4ea9757065c1c1637` (SHA256 `b4ace5f988ac043a8fd472753d959dd09d80ba438711a8a2c2d28ef4a07f413c`). Its 144 source-file checksums and real-input CPU preflight were verified outside the Git checkout; its ten portable software tests passed. GPU execution remains untested locally and all scientific retraining remains planned. Later evidence commits do not change the executable experiment source in this export.
+
 ## Kaggle setup
 
 Enable a GPU for 60-epoch retraining. Unpack the source into a **fresh empty** `/kaggle/working/cosmic-rl-ablations` directory. Example setup cell (replace attachment locations with the actual paths shown by Kaggle):

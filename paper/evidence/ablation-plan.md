@@ -59,3 +59,7 @@ Review focus: invalid budget inflation, changing halo populations, mislabeled in
 6. Train budget-specialized policies at .2/.4/.6/.8 on fixed splits and common evaluation cohorts. The completed transfer curve does not answer whether specialization repairs the low-budget failure.
 
 Tomorrow's manuscript can use the completed decoder/retention diagnostics and their limitations. It should describe reward attribution as unresolved until these new training runs complete.
+
+## Final validation
+
+The full repository suite passed (816 passed, 13 skipped; dependency deprecation warnings remain). The exported Kaggle source passed real-input CPU preflight and 10 portable tests. The diagnostic rerun from committed source reproduced every prediction and metric exactly, and completed-run resume verified checksums without rerunning experiments. Independent review reported no remaining blocking findings. The recovered archive/policy hashes were rechecked unchanged. See [validation record](../../experiments/paper_ablations/validation.json) and the [ready-to-attach source ZIP](../../experiments/paper_ablations/kaggle-source-38b6509.zip).

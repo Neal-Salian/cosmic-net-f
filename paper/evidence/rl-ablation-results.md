@@ -74,7 +74,7 @@ Run `python -m experiments.paper_ablations.report` to regenerate this document f
 - [Ranking equivalence](../../experiments/paper_ablations/results/local-2026-10-16/mask_equivalence.json)
 - [Historical log audit](../../experiments/paper_ablations/results/local-2026-10-16/historical_training_log.json)
 
-Executed source tree fingerprint: `db9cedeb240a04e95f866e0fa79a3753c3d0535d62ef4cccd84e603890347750`; evaluator HEAD at execution: `c825bf57652005c80faff79cf4dfd58e3a9baa14`. Exact experiment-source hashes are saved because the harness was run before its final commit. Core RL files remain those of the pinned base. Kaggle packaging records the final committed experiment revision.
+Executed source tree fingerprint: `9c416f3347accaf82d2f45794e8d4eb7a05dfa5a3b7fafac0b558bf07d4fb329`; evaluator HEAD at execution: `38b650999d1dec3e7e3a0dc4ea9757065c1c1637`. The diagnostic harness was executed from this exact committed source; the final branch commit additionally records its evidence outputs. Core RL files remain those of the pinned base. Kaggle packaging records the final committed experiment revision.
 
 Recovered selected-policy SHA256: `b1f41771c102bec644e0f84b0c002a228e5514321c768d8919e8beae3379f81d`. Source archive identity is rechecked from bytes; no source policy file is opened for writing.
 
