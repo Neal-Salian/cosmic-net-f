@@ -295,6 +295,10 @@ class TNGLoader(BaseDataLoader):
             if self.clustered_units is not None and self.clustered_units != marked_units:
                 raise ValueError("data.tng.clustered_units contradicts normalized CSV units marker")
             units = marked_units
+        # Check before selecting a group's first target or converting values.
+        # This does not certify M200c or change valid historical values.
+        from data.scientific_validation import validate_clustered_identity_targets
+        validate_clustered_identity_targets(df, halo_mass_unit=units['halo_mass'])
         if units['position'] == 'ckpc_per_h':
             df[['pos_x', 'pos_y', 'pos_z']] *= self.LENGTH_UNIT / self.H_PARAM
         if units['radius'] == 'ckpc_per_h':

@@ -1,0 +1,312 @@
+{
+  "schema_version": 1,
+  "audit_date_local": "2026-10-16",
+  "timezone": "Asia/Kolkata",
+  "base_commit": "c825bf57652005c80faff79cf4dfd58e3a9baa14",
+  "branch": "codex/paper-provenance-audit",
+  "worktree": "/Users/nealsalian/Desktop/cosmic-net-paper-provenance-audit",
+  "scientific_certification": false,
+  "overall_scope": "reproducible legacy-development campaign; independent scientific held-out claims remain blocked",
+  "classification_meanings": {
+    "VERIFIED": "The scoped statement is established by direct content, code or numerical evidence.",
+    "PARTIALLY VERIFIED": "Evidence supports only part of the statement or population; scope must remain explicit.",
+    "UNRESOLVED": "Available evidence cannot establish or refute the claim; a blocker and manuscript impact remain.",
+    "INVALID": "The stated affirmative claim conflicts with observed evidence or the meaning of the physical quantity."
+  },
+  "evidence_files": [
+    "provenance-audit.md",
+    "provenance-measurements.json",
+    "data-and-target-definition.md",
+    "backbone-audit.md",
+    "limitations-for-manuscript.md"
+  ],
+  "claims": [
+    {
+      "id": "campaign_identity",
+      "classification": "VERIFIED",
+      "claim": "A\u2013D share exact input bytes, frozen state, source identity and evaluation IDs.",
+      "evidence": "Recomputed Git source aggregate and all manifest/artifact hashes; exact 378/81/82 IDs.",
+      "impact_on_manuscript": "Supports a reproducible legacy campaign, not scientific certification.",
+      "next_action": "None for this scoped identity claim."
+    },
+    {
+      "id": "target_transform",
+      "classification": "VERIFIED",
+      "claim": "The numerical target is log10 of the CSV linear halo_mass in declared Msun.",
+      "evidence": "All redundant mass columns/group labels and C float32 graph targets agree.",
+      "impact_on_manuscript": "Report RMSE in dex against the legacy logarithmic mass label.",
+      "next_action": "Retain explicit target identity with any reported score."
+    },
+    {
+      "id": "all_labels_m200c",
+      "classification": "PARTIALLY VERIFIED",
+      "claim": "The legacy targets were intended as total M200c; full-catalog physical verification is incomplete.",
+      "evidence": "Fetcher selects Group_M_Crit200; exact raw matches for 20 rows in groups 0/1; 539 groups unavailable.",
+      "impact_on_manuscript": "Do not state that every halo label is independently certified M200c.",
+      "next_action": "Obtain complete raw targets or authenticated acquisition records and compare all group IDs."
+    },
+    {
+      "id": "dark_matter_only_target",
+      "classification": "INVALID",
+      "claim": "The pipeline predicts dark-matter-only halo mass.",
+      "evidence": "M200c is total enclosed matter; no DM-only target extraction exists.",
+      "impact_on_manuscript": "Use total halo mass intended as M200c, with the partial-provenance caveat.",
+      "next_action": "A DM-only experiment needs a distinct target, dataset and newly trained model."
+    },
+    {
+      "id": "stellar_radius",
+      "classification": "INVALID",
+      "claim": "Legacy half_mass_radius is a stellar type-4 radius.",
+      "evidence": "Fetcher uses halfmassrad; both raw matched groups verify total SubhaloHalfmassRad instead.",
+      "impact_on_manuscript": "Remove stellar-size/observable-only interpretations of this feature and old physics loss.",
+      "next_action": "Use an explicitly intrinsic study or a new audited type-4/observable dataset and compatible training."
+    },
+    {
+      "id": "stellar_metallicity",
+      "classification": "INVALID",
+      "claim": "Legacy metallicity is stellar metallicity.",
+      "evidence": "Fetcher uses gasmetallicity and raw gas values match after cleaning.",
+      "impact_on_manuscript": "Describe gas metallicity; do not claim a stellar-metallicity measurement.",
+      "next_action": "Rebuild a distinct feature schema if stellar metallicity is scientifically intended."
+    },
+    {
+      "id": "stellar_los_dispersion",
+      "classification": "INVALID",
+      "claim": "Legacy velocity_dispersion is measured stellar LOS galaxy velocity dispersion.",
+      "evidence": "Raw SubhaloVelDisp is internal 1D dispersion of all member particle/cell types.",
+      "impact_on_manuscript": "Do not call the legacy policy an observational kinematic selector.",
+      "next_action": "Use measured/projected bulk velocities in a separately trained observational pipeline."
+    },
+    {
+      "id": "no_literal_target_input",
+      "classification": "PARTIALLY VERIFIED",
+      "claim": "Current node/edge feature code does not copy target labels into predictor inputs.",
+      "evidence": "Explicit four-node/five-edge schema; target used only as graph y and supervised training reward.",
+      "impact_on_manuscript": "This rules out a literal label column, not all leakage or training exposure; intrinsic features contain privileged simulation information.",
+      "next_action": "Recover original training inputs/membership; predefine observable versus intrinsic feature scope."
+    },
+    {
+      "id": "final_catalog_unique",
+      "classification": "VERIFIED",
+      "claim": "The final CSV has no exact duplicate rows or repeated subhalo IDs.",
+      "evidence": "5378 unique IDs/rows, 541 groups; redundant targets consistent.",
+      "impact_on_manuscript": "Stable-ID overlap is absent in this final catalog only.",
+      "next_action": "Keep new fail-closed loader assertions."
+    },
+    {
+      "id": "independent_extraction_checkpoint",
+      "classification": "INVALID",
+      "claim": "checkpoint.csv or clustered HDF5 adds independent observations.",
+      "evidence": "HDF5 matches all 18 final CSV columns; checkpoint.csv overlaps 4970 member IDs.",
+      "impact_on_manuscript": "Never concatenate these as independent train/test data.",
+      "next_action": "Keep intermediates distinguished by identity and role."
+    },
+    {
+      "id": "raw_catalog_complete",
+      "classification": "INVALID",
+      "claim": "The available raw_hdf5 directory is a complete authentic catalog.",
+      "evidence": "Two nonempty group chunks, nine empty chunks, one zero-byte invalid file; expected 448 chunks.",
+      "impact_on_manuscript": "Full target/feature provenance cannot be certified from these files.",
+      "next_action": "Procure complete hash-verified raw catalogs; release authentication remains external."
+    },
+    {
+      "id": "selection_complete",
+      "classification": "UNRESOLVED",
+      "claim": "Catalog selection completeness and representativeness are established.",
+      "evidence": "Capped/cleaned central-candidate API workflow; no full acquisition/failure accounting.",
+      "impact_on_manuscript": "Mass/richness/galaxy-selection biases and missing satellites limit scientific population claims.",
+      "next_action": "Recover API selection/failure records and full member/halo selection accounting."
+    },
+    {
+      "id": "all_satellites",
+      "classification": "INVALID",
+      "claim": "The graphs contain every subhalo of the most massive 600 halos.",
+      "evidence": "Fetcher caps ten members and filters; actual 541 groups, richness 7\u201310.",
+      "impact_on_manuscript": "Describe selected capped FoF member lists, not complete halos or a representative survey.",
+      "next_action": "A complete-member experiment needs separately acquired and versioned inputs."
+    },
+    {
+      "id": "current_units",
+      "classification": "VERIFIED",
+      "claim": "Current campaign computations apply declared ckpc/h-to-Mpc and log-stellar-to-linear conversions once at snapshot 99.",
+      "evidence": "Explicit unit declaration, source trace, graph targets and two-group raw matches.",
+      "impact_on_manuscript": "Describe computational units; physical authentication outside matched rows remains partial.",
+      "next_action": "Use a new audited manifest for other epochs/semantics."
+    },
+    {
+      "id": "software_graph_definition",
+      "classification": "VERIFIED",
+      "claim": "Current graphs are within-group Euclidean radius plus nearest-isolate fallback, reciprocal columns and self-loops.",
+      "evidence": "Rebuilt graph hashes agree with saved C rows; actual fallback pairs measured.",
+      "impact_on_manuscript": "This precise software graph definition is safe to report.",
+      "next_action": "Keep architectural loops separate from physical pair budgets."
+    },
+    {
+      "id": "strict_physical_radius",
+      "classification": "INVALID",
+      "claim": "Every graph edge is a correct physical neighbor within 2 Mpc.",
+      "evidence": "215 minimum-image radius disagreements in 14 halos; five unordered fallback pairs exceed 2 Mpc.",
+      "impact_on_manuscript": "Physical graph interpretation is materially wrong, including two test halos; preserve scores as legacy only.",
+      "next_action": "Use verified unwrapping or consistent periodic geometry, then retrain/evaluate in a new experiment."
+    },
+    {
+      "id": "evaluation_split_identity",
+      "classification": "VERIFIED",
+      "claim": "Current evaluation splits are deterministic and member-disjoint for these bytes.",
+      "evidence": "Sorted cluster IDs, RandomState(42), exact manifest agreement and zero cross-split member overlap.",
+      "impact_on_manuscript": "Supports evaluation-population identity but not historical training separation.",
+      "next_action": "Preserve dataset hash, split IDs and algorithm with results."
+    },
+    {
+      "id": "historical_preprocessing_parity",
+      "classification": "INVALID",
+      "claim": "The original and current preprocessing can be treated as identical.",
+      "evidence": "Archived loader changes 1389 positions, 12 stellar masses and one radius; six test graph edge sets change.",
+      "impact_on_manuscript": "Older 0.1167 and current 0.114797 scores need separate preprocessing identities.",
+      "next_action": "Train fresh compatible weights for corrected scientific semantics; do not rewrite historical results."
+    },
+    {
+      "id": "historical_train_only_augmentation",
+      "classification": "PARTIALLY VERIFIED",
+      "claim": "Historical augmentation was executed exclusively on training parents.",
+      "evidence": "Notebook source splits first and adds three views to 378 train graphs; no durable executed lineage.",
+      "impact_on_manuscript": "Intended 1512/81/82 recipe is supported; absence of historical view leakage is not certified.",
+      "next_action": "Recover original parent/transform manifests or use a new provenance-complete training run."
+    },
+    {
+      "id": "physical_augmentation",
+      "classification": "INVALID",
+      "claim": "Historical augmentation is a physically covariant phase-space transformation with rebuilt neighbors.",
+      "evidence": "Positions rotate/jitter; velocities and original topology remain unchanged.",
+      "impact_on_manuscript": "Do not claim physical rotational invariance or a controlled augmentation benefit.",
+      "next_action": "Use joint transforms and explicit graph reconstruction in a separate compatible experiment."
+    },
+    {
+      "id": "backbone_heldout",
+      "classification": "UNRESOLVED",
+      "claim": "Independent held-out evaluation of the original backbone is demonstrable.",
+      "evidence": "Checkpoint stores no training catalog hash, source revision, split IDs or augmentation lineage; notebook/log agreement is supporting evidence only.",
+      "impact_on_manuscript": "No independently certified unseen-halo accuracy may be claimed from these weights; contamination is neither proven nor excluded.",
+      "next_action": "Recover checkpoint-bound original training evidence or train a fresh model on audited independent groups."
+    },
+    {
+      "id": "independent_volume_generalization",
+      "classification": "INVALID",
+      "claim": "The existing halo split establishes independent-volume or independent-IC generalization.",
+      "evidence": "All halos derive from a single TNG100 box and test results have been repeatedly inspected.",
+      "impact_on_manuscript": "Limit results to same-volume development evaluation.",
+      "next_action": "Reserve new independent IC/volume catalogs for predeclared confirmation."
+    },
+    {
+      "id": "checkpoint_identity",
+      "classification": "VERIFIED",
+      "claim": "The A\u2013D frozen checkpoint is identified and consistent across stages.",
+      "evidence": "File 42764f0d... and tensor-state 56907374... match exact input and stage records.",
+      "impact_on_manuscript": "Supports artifact identity, not how the weights were trained.",
+      "next_action": "Keep file/state hashes distinct and Stage B separately labelled."
+    },
+    {
+      "id": "legacy_policy_semantics",
+      "classification": "VERIFIED",
+      "claim": "Legacy policy uses intrinsic edges, frozen endpoint embeddings and mean context.",
+      "evidence": "EdgePolicyNet, prepare_graphs and pair-training code; five-edge/four-node schema.",
+      "impact_on_manuscript": "Describe an intrinsic simulation-feature selector.",
+      "next_action": "Maintain schema compatibility checks for any new policy."
+    },
+    {
+      "id": "calibrated_virial_equilibrium",
+      "classification": "INVALID",
+      "claim": "The RL reward measures calibrated total-halo virial equilibrium.",
+      "evidence": "Relative stellar/internal-dispersion degree-weighted proxy with Euclidean distances and reciprocal PE terms.",
+      "impact_on_manuscript": "Use the explicit proxy formula; no equilibrium/causal dark-matter mechanism claim.",
+      "next_action": "Validate a physically justified objective and ablate it on independent data."
+    },
+    {
+      "id": "proxy_physical_utility",
+      "classification": "UNRESOLVED",
+      "claim": "The policy physics proxy is empirically calibrated and causally improves performance.",
+      "evidence": "Implementation is dimensionally interpretable but no controlled causal/physical calibration is supplied.",
+      "impact_on_manuscript": "Cannot attribute accuracy to physical fidelity or report the proxy as measured binding energy.",
+      "next_action": "Run predeclared physics and feature ablations with real independent groups."
+    },
+    {
+      "id": "projected_policy",
+      "classification": "INVALID",
+      "claim": "The completed RL policy is a projected-observable policy.",
+      "evidence": "Embeddings inherit intrinsic all-particle dispersion and total radius; reward requires unavailable intrinsic fields.",
+      "impact_on_manuscript": "No real-observation or projected-policy transfer result is established.",
+      "next_action": "Develop a justified projected objective/trainer and newly trained compatible artifacts; never fabricate fields."
+    },
+    {
+      "id": "tta_label_free_objective",
+      "classification": "VERIFIED",
+      "claim": "The current D adaptation reward has no target-label argument.",
+      "evidence": "label_free_reward and TTA use uncertainty plus retention/connectivity/relative-proxy terms.",
+      "impact_on_manuscript": "Safe as an implementation property, not evidence of calibration, accuracy improvement or backbone independence.",
+      "next_action": "Retain validation-only K selection and separately validate objective utility."
+    },
+    {
+      "id": "legacy_scores",
+      "classification": "VERIFIED",
+      "claim": "Saved C full/nominal-q40 RL RMSE are 0.11479669852430192 and 0.13616044859036275 dex on 82 common test graphs.",
+      "evidence": "Saved per-example arithmetic, matching targets/graph hashes, same IDs and checkpoint; CPU replay agrees numerically.",
+      "impact_on_manuscript": "Report as legacy-development measurements with the held-out/target/geometry limitations.",
+      "next_action": "Retain frozen reference and score identities."
+    },
+    {
+      "id": "rl_superiority",
+      "classification": "INVALID",
+      "claim": "The current campaign establishes general RL superiority or accuracy preservation.",
+      "evidence": "Full graph is more accurate; one fitted policy seed and inspected development test population.",
+      "impact_on_manuscript": "Explicitly report that current evidence does not establish RL superiority.",
+      "next_action": "Predeclare comparisons and replicate fresh independent training/test groups."
+    },
+    {
+      "id": "new_audited_model",
+      "classification": "UNRESOLVED",
+      "claim": "A corrected independently held-out projected baseline and compatible policy have been trained.",
+      "evidence": "Separate audited baseline code exists; no real independent catalog manifest or new scientific run is available; projected RL trainer absent.",
+      "impact_on_manuscript": "New science cannot inherit legacy scores.",
+      "next_action": "Execute config/paper-provenance-baseline.example.yaml on real audited independent ICs into a new output directory; design projected RL separately."
+    },
+    {
+      "id": "general_efficiency_calibration",
+      "classification": "UNRESOLVED",
+      "claim": "The current sparse pipeline establishes practical speedup and calibrated uncertainty.",
+      "evidence": "This provenance audit preserves cost/calibration artifacts but does not supply independent efficiency/calibration experiments.",
+      "impact_on_manuscript": "Edge retention and broad MC-dropout intervals cannot justify general efficiency/calibration claims.",
+      "next_action": "Measure synchronized complete inference costs and independently calibrate/assess uncertainty on new evaluation populations."
+    }
+  ],
+  "remaining_blockers": [
+    "Full raw target/feature/acquisition coverage and release authentication",
+    "Checkpoint-bound original backbone training membership/source history",
+    "Correct periodic geometry and physically consistent features/augmentation for a new scientific run",
+    "Real independent IC/volume catalogs and new compatible trained baseline",
+    "Justified projected policy objective/trainer and new artifacts"
+  ],
+  "safe_manuscript_claims": [
+    "Executed reproducible legacy pipeline with explicit data/checkpoint/split identity",
+    "Scoped saved C full and RL metrics on the same 82-graph development population",
+    "No RL superiority established",
+    "Measured provenance/geometry/feature limitations and the distinct prospective baseline recipe"
+  ],
+  "preservation": {
+    "original_checkout_modified": false,
+    "existing_campaign_outputs_modified": false,
+    "historical_dataset_or_target_redefined": false,
+    "model_retrained": false,
+    "merge_rebase_push_or_pr": false
+  },
+  "verification": {
+    "measurement_file": "provenance-measurements.json",
+    "new_scientific_tests": "tests/test_paper_provenance.py",
+    "test_results_file": "verification.md",
+    "full_suite_passed": 829,
+    "full_suite_skipped": 13,
+    "full_suite_warnings": 695,
+    "new_tests_passed": 25,
+    "measurement_sha256": "111566789baf637548d2d11ac0c3dae0ac7a393bbbd67260fdfb3d16ff882660",
+    "independent_review": "Final review: no actionable findings after two regression-tested fixes"
+  }
+}
