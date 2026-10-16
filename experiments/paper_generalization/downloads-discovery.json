@@ -1,0 +1,10 @@
+{
+  "scope": "Downloads/Desktop filename discovery depth <= 3, not machine-wide absence",
+  "downloads_csv": {
+    "path": "/Users/nealsalian/Downloads/tng100_clustered.csv",
+    "size_bytes": 1068424,
+    "sha256": "6c148f2cae68abac7bc5c34d370ff0130a647b49e79c32880bcf36ecc0ab4d53"
+  },
+  "same_as_primary_csv": true,
+  "external_catalogs_discovered": []
+}

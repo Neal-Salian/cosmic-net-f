@@ -1,0 +1,87 @@
+{
+  "status": "blocked",
+  "experiment": "CAMELS IllustrisTNG CV_0 native Subfind z=0; frozen intrinsic backbone/policy",
+  "files": [
+    {
+      "input": "catalog",
+      "required_path": "inputs/IllustrisTNG/CV_0/groups_090.hdf5",
+      "available": false,
+      "requirements": "Current release; complete, self-contained native single-file catalog; all required fields; matching integer group membership and header counts; SHA-256"
+    },
+    {
+      "input": "parameters",
+      "required_path": "inputs/CV_0-parameters.txt",
+      "available": false,
+      "requirements": "Suite/set/generation, global IC seed lineage, h, a, redshift, Omega_m, Omega_b, Omega_Lambda, sigma8, n_s and feedback parameters; verify against Header"
+    },
+    {
+      "input": "schema_review",
+      "required_path": "inputs/CV_0-schema-review.md",
+      "available": false,
+      "requirements": "Release/source URLs, acquisition date, units, target M200c, total radius, peculiar subhalo velocities, metallicity convention, selected membership order, periodic geometry; reviewer identity"
+    },
+    {
+      "input": "backbone",
+      "available": true,
+      "local_candidate": "kaggle/best_model_augmented.pt",
+      "sha256": "42764f0db204863b28672d6ec6e207443602de16dcfa926765a0429b3451c63f",
+      "requirements": "Original frozen model; archived training transforms and population must be audited; no provenance embedded"
+    },
+    {
+      "input": "policy",
+      "available": true,
+      "local_candidate": "output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/policy.pt",
+      "sha256": "b1f41771c102bec644e0f84b0c002a228e5514321c768d8919e8beae3379f81d",
+      "requirements": "Original offline policy; receipt proves exact backbone binding; never replace by Stage-B finetuned_gnn"
+    },
+    {
+      "input": "training_receipt",
+      "required_path": "inputs/training-receipt.json",
+      "available": false,
+      "requirements": "Audited verification flags, complete single training catalog lineage, target/node/edge/normalization schema, member selection and training mass support, exact backbone/policy hashes, saved config and hashed evidence"
+    },
+    {
+      "input": "training_catalog",
+      "available": true,
+      "local_candidate": "data/raw/tng100_clustered.csv",
+      "sha256": "6c148f2cae68abac7bc5c34d370ff0130a647b49e79c32880bcf36ecc0ab4d53",
+      "requirements": "Evidence only; 541 halos, 5378 rows; not independent data"
+    },
+    {
+      "input": "split",
+      "available": "notebook provenance available; receipt pending audit",
+      "local_candidate": "output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/provenance.json",
+      "requirements": "All backbone training/augmentation and policy/model-selection populations reconciled; 378/81/82 policy split alone does not prove backbone independence"
+    },
+    {
+      "input": "semantic_audit",
+      "available": false,
+      "requirements": "Full extraction rule, field and transform audit across training rows; one central spot-check is insufficient"
+    },
+    {
+      "input": "training_code",
+      "available": "candidate notebooks exist; original execution version uncertified",
+      "requirements": "Archive exact code used to train backbone and select offline policy; input transforms and augmentation source IDs"
+    }
+  ],
+  "native_fields": {
+    "Group/Group_M_Crit200": "[Ngroups], 1e10 Msun/h",
+    "Subhalo/SubhaloGrNr": "[Nsubhalos], integer global group row",
+    "Subhalo/SubhaloPos": "[Nsubhalos,3], ckpc/h",
+    "Subhalo/SubhaloVel": "[Nsubhalos,3], peculiar km/s",
+    "Subhalo/SubhaloMassType": "[Nsubhalos,6], type4 stars, 1e10 Msun/h",
+    "Subhalo/SubhaloHalfmassRad": "[Nsubhalos], total, ckpc/h",
+    "Subhalo/SubhaloVelDisp": "[Nsubhalos], km/s",
+    "Subhalo/SubhaloStarMetallicity": "[Nsubhalos], total heavy-element mass fraction"
+  },
+  "header": [
+    "HubbleParam",
+    "Time",
+    "Redshift",
+    "BoxSize",
+    "NumFiles=1",
+    "Ngroups_ThisFile=Ngroups_Total",
+    "Nsubgroups_ThisFile=Nsubgroups_Total"
+  ],
+  "no_data_downloads_performed": true
+}
