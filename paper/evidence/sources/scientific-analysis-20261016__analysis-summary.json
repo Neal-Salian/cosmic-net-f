@@ -1,0 +1,39 @@
+{
+  "code_head": "c825bf57652005c80faff79cf4dfd58e3a9baa14",
+  "all_stages_complete": true,
+  "all_stage_audit_valid": true,
+  "kaggle_sessions": {
+    "A": 358697902,
+    "B": 358708561,
+    "C": 358713276,
+    "D": 358778452
+  },
+  "selected_K": 20,
+  "D_physical_pair_keep": 0.510102020565666,
+  "D_rmse_improvement_pct": 0.558052468932746,
+  "D_latency_factor": 2.4978965051223203,
+  "D_paired_significance_available": false,
+  "scientific_scope": "legacy_total_radius",
+  "scientific_superiority_established": false,
+  "submission_ready": false,
+  "git_push_merge_pr_performed": false,
+  "archive_hashes": {
+    "A": "5be79350625c2997318174ee0551fe21d35c9c1aba9cb5df946bcf012537763d",
+    "B": "800c65be6fe3c02c96967c1db4fd4c77c6324d7df19f72898e60151f0659bf40",
+    "C": "1c0b247b6df6e556d46eb7445baf6966dadcc572d9efc34ee05db0993a3eed11",
+    "D": "c3fe1c371089db357c212926bbec6cde84f678fde570cb1918b5f8bb73ffb8ba"
+  },
+  "reports": {
+    "Cosmic-Net-scientific-report-20261016.md": "2d793817f7dde58a964a74cccb7724705942b766d9bbec75de408482335a2e94",
+    "accuracy-and-inference-cost.png": "fbcee14c0734bcd6738a13f896cd81c8692e89a8c5b709c26bc924ef20ec24e2",
+    "analyze_c_paired_20261016.py": "a6576bd432ad603a69dfe7097d555492d946ebbe5c0945ff0fe40ac9dc69bc5a",
+    "final_scientific_report_20261016.py": "73716a49540c573da352dd147a238bf8bffac132b6e00324032c4934e6016ddf",
+    "mask-verification.json": "9664091e0ea02c6b4785931aae92c2ce3869c61917d16a9315566a5a8f2454c7",
+    "paired-comparisons.csv": "f40f3701b285e0e932416c3c3f817b67bbda50dd25cf411c1e51745d2115e8f2",
+    "paired-comparisons.json": "fb0903e7d11b237eb92ae13fc520038c83bddf985fb823c0cbffc73e9cdfb68b",
+    "plot_c_analysis_20261016.py": "4931424023568a8915b370b944b228ff59c32d5385c06a3b9477e30995745b34",
+    "q40-paired-uncertainty.png": "05d2dc99dc0956ab0491b45ce47a296cbc34f5769b8eee31c5b8d637f2d9210f",
+    "tta-accuracy-and-cost.png": "50380854e2d516a2b1e1259d6f8998a006066e0c499d1f91d71f45e470e86593",
+    "verify_saved_masks_20261016.py": "7bcb4cf7a08dc2853d6ad34e56963631e87d74f9fc9940e206b293de1a31586b"
+  }
+}

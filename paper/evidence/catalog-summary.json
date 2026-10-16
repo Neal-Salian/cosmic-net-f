@@ -1,0 +1,30 @@
+{
+  "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/recovered-notebook-B-358545025/inputs/v3/tng100_clustered.csv",
+  "sha256": "6c148f2cae68abac7bc5c34d370ff0130a647b49e79c32880bcf36ecc0ab4d53",
+  "rows": 5378,
+  "unique_group_ids": 541,
+  "groups_with_at_least_3_rows": 541,
+  "min_group_rows": 7,
+  "max_group_rows": 10,
+  "columns": [
+    "subhalo_id",
+    "group_id",
+    "is_central",
+    "stellar_mass",
+    "vel_dispersion",
+    "half_mass_radius",
+    "metallicity",
+    "pos_x",
+    "pos_y",
+    "pos_z",
+    "vel_x",
+    "vel_y",
+    "vel_z",
+    "halo_mass",
+    "halo_mass_log",
+    "log_vel_dispersion",
+    "log_half_mass_radius",
+    "log_metallicity"
+  ],
+  "scope": "Read-only count and byte identity; does not certify acquisition or physical semantics."
+}

@@ -1,0 +1,15 @@
+{
+  "source_files_verified": 30,
+  "configurations": 32,
+  "test_halos": 82,
+  "raw_rows": 2624,
+  "nonfull_masks_verified": 2296,
+  "rmse_recomputed_from_predictions": true,
+  "all_exact_budgets_symmetry_loops_and_coverage_verified": true,
+  "q40_rl_vs_full_pct": 18.610073582855023,
+  "q40_rl_slowdown": 56.160628933792935,
+  "q40_physical_retention": 0.402997139052006,
+  "q40_stored_retention": 0.46689920687106395,
+  "D_improvement_pct": 0.5580524689327238,
+  "D_latency_factor": 2.4978965051223203
+}

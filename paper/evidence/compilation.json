@@ -1,0 +1,17 @@
+{
+  "compiler": "Tectonic 0.17.0",
+  "command": "tectonic -X compile --outdir build --keep-logs --keep-intermediates --untrusted main.tex",
+  "exit_code": 0,
+  "bibtex_processed": true,
+  "total_pages": 11,
+  "main_text_pages": 8,
+  "reference_pages": 1,
+  "appendix_pages": 2,
+  "overfull_boxes": 0,
+  "undefined_citations_or_references": 0,
+  "remaining_warnings": "Nonfatal underfull text-box warnings only.",
+  "pdf_sha256": "4d9d906e6814635abe1d950c49d5d9530bd26407b72e6d8ffa71b2578bb1f76e",
+  "compile_log_sha256": "b89c14f7b83ae06094369119361867119ddec2d75435e79a403fc3bbf1f43200",
+  "visual_QA": "All main pages reviewed as rendered contact sheet; final appendix pages reviewed individually at 100 dpi; equation overflow fixed; appendix floats placed with content.",
+  "review_date": "2026-10-16"
+}

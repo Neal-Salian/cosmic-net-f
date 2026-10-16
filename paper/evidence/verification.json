@@ -1,0 +1,21 @@
+{
+  "source_snapshots_sha256_verified": 30,
+  "C_configurations_metrics_recomputed": 32,
+  "C_distinct_halos": 82,
+  "C_rows": 2624,
+  "D_same_budget_ids_all_K": true,
+  "D_selected_K": 20,
+  "bib_entries_and_citation_keys_verified": 12,
+  "tex_inputs_figures_labels_verified": true,
+  "statistics_recomputed": true,
+  "paired_contrasts_verified": 21,
+  "bootstrap_draws_per_contrast": 50000,
+  "permutations_per_contrast": 99999,
+  "exact_small_sample_permutation_self_check": true,
+  "holm_families_verified": [
+    7,
+    21
+  ],
+  "numpy": "2.5.2",
+  "scipy": "1.18.1"
+}

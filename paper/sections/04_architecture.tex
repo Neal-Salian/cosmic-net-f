@@ -1,0 +1,13 @@
+\section{Full-Graph GNN Architecture}
+\label{sec:gnn}
+The configured backbone projects four node features to width 64, applies three edge-conditioned \code{NNConv} blocks of width 64, pools by the node mean, and predicts one scalar through a $64\to64\to32\to1$ head. Each edge MLP is $5\to64\to64\to4096$, producing a $64\times64$ message matrix. With column-vector notation, a block can be written as
+\begin{align}
+ u_i^{(l)}&=W_{\mathrm{root}}^{(l)}h_i^{(l)}+b^{(l)}
+ +\frac{1}{|\mathcal N_D(i)|}\sum_{j\in\mathcal N_D(i)}
+ W^{(l)}(a_{ji})h_j^{(l)},\\
+ h_i^{(l+1)}&=h_i^{(l)}+operatorname{Drop}_{.05}
+ \left[\phi\!\left(\operatorname{LN}(u_i^{(l)})\right)\right],
+\end{align}
+where $h_i^{(0)}=\operatorname{Drop}_{.05}[\phi(W_{\mathrm{in}}x_i+b_{\mathrm{in}})]$, $\phi$ is leaky ReLU with slope 0.1, and $\mathcal N_D(i)$ includes the stored self-loop. The root transform is additional to that loop. Pooling gives $c=N^{-1}\sum_i h_i^{(3)}$ and $\hat y=\operatorname{MLP}_{\mathrm{head}}(c)$, with dropout and activation between head linear layers. Dropout is disabled for deterministic prediction and enabled for the uncertainty draws.
+
+The policy consumes the full-graph pre-pooling embeddings $h_i^{(3)}$ and their mean $c$. The primary comparison freezes $\theta$ throughout selection. Although the repository includes a supervised MSE plus virial-proxy backbone training path, its current configuration is not a complete training record for the historical checkpoint. We describe the represented forward architecture and verified frozen state; we do not assert that today's training defaults reconstruct its original optimizer, augmentation, or split history. Optional later backbone fine-tuning is reported separately.

@@ -1,0 +1,34 @@
+\section{Scientific Background}
+The dynamical motivation is the approximate virial relation $2T+W\simeq0$ for an equilibrated bound system. A graph over galaxies, however, contains tracers rather than the full gravitating matter distribution. Stellar masses, subhalo velocity dispersions, and pair separations do not directly determine the halo's total kinetic and potential energy. We consequently interpret the implemented physics term as a regularizer preserving a graph-dependent proxy, not as a conservation law or an equilibrium certificate.
+
+The prediction target is the stored logarithmic mass,
+\begin{equation}
+ y_g=\log_{10}(M_{g,\mathrm{stored}}/M_\odot),\qquad
+ \hat y_g=f_\theta(G_g).
+\end{equation}
+Errors in this logarithm are reported in dex. Although the loader's API path names \code{Group\_M\_Crit200}, the legacy CSV contract explicitly records an unknown historical target definition. We therefore do not relabel the campaign target as independently verified $M_{200\mathrm{c}}$. The intended task is halo-mass inference; the measured task is regression against these specific historical labels.
+
+\section{Dataset and Graph Construction}
+\label{sec:data}
+The campaign reads a TNG100-labelled, snapshot-99 ($z=0$) clustered CSV. IllustrisTNG provides the simulation context \citep{nelson2017}; that citation does not certify this derived catalog's acquisition history. The supplied file has 5,378 rows and produces 541 halo graphs, divided into 378 training, 81 validation, and 82 test graphs with seed 42 and nominal 70/15/15\% proportions. The split is at halo level within one volume. Identical file and model hashes and split identities are recorded across the campaign. They establish artifact identity, not the absence of leakage during the backbone's earlier training.
+
+For a halo let $V=\{1,\ldots,N\}$ and let $D$ be the stored directed edge columns, including self-loops $L$. Non-self reciprocal copies are grouped into unordered physical pairs $U$; write $P=|U|$. The graph is $G=(V,D,X,A)$ with $X\in\R^{N\times4}$ and $A\in\R^{|D|\times5}$. Each node carries
+\begin{equation}
+ x_i=\bigl(\log_{10}m_{*,i},\log_{10}\sigma_i,
+             \log_{10}R_i,\log_{10}Z_i\bigr),
+\end{equation}
+using numerical values in $M_\odot$, km\,s$^{-1}$, Mpc, and dimensionless metallicity. The feature routine floors inputs at $10^{-10}$ before taking logarithms; ingestion also applies field-specific floors. In this CSV, $R_i$ represents total-subhalo half-mass radius, despite older comments describing a stellar radius. The exact historical metallicity acquisition also merits certification.
+
+For $\Delta\bm r_{ij}=\bm r_j-\bm r_i$ and $\Delta\bm v_{ij}=\bm v_j-\bm v_i$, the edge vector is
+\begin{equation}
+\begin{split}
+ a_{ij}=\bigl(&r_{ij},\|\Delta\bm v_{ij}\|_2,c_{ij},\ell_{ij},r^\perp_{ij}\bigr),\\
+ c_{ij}&=\clip\!\left(\frac{\Delta\bm r_{ij}\cdot\Delta\bm v_{ij}}
+ {r_{ij}\|\Delta\bm v_{ij}\|_2+10^{-8}},-1,1\right),\\
+ \ell_{ij}&=x_{i,1}-x_{j,1},\quad
+ r^\perp_{ij}=\|\Delta\bm r_{ij,xy}\|_2.
+\end{split}
+\end{equation}
+Here $r_{ij}=\|\Delta\bm r_{ij}\|_2$. The signed mass-ratio feature reverses sign on exchanging endpoints; the other four attributes do not. The projected separation is an auxiliary feature alongside intrinsic three-dimensional information, not a complete observational feature contract.
+
+The configured graph includes reciprocal pairs within 2.0 Mpc, self-loops, and a nearest-neighbor fallback for physical isolates, with symmetric coalescing. Geometry uses direct Euclidean differences, without a periodic minimum-image correction in this path. Historical CSV positions and radii are explicitly interpreted as ckpc/$h$ and converted to Mpc using $h=0.6774$; stellar masses are interpreted as logarithmic and halo masses as linear $M_\odot$. These are declared legacy conventions, not magnitude-based unit inference. The repository fetch script caps satellites at ten. The observed test graphs contain 15--45 physical pairs (median 45), so this campaign does not test large-graph scaling or complete rich-cluster membership.
