@@ -1,0 +1,29 @@
+% Generated from verified evidence; exploratory results, not a confirmatory claim.
+On the common test split of 82 halos, the frozen full-graph reference attained
+an RMSE of 0.114797 dex. At nominal 40\% physical-pair retention
+(mean realized retention 40.30\%), RL attained
+0.136160 dex, compared with 0.136900 dex for gradient $\times$ input,
+0.147382 dex for the trained selector, and 0.156571 dex for random selection.
+RL's RMSE was 18.61\% higher than the full reference.
+
+The exploratory paired RL-minus-gradient RMSE difference was
+-0.000739 dex (unadjusted 95\% BCa CI
+[-0.014508, +0.013582]; two-sided paired MSE permutation
+$p=0.9192$; Holm-adjusted $p=0.9192$ for seven comparisons).
+The RL-minus-random difference was -0.020411 dex
+(95\% CI [-0.050979, +0.003193]; $p=0.1819$;
+Holm-adjusted $p=0.5457$). Neither comparison establishes an accuracy
+advantage. Intervals are conditional on one fitted policy, backbone and legacy
+split, and do not capture training-seed or simulation-volume uncertainty.
+
+Mean measured inference time at nominal 40\% retention was
+0.440260 s per halo for RL and 0.007839 s for the full
+reference, a 56.16-fold slowdown. Graph construction,
+setup and historical training are outside these measured inference regions.
+
+At the separate nominal 50\% adaptation budget, validation selected $K=20$.
+Test RMSE changed from 0.131123230 to 0.130391493 dex
+(0.558\% improvement), while mean latency increased
+2.498-fold. No final per-halo adaptation
+predictions were saved, so this accuracy change is descriptive and has no
+recoverable paired confidence interval or significance test.

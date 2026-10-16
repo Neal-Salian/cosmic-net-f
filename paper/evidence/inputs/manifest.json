@@ -1,0 +1,174 @@
+{
+  "base_commit": "c825bf57652005c80faff79cf4dfd58e3a9baa14",
+  "compression": "gzip; mtime=0; decompressed bytes identical to originals",
+  "files": [
+    {
+      "snapshot": "A/provenance.json.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/A-v1-terminal-001/artifacts/cosmic-net-runs/notebook_A/provenance.json",
+      "original_sha256": "d70b36b97c8c5553ab62199e467568a1801c697c6ce03ca743d7d3660390a7c4",
+      "original_bytes": 29291,
+      "snapshot_sha256": "0389ae35ff5fc0fc17837ddda6a5ca495b946de5ce7bb5721c3df434dbe2568e"
+    },
+    {
+      "snapshot": "A/baselines.csv.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/A-v1-terminal-001/artifacts/cosmic-net-runs/notebook_A/baselines.csv",
+      "original_sha256": "1c91e1cad19af5fd1bcb225a66ef634ca4d31fce566d7674b634dca9d393515a",
+      "original_bytes": 134293,
+      "snapshot_sha256": "1042c02e89c43c1b51b32e2cd636f17ff25d8d816f0b7a6d718a287d6ac0db01"
+    },
+    {
+      "snapshot": "A/baseline_per_example.json.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/A-v1-terminal-001/artifacts/cosmic-net-runs/notebook_A/baseline_per_example.json",
+      "original_sha256": "c63bfcd0b2dc49f3853abefb0a7bd88432aa5e8b7e6dd4837b27ffb9ea32d29b",
+      "original_bytes": 40394674,
+      "snapshot_sha256": "fb368478ae4d39e225247c63acf21229939ac4482e7d098dc7c098748026bf4b"
+    },
+    {
+      "snapshot": "B/provenance.json.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/provenance.json",
+      "original_sha256": "a775f072fa1a103517b72e611d75b95a00edf78ae594d7cbf99d3a4351049016",
+      "original_bytes": 482355,
+      "snapshot_sha256": "9803658ca009034c9adea36eb83a91f33cdcd230725af26a98de5dd28be4045f"
+    },
+    {
+      "snapshot": "B/policy_results.csv.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/policy_results.csv",
+      "original_sha256": "ea165a3a1fa67a5beb9b4e62244516a174f94542efc75f5f3d58a2e7e43a6bf0",
+      "original_bytes": 7451,
+      "snapshot_sha256": "0c594a24c1337cf53bf0a9324af3589e827ff20c150ebe7b1d144408ee4aa740"
+    },
+    {
+      "snapshot": "B/stageb_training_log.csv.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/stageb_training_log.csv",
+      "original_sha256": "d459bf1daec3952a6074aecc393f7cb55832e7ba74221478f2fefe4fe8a4cc8e",
+      "original_bytes": 410,
+      "snapshot_sha256": "50f7fcc2010a5836c7c1b5d30a8d90e726f2c67c51a90d4ed2a91dae320fdc2e"
+    },
+    {
+      "snapshot": "B/training_log.csv.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/training_log.csv",
+      "original_sha256": "102bc9972c48ba5339f14a17f04daa2f3494fc40997d445c08dcbf54ac660b27",
+      "original_bytes": 33242,
+      "snapshot_sha256": "d5c9966e6c30cae1b55058b651e19d5dc8e2e08de48ad97ae9f666da1dca65db"
+    },
+    {
+      "snapshot": "B/policy_validation.json.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/policy_validation.json",
+      "original_sha256": "166d7f85ed8048a6c68eb30174324a2665b04a107e59f397b38383b26bc4ece0",
+      "original_bytes": 53636,
+      "snapshot_sha256": "dc0815cb6ed38b20752a1b0358e4acd2ae8eecfa53390a81d5bcbf07f6abf153"
+    },
+    {
+      "snapshot": "B/budget_eligibility.json.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/budget_eligibility.json",
+      "original_sha256": "d9dc9146ac0144b2d0f2c20c3d6af375904f1af388190de4cf382da16838ed95",
+      "original_bytes": 326107,
+      "snapshot_sha256": "801aae67b85092f630468bd3ebd79736d58a2c9b9f6049d915565e608fc7e48d"
+    },
+    {
+      "snapshot": "C/provenance.json.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/provenance.json",
+      "original_sha256": "44410f959bce77f56db28a26104cda722dca8f1f2a5409ef048e80614cd2fdbd",
+      "original_bytes": 30258,
+      "snapshot_sha256": "e3be31edbcd2b167118ebd00eb2600ffccdd7433ab5bd14a511ec1443513b6f4"
+    },
+    {
+      "snapshot": "C/results_table.csv.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/results_table.csv",
+      "original_sha256": "36e262609de4fffa1ee8b6aaa0506d3b7079d3629f7ce19c377fd2faff795257",
+      "original_bytes": 153164,
+      "snapshot_sha256": "4f8ecb4a0194d5caa9940178e1534d6e288bc06e9210cb4f90bbb84cb9fe168e"
+    },
+    {
+      "snapshot": "C/matched_per_example.json.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/matched_per_example.json",
+      "original_sha256": "91b4c2fe7d729c72d0d75cbbaa254e6d27d696f9ad5fc2cc233bc980735e9cc7",
+      "original_bytes": 46561764,
+      "snapshot_sha256": "1faf432a5f112663400c2f337db3ad0b54a9d862d31f9a4ae30f73d5be3c7723"
+    },
+    {
+      "snapshot": "C/physics_alignment.csv.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/physics_alignment.csv",
+      "original_sha256": "8add898848621e9174850cd8c518e6ab5ca4e1a3dfd318e73c9fb9fb0e99a3d0",
+      "original_bytes": 11968,
+      "snapshot_sha256": "36bdd43035c4d6a24c6b8bb64e4184092f46fbb42ba2018ba97df6f77a8f6dc7"
+    },
+    {
+      "snapshot": "C/calibration.csv.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/calibration.csv",
+      "original_sha256": "356e0a9f0701bd2fc2947ef93b752505bca6192c7c51be9c6cb54aead30639d3",
+      "original_bytes": 136,
+      "snapshot_sha256": "07c667a4a028b4160818019784e8966d90161c00355dfb2119f46d929a7b8676"
+    },
+    {
+      "snapshot": "D/provenance.json.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/provenance.json",
+      "original_sha256": "16d22efc8788d242dd4b766d02394c86d850b7e44907c265938046da5b020cb5",
+      "original_bytes": 158618,
+      "snapshot_sha256": "8877a1920e793a545dc2e54c68839127fa482c0b72e52d6f49974f94cf0af4bd"
+    },
+    {
+      "snapshot": "D/tta_results.csv.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/tta_results.csv",
+      "original_sha256": "c8fefcf40383f77716a81032b6400c7ab50b7d398b5085c6d8a9500c0c726a29",
+      "original_bytes": 9314,
+      "snapshot_sha256": "d07eb861ed3442e7e8d03000023ff6b4bddab7516de971fccd734b783ad2a401"
+    },
+    {
+      "snapshot": "D/tta_validation.csv.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/tta_validation.csv",
+      "original_sha256": "0fddc874129c7c2d5e1348183b6de72d2833826eacb1f990d1c2f15857fedaec",
+      "original_bytes": 9257,
+      "snapshot_sha256": "1bb0210d48e87910751bc1046f96f34a692ad129ed49256db9c9fbc7d979fc9a"
+    },
+    {
+      "snapshot": "D/tta_histories.json.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/tta_histories.json",
+      "original_sha256": "9e43a0d9c7df1a05e907832ad23683e420a3c1a571513d7dc24ae3322d00bf44",
+      "original_bytes": 482987,
+      "snapshot_sha256": "af5aaecfb17b88da1f6dd4fda1bd06fe79649ef695f5690467ddeedc96a7b52d"
+    },
+    {
+      "snapshot": "previous-analysis/Cosmic-Net-scientific-report-20261016.md.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/scientific-analysis-20261016/Cosmic-Net-scientific-report-20261016.md",
+      "original_sha256": "2d793817f7dde58a964a74cccb7724705942b766d9bbec75de408482335a2e94",
+      "original_bytes": 20256,
+      "snapshot_sha256": "3943c595d8d06e3fd97ecb77d37473ed9d2decfcfb4cd0a92dc9eec6fdd9f055"
+    },
+    {
+      "snapshot": "previous-analysis/analyze_c_paired_20261016.py.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/scientific-analysis-20261016/analyze_c_paired_20261016.py",
+      "original_sha256": "a6576bd432ad603a69dfe7097d555492d946ebbe5c0945ff0fe40ac9dc69bc5a",
+      "original_bytes": 8172,
+      "snapshot_sha256": "4cd8609fa8a50945899d840797610481605e358073821d7954947b6ca72984f1"
+    },
+    {
+      "snapshot": "previous-analysis/paired-comparisons.json.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/scientific-analysis-20261016/paired-comparisons.json",
+      "original_sha256": "fb0903e7d11b237eb92ae13fc520038c83bddf985fb823c0cbffc73e9cdfb68b",
+      "original_bytes": 21554,
+      "snapshot_sha256": "b28a76eb13e82654a8342d677e6db07aafd3bb78c362282b651ef0416aaa020a"
+    },
+    {
+      "snapshot": "previous-analysis/analysis-summary.json.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/scientific-analysis-20261016/analysis-summary.json",
+      "original_sha256": "f817c7b83ad3f4b9132d6958f29173a5f3dbd1060cf555f1ae612973f103fd7e",
+      "original_bytes": 2089,
+      "snapshot_sha256": "1318ddac0fbf4b6addb41e2d51697d023a298ef2e7d7401aaa4c3e12b2fc996c"
+    },
+    {
+      "snapshot": "previous-analysis/mask-verification.json.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/scientific-analysis-20261016/mask-verification.json",
+      "original_sha256": "9664091e0ea02c6b4785931aae92c2ce3869c61917d16a9315566a5a8f2454c7",
+      "original_bytes": 271,
+      "snapshot_sha256": "22275ff086983ed819658bdaee3756477e6f0acc604f47cb3bc03f05794e7c9d"
+    },
+    {
+      "snapshot": "catalog/tng100_clustered.csv.gz",
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/data/raw/tng100_clustered.csv",
+      "original_sha256": "6c148f2cae68abac7bc5c34d370ff0130a647b49e79c32880bcf36ecc0ab4d53",
+      "original_bytes": 1068424,
+      "snapshot_sha256": "b612f145ff7e7e067523d8bf0269e2d96b35dcaf851250bd0fd3ad855a918ba9"
+    }
+  ]
+}
