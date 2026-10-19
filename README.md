@@ -10,7 +10,7 @@ Cosmic-Net is a research prototype for halo-mass prediction and constrained grap
 
 ## Current evidence and research workflow
 
-The historical full-GNN test result is **R² 0.9075, RMSE 0.1167 dex, MAE 0.0921 dex** on 82 legacy graphs. The saved RL experiment reduces stored edges to 47.91% but increases RMSE to **0.134322 dex**. Matched real-data superiority, practical speedup and CAMELS/SIMBA transfer have not been demonstrated.
+The audited A–D campaign (frozen backbone, 82 held-out halos) reports: full-graph **R² 0.910491, RMSE 0.114797 dex, MAE 0.090928 dex**; RL at nominal 40% physical-pair retention (40.30% realized) **RMSE 0.136160 dex, R² 0.874075** (46.69% stored-edge retention) — 18.61% worse than the full graph and **56.16× slower** in the measured inference region; the closest control (gradient × input at 0.136900 dex) is statistically unresolved against RL (p=0.9192). Full tables, figures and manuscript: [paper/](paper/). Matched real-data superiority, practical speedup and CAMELS/SIMBA transfer have not been demonstrated.
 
 See [controlled campaign instructions](docs/research_readiness.md) and [audited projected baseline](docs/audited_baseline.md) before running experiments. A–D now use `fix/research-pipeline-readiness`, require explicitly acknowledged legacy inputs, preserve historical outputs, and reject stale handoffs and existing output directories. Their source edits do not constitute new execution evidence.
 
@@ -30,7 +30,7 @@ The GNN uses NNConv and supports MC dropout. Physics loss is an explicitly bound
 
 ```bash
 # Clone the repository
-git clone https://github.com/Rusheel86/cosmic-net.git
+git clone https://github.com/Neal-Salian/cosmic-net-f.git
 cd cosmic-net
 
 # Create conda environment
