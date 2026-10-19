@@ -1,0 +1,27 @@
+{
+  "base_commit": "c825bf57652005c80faff79cf4dfd58e3a9baa14",
+  "base_tree": "af1e1dec692a92b5eb132793981019135751089d",
+  "baseline_index_sha256": "7abd97884e14d9848a7a2873a78ca0c7c9a52d55e35ddf8c92f2983d19b5bd3d",
+  "tracked_baseline_paths": 271,
+  "tests": {
+    "command": "python3 -m pytest -q",
+    "summary": "820 passed, 13 skipped, 715 warnings in 195.69s (0:03:15)"
+  },
+  "all_test_graphs_equal": 82,
+  "source_and_input_hashes_rechecked": true,
+  "figures_visually_checked": [
+    "matched-latency",
+    "stage-costs",
+    "synthetic-scaling",
+    "amortization-model"
+  ],
+  "independent_review": {
+    "decoder": "No correctness defect found",
+    "fixed_findings": [
+      "True CPU-source transfer timing",
+      "Strict break-even floating-point boundary",
+      "Report environment/thread/provenance checks"
+    ]
+  },
+  "integration": "Commit only on codex/paper-inference-efficiency; no merge, push or PR."
+}

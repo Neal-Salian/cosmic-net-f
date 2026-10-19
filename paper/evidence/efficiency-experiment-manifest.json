@@ -1,0 +1,68 @@
+{
+  "files": {
+    "benchmarks/paper_efficiency/results/m2-cpu-verified/results.json": "5752f15d1c374a5723e7caed978055cac1e03f6fa1c04715e10b8931782e59d6",
+    "benchmarks/paper_efficiency/results/m2-cpu-scaling-verified/scaling.json": "21b43385130ccafca412a75ae36f08cfd238668f5c342d07dfcb32872e36f8bc",
+    "benchmarks/paper_efficiency/results/all-test-validation/validation.json": "172102957d076e5afce5afb3af67b466ba06747bcf4ec490c8ffdcef70007b2c"
+  },
+  "environment": {
+    "platform": "macOS-26.3-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "hardware": "Apple M2",
+    "memory_bytes": 8589934592,
+    "python": "3.13.3 (v3.13.3:6280bb54784, Apr  8 2025, 10:47:54) [Clang 15.0.0 (clang-1500.3.9.4)]",
+    "torch": "2.13.0",
+    "torch_geometric": "2.8.0.post1",
+    "numpy": "2.5.2",
+    "networkx": "3.6.1",
+    "device": "cpu",
+    "cuda_device": null,
+    "threads": 1,
+    "interop_threads": 1,
+    "warmup": 3,
+    "repeats": 15
+  },
+  "shared_inputs": {
+    "csv": {
+      "path": "/Users/nealsalian/.codex/worktrees/paper-inference-efficiency/cosmic-net/data/raw/tng100_clustered.csv",
+      "sha256": "6c148f2cae68abac7bc5c34d370ff0130a647b49e79c32880bcf36ecc0ab4d53"
+    },
+    "checkpoint": {
+      "path": "/Users/nealsalian/.codex/worktrees/paper-inference-efficiency/cosmic-net/kaggle/best_model_augmented.pt",
+      "sha256": "42764f0db204863b28672d6ec6e207443602de16dcfa926765a0429b3451c63f"
+    },
+    "policy": {
+      "path": "/Users/nealsalian/.codex/worktrees/paper-inference-efficiency/cosmic-net/benchmarks/paper_efficiency/inputs/policy.pt",
+      "sha256": "b1f41771c102bec644e0f84b0c002a228e5514321c768d8919e8beae3379f81d"
+    },
+    "context": {
+      "path": "/Users/nealsalian/.codex/worktrees/paper-inference-efficiency/cosmic-net/benchmarks/paper_efficiency/inputs/context.json",
+      "sha256": "cf2a481b71142398d12386ce866b20fc6cca3fdf51a1c55f13e1ddd89d14e38e"
+    }
+  },
+  "main_source_sha256": {
+    "rls/constrained_policy.py": "3642a8f1a79dcac5bf76def3f79f361cb1277d3a499b002bdc7c56510ff861d4",
+    "rls/constraints.py": "90bf5ac71d4794790a026be24387b7a0bdf5e7f493ceb6c23758f479b5d3dd1d",
+    "rls/benchmark_scorers.py": "ab79b805a6dc7b9ea695fc1aba91b8e43d1686749e00a77b6f28e85844ca5839",
+    "rls/benchmark_predictor.py": "34126e5935c83540dfba6ed9e709d8956f06fe8916105918808da8d8701f0f58",
+    "rls/inference_efficiency.py": "30b6f6cf2281003a02d5cef0335977478497abfdcf5c16ca65be8595d81a577c",
+    "graph/graph_builder.py": "76a88349a425a0bd37d85fb55b9ebfc169fe64c6806c6d7f1e7e6f0887f8a159",
+    "model/model.py": "80b030a4d9ddd0a1e2102327234119022fd7dca7d6095534894b473529ed45ff",
+    "rls/policy.py": "edba41dbbe9fa6d7a8d30370f94d9d99f9ae498561d785c8538070a7d3328bf1",
+    "benchmarks/paper_efficiency/run.py": "d574205a8b3d0627b2184eb1b0a9cac47c969b3c47b51a1a3dd30026bccc1cfc"
+  },
+  "scaling_source_sha256": {
+    "rls/inference_efficiency.py": "30b6f6cf2281003a02d5cef0335977478497abfdcf5c16ca65be8595d81a577c",
+    "rls/constrained_policy.py": "3642a8f1a79dcac5bf76def3f79f361cb1277d3a499b002bdc7c56510ff861d4",
+    "rls/constraints.py": "90bf5ac71d4794790a026be24387b7a0bdf5e7f493ceb6c23758f479b5d3dd1d",
+    "rls/benchmark_scorers.py": "ab79b805a6dc7b9ea695fc1aba91b8e43d1686749e00a77b6f28e85844ca5839",
+    "rls/benchmark_predictor.py": "34126e5935c83540dfba6ed9e709d8956f06fe8916105918808da8d8701f0f58",
+    "rls/policy.py": "edba41dbbe9fa6d7a8d30370f94d9d99f9ae498561d785c8538070a7d3328bf1",
+    "model/model.py": "80b030a4d9ddd0a1e2102327234119022fd7dca7d6095534894b473529ed45ff",
+    "graph/graph_builder.py": "76a88349a425a0bd37d85fb55b9ebfc169fe64c6806c6d7f1e7e6f0887f8a159",
+    "benchmarks/paper_efficiency/run.py": "d574205a8b3d0627b2184eb1b0a9cac47c969b3c47b51a1a3dd30026bccc1cfc",
+    "benchmarks/paper_efficiency/scaling.py": "697ec142cf4df5fe3571259e3a34fc21c1a2cda64c5495b9c527f5e1d08247dd"
+  },
+  "note": "Main and synthetic scaling executed sequentially on the same CPU/environment. Profile instrumentation excluded from latency samples.",
+  "report_source_sha256": "0eb1e8172e54f42cc49835463a9ba5ad728c40c072cadd44efe49b7c516b3f8a",
+  "cost_model_source_sha256": "8abd56f8f138aea1a32d26165762d0f4e712c44a08f4f664d2701cbc5d73e6ae"
+}

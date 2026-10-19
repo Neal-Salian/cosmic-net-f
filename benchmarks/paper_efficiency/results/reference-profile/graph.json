@@ -1,0 +1,7 @@
+{
+  "cluster_id": "tng100_0000000",
+  "nodes": 10,
+  "pairs": 19,
+  "stored_edges": 48,
+  "instrumented_latency_s": 0.03916845800267765
+}
