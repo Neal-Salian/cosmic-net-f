@@ -1,0 +1,78 @@
+\section{Physics-Constrained RL Sparsification}
+\label{sec:method}
+\subsection{Policy formulation and action space}
+The decision is a one-step graph-level selection problem, rather than a multi-step control trajectory. The state consists of the graph's edge attributes, frozen node embeddings, and mean context. The policy does not receive the mass label. For a directed column $(i,j)$ it computes
+\begin{equation}
+ z_{ij}=\operatorname{MLP}_{\psi}
+ \bigl[\phi(B_h\tilde h_i),\phi(B_h\tilde h_j),
+       \phi(B_a\tilde a_{ij}),\phi(B_h\tilde c)\bigr].
+\end{equation}
+Affine maps include biases; their outputs have width 64, and the concatenated width-256 vector passes through $256\to64\to64\to1$ layers with leaky ReLU between them. Tildes denote train-fitted featurewise standardization, with scale floored at $10^{-4}$ and standardized values clipped to $[-10,10]$. One shared map $B_h$ projects endpoints and context. A physical-pair score $s_p$ averages logits over all stored non-self copies of pair $p$. Loops are excluded from stochastic actions.
+
+At training epoch $e$ the requested keep fraction is
+\begin{equation}
+ q_e=0.9-0.5\min(1,e/40),\qquad k_e=\lceil q_eP\rceil.
+\end{equation}
+The action $o=(p_1,\ldots,p_{k_e})$ is an ordered sample of distinct pairs under a Plackett--Luce law,
+\begin{equation}
+ \pi_\psi(o\mid G)=\prod_{t=1}^{k_e}
+ \frac{\exp s_{p_t}}{\sum_{p\notin\{p_1,\ldots,p_{t-1}\}}\exp s_p}.
+ \label{eq:pl}
+\end{equation}
+The implementation sums the conditional log probabilities exactly. Training then adds pairs to cover physical isolates using independent pair priorities, expands membership to every reciprocal copy, and preserves loops. This repair can exceed $k_e$. The likelihood in Eq.~\ref{eq:pl} is the ordered action likelihood, not the likelihood of the repaired mask. Reward is evaluated on the repaired graph; the additive repair is part of the environment. This distinction prevents an incorrect claim that the historical policy was trained by exact constrained-mask likelihood optimization.
+
+\subsection{Reward design}
+\label{sec:reward}
+For one graph, let $D'_0$ be retained non-self directed columns. Full and retained degrees $d_i,d'_i$ count incidences at both endpoints over these stored columns. The implemented proxy energies are
+\begin{align}
+ T(D')&=\tfrac12\sum_i\frac{d'_i}{\max(d_i,1)}m_{*,i}\sigma_i^2,\\
+ |W(D')|&=G_{\!N}\sum_{(i,j)\in D'_0}
+ \frac{m_{*,i}m_{*,j}}{\max(r_{ij},10^{-6}\,\mathrm{Mpc})},
+\end{align}
+where $G_{\!N}=4.302\times10^{-9}$ in Mpc\,(km\,s$^{-1}$)$^2/M_\odot$. The potential sum counts both stored orientations on these graphs; no factor of $1/2$ is inserted. Self-loops are excluded from both energies. Define
+\begin{align}
+ v(D')&=\clip\!\left(\frac{2T(D')}{\max(|W(D')|,10^{-30})},10^{-12},10^{12}\right),\\
+ \mathcal V(D')&=[\ln v(D')-\ln v(D)]^2.
+ \label{eq:virial}
+\end{align}
+The numeric floors use the code's internal units. The full-graph reference is action-independent. This relative term preserves a stellar-tracer proxy and avoids assuming that its absolute value must be unity. It neither uses predicted mass nor proves the retained system is physically virialized.
+
+The per-graph accuracy term reduces to an absolute-error difference because each policy reward has one scalar target. Let $\rho=|U'|/P$, $C=1$ if every node has a retained non-self neighbor and $C=-2$ otherwise. The reward is
+\begin{equation}
+\begin{split}
+ \bar r={}&w_a\,[|\hat y_D-y|-|\hat y_{D'}-y|]/s_y\\
+ &-w_s\min\{(\rho-q_e)^2,1\}+w_cC-w_v(e)\mathcal V(D'),\\
+ r={}&\clip(\bar r,-10,10).
+\end{split}
+\label{eq:reward}
+\end{equation}
+Here $w_a=1$, $w_s=0.5$, $w_c=1$, and $w_v(e)=\min\{1,\max[0,(e-9)/10]\}$. The fixed scale is $s_y=\max(\RMSE_{\mathrm{train,full}},0.05)$, reconstructed as $0.124135822$ dex. Unlike a relative error divided by each graph's full-graph residual, this scale does not diverge for individually well-predicted graphs. The soft budget penalty acts on final physical retention, including repair additions.
+
+\subsection{Policy training}
+\label{sec:training}
+Four independent ordered rollouts are drawn per training graph. For rewards $r_1,\ldots,r_4$, each rollout's baseline is the mean of the other three, $b_j=\sum_{l\ne j}r_l/3$. The actor objective is
+\begin{equation}
+ \mathcal L_{\mathrm{actor}}=-\frac14\sum_{j=1}^4
+ \operatorname{stopgrad}(r_j-b_j)\log\pi_\psi(o_j\mid G).
+\end{equation}
+A separate value network $64\to64\to64\to1$ is fitted to the mean reward using smooth-$L_1$ loss, weighted by 0.5. It is not the actor's baseline in this pair-policy path. An entropy bonus of weight 0.01 uses the entropy of the first-draw categorical distribution $\operatorname{softmax}(s)$ divided by $\max(1,\ln P)$; it is not the entropy of the full repaired-mask distribution. Losses are averaged over minibatches of 32 graphs. Adam uses learning rate $10^{-3}$ and gradient norms are clipped at 1.
+
+The historical run completed 60 epochs on all 378 training graphs. The checkpoint selected by validation at the final 40\% budget is epoch 42 (zero-based). Notebook B recovered these weights and logs rather than training a new policy. Reconstructed metadata and a near-identical validation replay support evaluation recovery, but missing optimizer and random-number state prevent a claim of bitwise training continuation. The training modules governing Eqs.~\ref{eq:pl}--\ref{eq:reward} are unchanged between the recovered training revision and the campaign base; the evaluation contract is recorded separately.
+
+\subsection{Graph constraints and exact-budget inference}
+\label{sec:constraints}
+All benchmark selectors emit scores only. A common decoder receives the requested fraction $q$ and enforces
+\begin{equation}
+ k=\lceil qP\rceil,\quad |U'|=k,\quad
+ \deg_{U'}(i)\ge1\ (i\in V),\quad L\subseteq D'.
+ \label{eq:constraints}
+\end{equation}
+Every stored copy of a pair shares membership. Physical coverage ignores self-loops; no-isolate coverage does not imply a single connected component. Feasibility is checked before selection and infeasible budgets are rejected rather than enlarged.
+
+For a partial set $S$, let $I(S)$ be its uncovered vertices and $\nu(I)$ the maximum matching cardinality in the available graph induced by $I$. If every uncovered vertex has an incident available edge, the minimum additional edges required to cover it are
+\begin{equation}
+ m(S)=|I(S)|-\nu(I(S)).
+\end{equation}
+An edge joining two uncovered vertices can cover two only when those edges form a matching; remaining uncovered vertices each need one edge. This yields the exact completion test $|S|+m(S)\le k\le P$. At each step the direct decoder chooses the highest-score unselected pair whose addition passes this test. Independent, graph-seeded unique marks resolve score ties. The decoder guarantees feasibility and cardinality, not a globally maximum-score feasible subset.
+
+For RL evaluation, logits are averaged over both endpoint orientations, reversing the signed mass-ratio attribute, then averaged over stored copies. The primary benchmark meters a fresh full-GNN embedding forward. Deterministic ranking evaluates no action likelihood. Thus the reported system is a recovered scorer combined with a constrained inference decoder, with a documented difference from its repaired training environment. For a reciprocal graph with one loop per node, stored-column retention is $(2k+N)/(2P+N)$, which can substantially exceed physical-pair retention $k/P$.

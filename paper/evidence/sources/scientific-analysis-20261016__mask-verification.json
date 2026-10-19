@@ -1,0 +1,6 @@
+{
+  "C_nonfull_masks_checked": 2296,
+  "selected_pairs_serialization": "indices, not boolean vector",
+  "actual_pair_expansion_loop_preservation_exact_counts_and_node_coverage": true,
+  "source_sha256": "91b4c2fe7d729c72d0d75cbbaa254e6d27d696f9ad5fc2cc233bc980735e9cc7"
+}

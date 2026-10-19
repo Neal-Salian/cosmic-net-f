@@ -1,0 +1,246 @@
+{
+  "base_commit": "c825bf57652005c80faff79cf4dfd58e3a9baa14",
+  "snapshot_date": "2026-10-16",
+  "files": [
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/scientific-analysis-20261016/Cosmic-Net-scientific-report-20261016.md",
+      "campaign_relative_path": "scientific-analysis-20261016/Cosmic-Net-scientific-report-20261016.md",
+      "snapshot": "paper/evidence/sources/scientific-analysis-20261016__Cosmic-Net-scientific-report-20261016.md",
+      "sha256_uncompressed": "2d793817f7dde58a964a74cccb7724705942b766d9bbec75de408482335a2e94",
+      "size_uncompressed": 20256,
+      "snapshot_sha256": "2d793817f7dde58a964a74cccb7724705942b766d9bbec75de408482335a2e94"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/scientific-analysis-20261016/analysis-summary.json",
+      "campaign_relative_path": "scientific-analysis-20261016/analysis-summary.json",
+      "snapshot": "paper/evidence/sources/scientific-analysis-20261016__analysis-summary.json",
+      "sha256_uncompressed": "f817c7b83ad3f4b9132d6958f29173a5f3dbd1060cf555f1ae612973f103fd7e",
+      "size_uncompressed": 2089,
+      "snapshot_sha256": "f817c7b83ad3f4b9132d6958f29173a5f3dbd1060cf555f1ae612973f103fd7e"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/scientific-analysis-20261016/paired-comparisons.json",
+      "campaign_relative_path": "scientific-analysis-20261016/paired-comparisons.json",
+      "snapshot": "paper/evidence/sources/scientific-analysis-20261016__paired-comparisons.json",
+      "sha256_uncompressed": "fb0903e7d11b237eb92ae13fc520038c83bddf985fb823c0cbffc73e9cdfb68b",
+      "size_uncompressed": 21554,
+      "snapshot_sha256": "fb0903e7d11b237eb92ae13fc520038c83bddf985fb823c0cbffc73e9cdfb68b"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/scientific-analysis-20261016/paired-comparisons.csv",
+      "campaign_relative_path": "scientific-analysis-20261016/paired-comparisons.csv",
+      "snapshot": "paper/evidence/sources/scientific-analysis-20261016__paired-comparisons.csv",
+      "sha256_uncompressed": "f40f3701b285e0e932416c3c3f817b67bbda50dd25cf411c1e51745d2115e8f2",
+      "size_uncompressed": 6712,
+      "snapshot_sha256": "f40f3701b285e0e932416c3c3f817b67bbda50dd25cf411c1e51745d2115e8f2"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/scientific-analysis-20261016/mask-verification.json",
+      "campaign_relative_path": "scientific-analysis-20261016/mask-verification.json",
+      "snapshot": "paper/evidence/sources/scientific-analysis-20261016__mask-verification.json",
+      "sha256_uncompressed": "9664091e0ea02c6b4785931aae92c2ce3869c61917d16a9315566a5a8f2454c7",
+      "size_uncompressed": 271,
+      "snapshot_sha256": "9664091e0ea02c6b4785931aae92c2ce3869c61917d16a9315566a5a8f2454c7"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/scientific-analysis-20261016/analyze_c_paired_20261016.py",
+      "campaign_relative_path": "scientific-analysis-20261016/analyze_c_paired_20261016.py",
+      "snapshot": "paper/evidence/sources/scientific-analysis-20261016__analyze_c_paired_20261016.py",
+      "sha256_uncompressed": "a6576bd432ad603a69dfe7097d555492d946ebbe5c0945ff0fe40ac9dc69bc5a",
+      "size_uncompressed": 8172,
+      "snapshot_sha256": "a6576bd432ad603a69dfe7097d555492d946ebbe5c0945ff0fe40ac9dc69bc5a"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/scientific-analysis-20261016/verify_saved_masks_20261016.py",
+      "campaign_relative_path": "scientific-analysis-20261016/verify_saved_masks_20261016.py",
+      "snapshot": "paper/evidence/sources/scientific-analysis-20261016__verify_saved_masks_20261016.py",
+      "sha256_uncompressed": "7bcb4cf7a08dc2853d6ad34e56963631e87d74f9fc9940e206b293de1a31586b",
+      "size_uncompressed": 2322,
+      "snapshot_sha256": "7bcb4cf7a08dc2853d6ad34e56963631e87d74f9fc9940e206b293de1a31586b"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/analysis-ABCD-official-20261016-001.json",
+      "campaign_relative_path": "analysis-ABCD-official-20261016-001.json",
+      "snapshot": "paper/evidence/sources/analysis-ABCD-official-20261016-001.json.gz",
+      "sha256_uncompressed": "1d9d8c28d4fcb59062875edec3063bde60bf5238821dde277d3c25420288689b",
+      "size_uncompressed": 1428160,
+      "snapshot_sha256": "1b870aa84e732f3b2bec5165c842a5532ef7fcf38ce930bc5ec2402db9404a18"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/A-v1-terminal-001/artifacts/cosmic-net-runs/notebook_A/provenance.json",
+      "campaign_relative_path": "A-v1-terminal-001/artifacts/cosmic-net-runs/notebook_A/provenance.json",
+      "snapshot": "paper/evidence/sources/A-v1-terminal-001__artifacts__cosmic-net-runs__notebook_A__provenance.json",
+      "sha256_uncompressed": "d70b36b97c8c5553ab62199e467568a1801c697c6ce03ca743d7d3660390a7c4",
+      "size_uncompressed": 29291,
+      "snapshot_sha256": "d70b36b97c8c5553ab62199e467568a1801c697c6ce03ca743d7d3660390a7c4"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/provenance.json",
+      "campaign_relative_path": "B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/provenance.json",
+      "snapshot": "paper/evidence/sources/B-v1-terminal-001__artifacts__cosmic-net-runs__notebook_B__provenance.json",
+      "sha256_uncompressed": "a775f072fa1a103517b72e611d75b95a00edf78ae594d7cbf99d3a4351049016",
+      "size_uncompressed": 482355,
+      "snapshot_sha256": "a775f072fa1a103517b72e611d75b95a00edf78ae594d7cbf99d3a4351049016"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/policy_results.csv",
+      "campaign_relative_path": "B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/policy_results.csv",
+      "snapshot": "paper/evidence/sources/B-v1-terminal-001__artifacts__cosmic-net-runs__notebook_B__policy_results.csv",
+      "sha256_uncompressed": "ea165a3a1fa67a5beb9b4e62244516a174f94542efc75f5f3d58a2e7e43a6bf0",
+      "size_uncompressed": 7451,
+      "snapshot_sha256": "ea165a3a1fa67a5beb9b4e62244516a174f94542efc75f5f3d58a2e7e43a6bf0"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/stageb_training_log.csv",
+      "campaign_relative_path": "B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/stageb_training_log.csv",
+      "snapshot": "paper/evidence/sources/B-v1-terminal-001__artifacts__cosmic-net-runs__notebook_B__stageb_training_log.csv",
+      "sha256_uncompressed": "d459bf1daec3952a6074aecc393f7cb55832e7ba74221478f2fefe4fe8a4cc8e",
+      "size_uncompressed": 410,
+      "snapshot_sha256": "d459bf1daec3952a6074aecc393f7cb55832e7ba74221478f2fefe4fe8a4cc8e"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/training_log.csv",
+      "campaign_relative_path": "B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/training_log.csv",
+      "snapshot": "paper/evidence/sources/B-v1-terminal-001__artifacts__cosmic-net-runs__notebook_B__training_log.csv",
+      "sha256_uncompressed": "102bc9972c48ba5339f14a17f04daa2f3494fc40997d445c08dcbf54ac660b27",
+      "size_uncompressed": 33242,
+      "snapshot_sha256": "102bc9972c48ba5339f14a17f04daa2f3494fc40997d445c08dcbf54ac660b27"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/recovery_record.json",
+      "campaign_relative_path": "B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/recovery_record.json",
+      "snapshot": "paper/evidence/sources/B-v1-terminal-001__artifacts__cosmic-net-runs__notebook_B__recovery_record.json",
+      "sha256_uncompressed": "caa9b8049a708cf1ddec71d3a11e36c6a97336c5ad21a12a1ab0ddded3cad290",
+      "size_uncompressed": 9255,
+      "snapshot_sha256": "caa9b8049a708cf1ddec71d3a11e36c6a97336c5ad21a12a1ab0ddded3cad290"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/recovered_training/training_checkpoint.json",
+      "campaign_relative_path": "B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/recovered_training/training_checkpoint.json",
+      "snapshot": "paper/evidence/sources/B-v1-terminal-001__artifacts__cosmic-net-runs__notebook_B__recovered_training__training_checkpoint.json",
+      "sha256_uncompressed": "f27f035c84f8af6850e8580bc20b8df869451b38216ff17f57e358a61b1ff983",
+      "size_uncompressed": 37151,
+      "snapshot_sha256": "f27f035c84f8af6850e8580bc20b8df869451b38216ff17f57e358a61b1ff983"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/policy_validation.json",
+      "campaign_relative_path": "B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/policy_validation.json",
+      "snapshot": "paper/evidence/sources/B-v1-terminal-001__artifacts__cosmic-net-runs__notebook_B__policy_validation.json",
+      "sha256_uncompressed": "166d7f85ed8048a6c68eb30174324a2665b04a107e59f397b38383b26bc4ece0",
+      "size_uncompressed": 53636,
+      "snapshot_sha256": "166d7f85ed8048a6c68eb30174324a2665b04a107e59f397b38383b26bc4ece0"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/provenance.json",
+      "campaign_relative_path": "C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/provenance.json",
+      "snapshot": "paper/evidence/sources/C-v1-terminal-001__artifacts__cosmic-net-runs__notebook_C__provenance.json",
+      "sha256_uncompressed": "44410f959bce77f56db28a26104cda722dca8f1f2a5409ef048e80614cd2fdbd",
+      "size_uncompressed": 30258,
+      "snapshot_sha256": "44410f959bce77f56db28a26104cda722dca8f1f2a5409ef048e80614cd2fdbd"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/results_table.csv",
+      "campaign_relative_path": "C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/results_table.csv",
+      "snapshot": "paper/evidence/sources/C-v1-terminal-001__artifacts__cosmic-net-runs__notebook_C__results_table.csv",
+      "sha256_uncompressed": "36e262609de4fffa1ee8b6aaa0506d3b7079d3629f7ce19c377fd2faff795257",
+      "size_uncompressed": 153164,
+      "snapshot_sha256": "36e262609de4fffa1ee8b6aaa0506d3b7079d3629f7ce19c377fd2faff795257"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/matched_per_example.json",
+      "campaign_relative_path": "C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/matched_per_example.json",
+      "snapshot": "paper/evidence/sources/C-v1-terminal-001__artifacts__cosmic-net-runs__notebook_C__matched_per_example.json.gz",
+      "sha256_uncompressed": "91b4c2fe7d729c72d0d75cbbaa254e6d27d696f9ad5fc2cc233bc980735e9cc7",
+      "size_uncompressed": 46561764,
+      "snapshot_sha256": "1faf432a5f112663400c2f337db3ad0b54a9d862d31f9a4ae30f73d5be3c7723"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/physics_alignment.csv",
+      "campaign_relative_path": "C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/physics_alignment.csv",
+      "snapshot": "paper/evidence/sources/C-v1-terminal-001__artifacts__cosmic-net-runs__notebook_C__physics_alignment.csv",
+      "sha256_uncompressed": "8add898848621e9174850cd8c518e6ab5ca4e1a3dfd318e73c9fb9fb0e99a3d0",
+      "size_uncompressed": 11968,
+      "snapshot_sha256": "8add898848621e9174850cd8c518e6ab5ca4e1a3dfd318e73c9fb9fb0e99a3d0"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/calibration.csv",
+      "campaign_relative_path": "C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/calibration.csv",
+      "snapshot": "paper/evidence/sources/C-v1-terminal-001__artifacts__cosmic-net-runs__notebook_C__calibration.csv",
+      "sha256_uncompressed": "356e0a9f0701bd2fc2947ef93b752505bca6192c7c51be9c6cb54aead30639d3",
+      "size_uncompressed": 136,
+      "snapshot_sha256": "356e0a9f0701bd2fc2947ef93b752505bca6192c7c51be9c6cb54aead30639d3"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/provenance.json",
+      "campaign_relative_path": "D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/provenance.json",
+      "snapshot": "paper/evidence/sources/D-v1-terminal-001__artifacts__cosmic-net-runs__notebook_D__provenance.json",
+      "sha256_uncompressed": "16d22efc8788d242dd4b766d02394c86d850b7e44907c265938046da5b020cb5",
+      "size_uncompressed": 158618,
+      "snapshot_sha256": "16d22efc8788d242dd4b766d02394c86d850b7e44907c265938046da5b020cb5"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/tta_results.csv",
+      "campaign_relative_path": "D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/tta_results.csv",
+      "snapshot": "paper/evidence/sources/D-v1-terminal-001__artifacts__cosmic-net-runs__notebook_D__tta_results.csv",
+      "sha256_uncompressed": "c8fefcf40383f77716a81032b6400c7ab50b7d398b5085c6d8a9500c0c726a29",
+      "size_uncompressed": 9314,
+      "snapshot_sha256": "c8fefcf40383f77716a81032b6400c7ab50b7d398b5085c6d8a9500c0c726a29"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/tta_validation.csv",
+      "campaign_relative_path": "D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/tta_validation.csv",
+      "snapshot": "paper/evidence/sources/D-v1-terminal-001__artifacts__cosmic-net-runs__notebook_D__tta_validation.csv",
+      "sha256_uncompressed": "0fddc874129c7c2d5e1348183b6de72d2833826eacb1f990d1c2f15857fedaec",
+      "size_uncompressed": 9257,
+      "snapshot_sha256": "0fddc874129c7c2d5e1348183b6de72d2833826eacb1f990d1c2f15857fedaec"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/tta_histories.json",
+      "campaign_relative_path": "D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/tta_histories.json",
+      "snapshot": "paper/evidence/sources/D-v1-terminal-001__artifacts__cosmic-net-runs__notebook_D__tta_histories.json",
+      "sha256_uncompressed": "9e43a0d9c7df1a05e907832ad23683e420a3c1a571513d7dc24ae3322d00bf44",
+      "size_uncompressed": 482987,
+      "snapshot_sha256": "9e43a0d9c7df1a05e907832ad23683e420a3c1a571513d7dc24ae3322d00bf44"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/budget_eligibility.json",
+      "campaign_relative_path": "D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/budget_eligibility.json",
+      "snapshot": "paper/evidence/sources/D-v1-terminal-001__artifacts__cosmic-net-runs__notebook_D__budget_eligibility.json",
+      "sha256_uncompressed": "0ba8f854179e65f13ff35671ea43f3752ac12f6a8ca8a56955eddd60908958ca",
+      "size_uncompressed": 98592,
+      "snapshot_sha256": "0ba8f854179e65f13ff35671ea43f3752ac12f6a8ca8a56955eddd60908958ca"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/A-v1-terminal-001/source.ipynb",
+      "campaign_relative_path": "A-v1-terminal-001/source.ipynb",
+      "snapshot": "paper/evidence/sources/A-v1-terminal-001__source.ipynb",
+      "sha256_uncompressed": "428bb51f14bf2439a146fe6f695151967b8037f3dc8cbce5aa3749ba9c97cd76",
+      "size_uncompressed": 51594,
+      "snapshot_sha256": "428bb51f14bf2439a146fe6f695151967b8037f3dc8cbce5aa3749ba9c97cd76"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/source.ipynb",
+      "campaign_relative_path": "B-v1-terminal-001/source.ipynb",
+      "snapshot": "paper/evidence/sources/B-v1-terminal-001__source.ipynb",
+      "sha256_uncompressed": "2cf76fc1e5b59e7a8f2d7c373f6059911fe7775e771b3c1deb52369ed4395d79",
+      "size_uncompressed": 263863,
+      "snapshot_sha256": "2cf76fc1e5b59e7a8f2d7c373f6059911fe7775e771b3c1deb52369ed4395d79"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/source.ipynb",
+      "campaign_relative_path": "C-v1-terminal-001/source.ipynb",
+      "snapshot": "paper/evidence/sources/C-v1-terminal-001__source.ipynb",
+      "sha256_uncompressed": "897e35fa6974717d391c626ea7ea52e42182503756c0e5a7abe21d40129c6cd9",
+      "size_uncompressed": 53825,
+      "snapshot_sha256": "897e35fa6974717d391c626ea7ea52e42182503756c0e5a7abe21d40129c6cd9"
+    },
+    {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/D-v1-terminal-001/source.ipynb",
+      "campaign_relative_path": "D-v1-terminal-001/source.ipynb",
+      "snapshot": "paper/evidence/sources/D-v1-terminal-001__source.ipynb",
+      "sha256_uncompressed": "2a88a9f557cdd7840105e4f79298a9c9437e6e0fb5ad57dc67df9b87bb4157ac",
+      "size_uncompressed": 54412,
+      "snapshot_sha256": "2a88a9f557cdd7840105e4f79298a9c9437e6e0fb5ad57dc67df9b87bb4157ac"
+    }
+  ]
+}

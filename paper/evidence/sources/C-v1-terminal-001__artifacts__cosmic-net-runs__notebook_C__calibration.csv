@@ -1,0 +1,3 @@
+method,coverage_95,mean_interval_width,mc_samples,run_mode
+full,1.0,1.9596004558772575,30,full
+rl_policy,1.0,1.9499335041860255,30,full

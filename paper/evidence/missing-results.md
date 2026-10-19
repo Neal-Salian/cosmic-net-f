@@ -1,0 +1,24 @@
+# Missing evidence and proposed experiments
+
+Status: supervisor-review first draft, 16 October 2026. These are **uncompleted** requirements or proposed studies, not claims of completed experiments. The A–D campaign is preserved as conditional legacy evidence. No placeholders contain fabricated measurements.
+
+| Priority | Missing evidence | Consequence for this draft | Concrete resolution |
+|---|---|---|---|
+| 1 | Historical target mass definition and complete acquisition/selection record | Stored target is not certified M200c; errors are conditional legacy-log-label errors | Audit actual HDF5 fields, units, group assignments, selection, and target matches; publish a content manifest |
+| 1 | Total versus stellar radius semantics; metallicity mapping; periodic geometry | Existing CSV has total-subhalo radius; intrinsic features are not observationally available by default | Certify every actual field and use explicit periodic/observer contracts; rebuild compatible graphs |
+| 1 | Original backbone split, training, augmentation, optimizer and checkpoint provenance | Hashes certify artifact identity only; absence of historical leakage is unproven | Train a fresh baseline with split/lineage, config, augmentation, seed, epoch, and optimizer manifests |
+| 1 | Independent policy/backbone training seeds and random TEST masks | One policy and one random test realization; halo bootstrap omits training variability | Predeclare independent seeds, comparator, meaningful effect, search budget, and precision target; use seed-aware intervals |
+| 1 | Independent volumes/initial conditions | Single-volume halo split does not measure volume generalization; exchangeability uncertain | Hold out independent volumes/IC groups for confirmation and reserve them before method selection |
+| 2 | Completed CAMELS/SIMBA and observation-shift validation | No cross-domain or observational robustness claim | Resolve compatible features/targets first; run actual external-domain tests with certified data and new held-out groups |
+| 2 | A compatible projected-feature RL reward and trainer | Existing intrinsic reward requires unmeasured quantities | Design and validate an honest projected objective or acquire a fully audited intrinsic schema; never zero-fill unavailable features |
+| 2 | Physics reward, constraints, repair, and feature ablations | No causal contribution assigned to the physics term or feasibility design | Compare reward removed/reweighted, same constraints, training/inference matched decoders, and feature controls at common budgets |
+| 2 | Competitive tuned learned baselines | Raw selector is one train-only saliency-distilled control | Tune multiple relevant learned selectors under equal validation/search and cost accounting; do not relabel the current control as PGExplainer/NeuralSparse |
+| 2 | Per-halo TTA final predictions, masks and residuals | Aggregate 0.558% change cannot support a paired significance test | Re-export each K with graph ID, prediction, target, final mask, cost and seed; analyze paired changes on new confirmation data |
+| 2 | Matched 50% selector grid alongside TTA | D's 50% results cannot establish improvement over C's 40% results | Predeclare a common retention grid and compare all selectors and adaptation at identical final pair counts |
+| 3 | Repeated latency, hardware model, throughput and peak memory | Current cost is one scoped observed campaign; no memory/amortization claim | Record accelerator/CPU, software, warmup, synchronization, repeats and distributions; profile larger graphs and all preprocessing |
+| 3 | Cheaper encoder or validated embedding reuse | Current RL needs full embeddings plus pruned prediction | Implement and verify a distinct cost-saving path, then measure end-to-end cost; decoder optimization alone is insufficient |
+| 3 | Historical policy training wall time/query totals | Training cost is unknown rather than zero | Recover measured logs if available or report future training with complete metering; never infer total optimization cost from teacher calls |
+| 3 | Independent uncertainty calibration and sharpness | 100% coverage of very broad intervals is not useful 95% calibration evidence | Calibrate on validation only; report NLL/sharpness/coverage and mass/richness/domain strata on held-out data |
+| Before submission | Author list, affiliations, funding, acknowledgments, permissions/release arrangements, venue choice | Title block explicitly marks authorship as pending | Supervisor and project owner confirm administrative details; apply the chosen official template later |
+
+No new training, simulation, or confirmatory experiment was required to finish this first draft. All proposed experiments are separated from the completed A–D results in the manuscript and this register. Results from other independent chats have not been incorporated.

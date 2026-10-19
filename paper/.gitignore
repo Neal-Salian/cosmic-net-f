@@ -1,0 +1,9 @@
+build/
+__pycache__/
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+*.xdv

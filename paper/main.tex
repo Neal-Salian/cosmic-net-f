@@ -1,0 +1,57 @@
+% !TEX program = xelatex
+\documentclass[10pt,twocolumn,letterpaper]{article}
+\usepackage[margin=0.72in,columnsep=0.24in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{graphicx,booktabs,array,microtype}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{xcolor}
+\usepackage[breaklinks,colorlinks,allcolors=blue!45!black]{hyperref}
+\usepackage{url}
+\usepackage{xurl,titlesec,float}
+\usepackage{placeins}
+\titleformat{\section}{\large\bfseries}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.7em}{}
+\titlespacing*{\section}{0pt}{1.8ex plus .4ex minus .2ex}{.75ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{1.5ex plus .3ex minus .2ex}{.6ex plus .2ex}
+\urlstyle{same}
+\raggedbottom
+\setlength{\emergencystretch}{1.5em}
+\setlength{\parskip}{0pt}
+\newcommand{\dex}{\,\mathrm{dex}}
+\newcommand{\clip}{\operatorname{clip}}
+\newcommand{\RMSE}{\operatorname{RMSE}}
+\newcommand{\MAE}{\operatorname{MAE}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\title{Physics-Constrained Reinforcement Learning for Graph Sparsification in Cosmological Graph Neural Networks:\\A Controlled Empirical Study}
+\author{Cosmic-Net project\\\small Supervisor-review draft; author list and affiliations to be confirmed}
+\date{16 October 2026}
+\begin{document}
+\maketitle
+\begin{abstract}
+Learned graph sparsification may reduce the interactions processed by cosmological graph neural networks, but fewer edges do not by themselves imply faster or more accurate inference. We examine Cosmic-Net, an edge-conditioned halo-mass predictor with a reinforcement-learning selector, using a completed four-notebook experimental campaign. A physical-pair representation separates reciprocal edge copies from self-loops, and a shared feasibility-aware decoder enforces exact pair budgets and excludes physical isolates. On 82 held-out halo graphs from one legacy TNG100-labelled catalog, nominal 40\% retention realizes 40.30\% mean pair retention. The full graph achieves an RMSE of $0.114797\dex$, compared with $0.136160\dex$ for reinforcement learning and $0.136900\dex$ for gradient~$\times$~input selection. The observed 0.54\% advantage over that control is inconclusive: the paired RMSE difference is $-0.000739\dex$, with a 95\% bootstrap interval of $[-0.014508,+0.013582]\dex$ and permutation $p=0.9192$. Reinforcement learning is 18.61\% worse than the full graph and approximately $56\times$ slower in the measured inference region. At a separate 50\% budget, label-free test-time adaptation improves aggregate RMSE by 0.558\% while increasing latency $2.50\times$; paired predictions are unavailable. Unresolved historical target semantics, incomplete backbone provenance, and absent seed and volume replications restrict interpretation. The study establishes a traceable constrained benchmark and documents failure modes; it establishes neither an accuracy nor an efficiency advantage.
+\end{abstract}
+\noindent\textbf{Keywords:} graph sparsification; halo mass inference; reinforcement learning; physical constraints; empirical evaluation
+
+\input{sections/01_introduction}
+\input{sections/02_related_work}
+\input{sections/03_background_data}
+\input{sections/04_architecture}
+\input{sections/05_method}
+\input{sections/06_experiments}
+\input{sections/07_results}
+\input{sections/08_discussion}
+\input{sections/09_conclusion}
+\label{page:main-end}
+\clearpage
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+\clearpage
+\onecolumn
+\appendix
+\input{sections/10_appendices}
+\end{document}

@@ -1,0 +1,31 @@
+\section{Experimental Setup}
+\label{sec:experiments}
+The four completed private Kaggle sessions form one campaign. A constructs data and graphs, loads the frozen backbone, and fits the learned control. B recovers the fitted policy, validates it, and performs optional supervised backbone fine-tuning. C runs the unified benchmark, physical-alignment diagnostic, and dropout intervals. D evaluates validation-selected test-time adaptation (TTA). The evaluation base is commit \code{c825bf5}; archival notebook outputs from older executions are not used as evidence for this campaign. Exact source identities, input hashes, and session identifiers are retained in the accompanying evidence inventory.
+
+C evaluates eight rows (seven selectors and a full-graph reference) at each $q\in\{0.4,0.6,0.8,1.0\}$. All methods share the same 82 test halos, frozen backbone, no-isolate constraint, and direct decoder. The full reference retains every pair regardless of the requested comparison budget. This is a frozen-predictor selection study; it does not retrain each GNN on each sparse topology. Only one fitted policy and one random test-score realization are available. Ten random validation seeds provide a validation reference, not independent policy runs or ten random test replications.
+
+\subsection{Baseline methods}
+Random assigns exchangeable Gaussian pair scores; the shared decoder still enforces feasibility, so its final masks are not described as uniform draws from all feasible subsets. Distance ranks by $-r_{ij}$. Degree uses $(d_i+d_j)/2$ on distinct full-graph pairs. The stellar-binding proxy uses $\ln m_{*,i}+\ln m_{*,j}-\ln\max(r_{ij},\epsilon)$ with declared distance units and floor; it is a ranking proxy rather than total dark-matter binding energy.
+
+Gradient~$\times$~input computes $\sum_f|a_{ij,f}\,\partial f_\theta(G)/\partial a_{ij,f}|$ and averages over physical copies. This is edge-feature saliency of a prediction, not a derivative with respect to discrete edge deletion or a target-dependent oracle. The trained raw selector receives endpoint sums and absolute differences, symmetrized edge attributes (absolute mass-ratio feature), graph node-feature mean and maximum, and $k/P$. A $22\to16\to1$ ReLU MLP distils train-only saliency labels, normalized by the maximum absolute saliency within each graph. Train-fitted feature normalization, 20 optimization epochs, MSE loss, Adam at $10^{-3}$, and seed 42 are recorded. Its teacher requires 378 frozen-predictor calls reused across budgets; these calls are not its entire training cost. RL uses the recovered policy and the common inference adapter in Section~\ref{sec:constraints}.
+
+\subsection{Statistical evaluation}
+\label{sec:stats}
+For residuals $e_{g,m}=\hat y_{g,m}-y_g$ on $n=82$ halos,
+\begin{align}
+ \RMSE_m&=\sqrt{n^{-1}\sum_g e_{g,m}^2},\quad
+ \MAE_m=n^{-1}\sum_g|e_{g,m}|,\\
+ R_m^2&=1-\frac{\sum_g e_{g,m}^2}{\sum_g(y_g-\bar y)^2}.
+\end{align}
+Paired contrasts use $\Delta_m=\RMSE_{\mathrm{RL}}-\RMSE_m$, so negative values favor RL. The post hoc analysis aligns graph IDs and targets, resamples the same halo indices for both methods, and recomputes the nonlinear RMSE contrast using 50,000 bias-corrected and accelerated (BCa) bootstrap draws. Two-sided paired permutation tests use 99,999 within-halo label swaps of squared errors and statistic $n^{-1}\sum_g(e_{g,\mathrm{RL}}^2-e_{g,m}^2)$. The permutation test targets mean squared error; its $p$-value is not computed from a distribution of bootstrap RMSE differences.
+
+The analysis uses SciPy's paired bootstrap and paired-samples permutation interfaces, with base RNG seed 20261016 and deterministic contrast-specific offsets. Holm correction is reported for seven 40\% contrasts and for all 21 contrasts at 40/60/80\%. Intervals are marginal, unadjusted 95\% intervals. The 2,624 stored method--budget records represent repeated measurements of 82 halos, not independent observations. Halo resampling assumes independence or exchangeability; spatial correlation within one volume and absent training-seed replication limit that interpretation. The tests are exploratory because results were already inspected. A non-significant result does not establish equivalence or non-inferiority.
+
+\subsection{Adaptation and timing protocol}
+For D, requested retention is fixed at $q=0.5$ for every $K\in\{0,5,10,20\}$. A fresh policy copy adapts separately to each graph; the label tensor is removed and the backbone stays frozen. Two ordered rollouts per step use the repaired action environment. With dropout standard deviations $u_D,u_{D'}$ from 15 draws, the reward replaces the accuracy term in Eq.~\ref{eq:reward} by
+\begin{equation}
+ 0.5\,\frac{u_D-u_{D'}}{\max(u_D,0.05)}.
+\end{equation}
+The remaining terms use $q=0.5$ and $w_v=1$, with reward clipping at $\pm10$. The two rollouts supply each other's baseline. Adam uses $10^{-4}$, gradient clipping at 1, and early stopping after three non-improving mean rewards. The configured KL coefficient is zero and learning-rate decay is one; no active trust-region effect is claimed. The final policy state, rather than a saved best-reward state, produces the final exact-decoder mask. The maximum step count is selected on validation, subject to a 2\% relative degradation guard, and then held fixed for test reporting.
+
+C records synchronized GPU predictor calls and wall-clock scoring, decoder, and prediction regions. Its manifest identifies CUDA execution with PyTorch 2.11.0+cu128 and a portable Torch graph backend; the exact accelerator model is not certified by the retained runtime manifest. The primary RL scoring region includes embedding extraction and both policy orientations. Data ingestion, setup, and graph construction are outside this inference region. D uses its own adaptation-plus-final-evaluation timing scope, including data/batch preparation; C and D timings are not interchangeable hardware-normalized microbenchmarks. Historical policy training cost is unknown. We report measured latency and its scope, without extrapolating to throughput or peak memory.
