@@ -1,0 +1,66 @@
+{
+  "full": {
+    "scoring_time_s": 0.0,
+    "decoder_time_s": 0.0,
+    "prediction_time_s": 0.0,
+    "full_time_s": 0.007839306012184773,
+    "total_region_time_s": 0.007839306012184773,
+    "mean_live_forward_calls": 1.0
+  },
+  "random": {
+    "scoring_time_s": 0.0014237954267949733,
+    "decoder_time_s": 0.404072643829295,
+    "prediction_time_s": 0.008422596317082136,
+    "full_time_s": 0.0,
+    "total_region_time_s": 0.4156728454756054,
+    "mean_live_forward_calls": 1.0
+  },
+  "distance": {
+    "scoring_time_s": 0.0028820730853634058,
+    "decoder_time_s": 0.4317714239755388,
+    "prediction_time_s": 0.008461660695125252,
+    "full_time_s": 0.0,
+    "total_region_time_s": 0.4449172768292844,
+    "mean_live_forward_calls": 1.0
+  },
+  "degree": {
+    "scoring_time_s": 0.0026003537195054644,
+    "decoder_time_s": 0.4045543093293251,
+    "prediction_time_s": 0.008469890073168177,
+    "full_time_s": 0.0,
+    "total_region_time_s": 0.4174214262805036,
+    "mean_live_forward_calls": 1.0
+  },
+  "stellar_binding_proxy": {
+    "scoring_time_s": 0.002136036097559421,
+    "decoder_time_s": 0.43537094162195167,
+    "prediction_time_s": 0.00837443434144317,
+    "full_time_s": 0.0,
+    "total_region_time_s": 0.44764907398782117,
+    "mean_live_forward_calls": 1.0
+  },
+  "edge_feature_grad_x_input": {
+    "scoring_time_s": 0.012476021146356998,
+    "decoder_time_s": 0.4247129258536494,
+    "prediction_time_s": 0.00855871549998017,
+    "full_time_s": 0.0,
+    "total_region_time_s": 0.4475407298902621,
+    "mean_live_forward_calls": 2.0
+  },
+  "supervised_raw": {
+    "scoring_time_s": 0.03115570987803239,
+    "decoder_time_s": 0.4183630794756338,
+    "prediction_time_s": 0.008369946670771285,
+    "full_time_s": 0.0,
+    "total_region_time_s": 0.4597071123048575,
+    "mean_live_forward_calls": 1.0
+  },
+  "provided_rl": {
+    "scoring_time_s": 0.011821089353655381,
+    "decoder_time_s": 0.41823424825610145,
+    "prediction_time_s": 0.008438390634154996,
+    "full_time_s": 0.0,
+    "total_region_time_s": 0.44026035604876107,
+    "mean_live_forward_calls": 2.0
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "status": "executed",
+  "source_manifest": {
+    "path": "experiments/paper_baselines/results/run-20261016-final-v2/manifest.json",
+    "size_bytes": 10140,
+    "sha256": "7b3e84a399b5ccced4f0006d0851c34b25f39e2486cfd11d20f98504a1c06c78"
+  },
+  "analyzer_sha256": {
+    "path": "/Users/nealsalian/.codex/worktrees/paper-baseline-robustness/cosmic-net/experiments/paper_baselines/analyze.py",
+    "size_bytes": 28743,
+    "sha256": "2320cdc06c1d5db15d5a59cad16e973ecb10bd8f13cdeab94b7844b05994a80f"
+  },
+  "outputs": [
+    {
+      "path": "experiments/paper_baselines/results/run-20261016-final-v2/matched_budget_table.csv",
+      "size_bytes": 12414,
+      "sha256": "501de3b98a7440064f5bf4cc47d2073ec3410160a8ac7505c50c1cc120dbce5d"
+    },
+    {
+      "path": "experiments/paper_baselines/results/run-20261016-final-v2/paired_comparisons.csv",
+      "size_bytes": 10633,
+      "sha256": "3c7543a3359d482d005b72008cf6a2bc71879914de425e60a89978f4031e4a1a"
+    },
+    {
+      "path": "experiments/paper_baselines/results/run-20261016-final-v2/per_halo_comparisons.csv",
+      "size_bytes": 464502,
+      "sha256": "9cf749206c2d8fe9fc8fbfe4ee0d43656f4a6c8456f90c15d0830eb379f18214"
+    },
+    {
+      "path": "experiments/paper_baselines/results/run-20261016-final-v2/seed_metrics.csv",
+      "size_bytes": 8970,
+      "sha256": "b78734a1a7125c70b050774478f38762a5ee2dac80a8017994cfb78c6d63f0f1"
+    },
+    {
+      "path": "experiments/paper_baselines/results/run-20261016-final-v2/strata_cutpoints.json",
+      "size_bytes": 232,
+      "sha256": "43673bfd52022bda4b4241078066129049ea39e1be2b76bdbafbef56666467e1"
+    },
+    {
+      "path": "experiments/paper_baselines/results/run-20261016-final-v2/stratified_comparisons.csv",
+      "size_bytes": 138511,
+      "sha256": "4404d5f5e95dda4d84a7e2eba5c4560579dbb83b982522dbf566049d50310a5d"
+    },
+    {
+      "path": "experiments/paper_baselines/results/run-20261016-final-v2/validation_tuning_table.csv",
+      "size_bytes": 232,
+      "sha256": "cf902db0651e8a46bbc614a731f219827977708cad0d7b7e42b6b0e5dafa5e3b"
+    },
+    {
+      "path": "paper/evidence/baseline-audit.md",
+      "size_bytes": 4494,
+      "sha256": "780143b522d79c0855255313d2447bea17d09f478aa371cad19a106a1b0a8747"
+    },
+    {
+      "path": "paper/evidence/baseline-comparison.tex",
+      "size_bytes": 1642,
+      "sha256": "e12f8b351df007bc3c7ed1b87ede854ee9ecd102e52047365ab58b56f49b4335"
+    },
+    {
+      "path": "paper/evidence/baseline-sensitivity.png",
+      "size_bytes": 181484,
+      "sha256": "b322be12600fce0978217d2264a2e006cc85b262c245bbb09a213a87565000b3"
+    },
+    {
+      "path": "paper/evidence/robustness-results.md",
+      "size_bytes": 11358,
+      "sha256": "98bab6bc0d3344063280351410d0b9be2f4e8c8c6cb0ecfd7719a15e3ccf8c62"
+    }
+  ],
+  "paired_unit": "halo",
+  "policy_training_seeds": [
+    42
+  ]
+}

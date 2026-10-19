@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "verified_utc": "2026-10-16T05:03:48.817129+00:00",
+  "tests": {
+    "command": "python3 -m pytest -q tests experiments/paper_baselines/tests",
+    "passed": 820,
+    "skipped": 13,
+    "warnings": 695,
+    "notes": "Warnings are dependency deprecations; original suite required command-local GIT_NO_REPLACE_OBJECTS and a local alternate object store because cloud-evicted refs stalled Git subprocesses."
+  },
+  "experiment_verification": {
+    "command": "python3 -m experiments.paper_baselines.verify --results experiments/paper_baselines/results/run-20261016-final-v2 --evidence paper/evidence",
+    "status": "passed",
+    "historical_predictions": 2624,
+    "new_test_predictions": 9184,
+    "validation_predictions": 486,
+    "new_exported_masks": 9670
+  },
+  "independent_review": "review.md; both important findings regression-tested and followed by full inference rerun",
+  "repeat_execution": {
+    "max_prediction_difference": 0.0,
+    "all_new_mask_hashes_identical": true
+  },
+  "whitespace_check": "git diff --cached --check passed; CSV CRLF bytes explicitly preserved by package .gitattributes",
+  "plot_qa": "baseline-sensitivity.png visually inspected; legends and axes readable",
+  "not_executed": [
+    "independent policy training seeds",
+    "corrected astronomy/external population",
+    "fresh GPU latency trials"
+  ],
+  "git_constraint": "commit only to codex/paper-baseline-robustness; preserve worktree; no merge, push, or PR"
+}

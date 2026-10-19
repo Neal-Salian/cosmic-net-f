@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "base_commit": "c825bf57652005c80faff79cf4dfd58e3a9baa14",
+  "retentions": [
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "constraint": "no_isolates",
+  "policy_training_seeds_available": [
+    42
+  ],
+  "random_mask_seeds": [
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109
+  ],
+  "policy_sampling_seeds": [
+    200,
+    201,
+    202,
+    203,
+    204,
+    205,
+    206,
+    207,
+    208,
+    209
+  ],
+  "tie_mark_seeds": [
+    300,
+    301,
+    302
+  ],
+  "bootstrap_seed": 20261016,
+  "bootstrap_resamples": 10000,
+  "tuning_retention": 0.4,
+  "geometric_alpha_grid": [
+    0.0,
+    0.5,
+    1.0
+  ],
+  "hybrid_alpha_grid": [
+    0.0,
+    0.5,
+    1.0
+  ],
+  "prediction_replay_atol": 0.0001,
+  "strata": [
+    "nodes",
+    "mean_degree",
+    "target_log_mass",
+    "velocity_dispersion"
+  ],
+  "stratum_cutpoints": "validation tertiles; all test halos reported; constant/tied bins may be empty",
+  "timing": "CPU single-thread, scoring + decoder + masked prediction; report separately from historical GPU timings; cached replay scores excluded from latency claims"
+}

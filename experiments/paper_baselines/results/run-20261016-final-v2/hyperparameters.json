@@ -1,0 +1,13 @@
+{
+  "geometric_alpha": 0.5,
+  "hybrid_alpha": 1.0,
+  "velocity_scale_km_s": 371.84967041015625,
+  "train_feature_std": [
+    1.6694681644439697,
+    252.75238037109375,
+    0.5469873547554016,
+    1.4673303365707397,
+    1.2013225555419922
+  ],
+  "scope": "train feature scales; validation q=.4 RMSE tuning; fixed for all test budgets"
+}

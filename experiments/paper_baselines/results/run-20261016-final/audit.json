@@ -1,0 +1,57 @@
+{
+  "status": "passed",
+  "rows": 2624,
+  "test_halos": 82,
+  "methods": [
+    "full",
+    "random",
+    "distance",
+    "degree",
+    "stellar_binding_proxy",
+    "edge_feature_grad_x_input",
+    "supervised_raw",
+    "provided_rl"
+  ],
+  "retentions": [
+    0.4,
+    0.6,
+    0.8,
+    1.0
+  ],
+  "verified_pruned_masks": 2296,
+  "split_sizes": {
+    "train": 378,
+    "val": 81,
+    "test": 82
+  },
+  "backbone_state_sha256": "56907374794d9203b4b1873a3b930fff856aff427244d86e6a55742cded12034",
+  "full_reference_cross_budget_max_spread": 1.9073486328125e-06,
+  "available_pair_range": [
+    15,
+    45
+  ],
+  "note": "ID separation verifies selector splits; original backbone training split is not certified by this legacy checkpoint.",
+  "lazy_decoder_saved_mask_matches": 2296,
+  "selector_training": {
+    "learned_control_train_count": 378,
+    "learned_excluded_training_graphs": [],
+    "policy_training_seed": 42,
+    "policy_selected_epoch": 42,
+    "policy_selection_scope": "validation",
+    "policy_metadata_status": "reconstructed_from_original_revision_and_exact_inputs",
+    "backbone_training_split_certified": false
+  },
+  "catalog_subhalo_ids_in_multiple_groups": 0,
+  "graph_hashes_rebuilt": 82,
+  "prediction_replay": {
+    "rows": 2624,
+    "max_absolute_difference": 1.9073486328125e-06,
+    "atol": 0.0001,
+    "device": "cpu"
+  },
+  "probability_ranking": {
+    "checks": 328,
+    "same_masks": 328,
+    "control_counted_as_new_method": false
+  }
+}
