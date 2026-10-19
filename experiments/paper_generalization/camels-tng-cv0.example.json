@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "status": "pending_inputs",
+  "dataset": {
+    "id": "camels-IllustrisTNG-CV_0-z0",
+    "suite": "IllustrisTNG",
+    "simulation": "CV_0",
+    "snapshot": "090",
+    "initial_condition_id": "PENDING_VERIFY_GLOBAL_IC_LINEAGE",
+    "release": "PENDING_REVIEW_CURRENT_SUBFIND_RELEASE",
+    "source_kind": "local_hdf5",
+    "source": {
+      "path": "inputs/IllustrisTNG/CV_0/groups_090.hdf5",
+      "sha256": "PENDING"
+    },
+    "source_sha256": "PENDING",
+    "feature_contract": {
+      "target": "log10(M200c/M_sun)",
+      "target_field": "Group_M_Crit200",
+      "radius_field": "SubhaloHalfmassRad",
+      "radius_semantic": "total_subhalo_half_mass_radius",
+      "node_features": [
+        "log10_stellar_mass_Msun",
+        "log10_velocity_dispersion_kms",
+        "log10_total_half_mass_radius_Mpc",
+        "log10_stellar_metallicity"
+      ],
+      "edge_features": [
+        "distance",
+        "delta_v",
+        "cos_theta",
+        "mass_ratio",
+        "proj_sep"
+      ],
+      "position_units": "physical_Mpc",
+      "velocity_units": "peculiar_km/s",
+      "mass_units": "M_sun",
+      "metallicity": "SubhaloStarMetallicity_mass_fraction",
+      "normalization": "log10_nodes_no_refit_raw_physical_edges",
+      "geometry": "euclidean_per_halo_unwrapped"
+    },
+    "claim": "independent_volume",
+    "epoch": {
+      "h": 0.6711,
+      "scale_factor": 1.0
+    },
+    "parameters": {
+      "path": "inputs/CV_0-parameters.txt",
+      "sha256": "PENDING"
+    },
+    "schema_review": {
+      "path": "inputs/CV_0-schema-review.md",
+      "sha256": "PENDING"
+    },
+    "population_contract": null
+  },
+  "training_receipt": {
+    "path": "inputs/training-receipt.json",
+    "sha256": "PENDING"
+  },
+  "backbone": {
+    "path": "inputs/best_model_augmented.pt",
+    "sha256": "42764f0db204863b28672d6ec6e207443602de16dcfa926765a0429b3451c63f"
+  },
+  "policy": {
+    "path": "inputs/policy.pt",
+    "sha256": "PENDING"
+  },
+  "budget": {
+    "keep_fraction": 0.4,
+    "constraint": "no_isolates",
+    "decoder": "direct"
+  },
+  "seed": 42
+}

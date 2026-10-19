@@ -1,0 +1,2650 @@
+{
+  "audit_date_local": "2026-10-16",
+  "source_commit": "c825bf57652005c80faff79cf4dfd58e3a9baa14",
+  "root": "/Users/nealsalian/Desktop/cosmic-net",
+  "search_scope": [
+    "data/raw/**",
+    "raw_hdf5/**",
+    "config/*",
+    "outputs/{checkpoints,rls}/*",
+    "kaggle/*",
+    "output/stageb-fix-campaign-20261015/{B,C}-v1-terminal-001/artifacts/cosmic-net-runs/notebook_{B,C}/*"
+  ],
+  "scientific_evaluation_executed": false,
+  "records": [
+    {
+      "relative_path": "config/astronomy_manifest.example.yaml",
+      "size_bytes": 1675,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/config/astronomy_manifest.example.yaml",
+      "sha256": "5ccf2735ce0153effe8b598a18d7f58352ac94cbd489c859b72388bf46e354fd",
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "config/audited-baseline.example.yaml",
+      "size_bytes": 1559,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/config/audited-baseline.example.yaml",
+      "sha256": "daa8f8f4c9a52c37924adb449b0e113bb300f55f1ca7141475d6f349cfe3f176",
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "config/config.yaml",
+      "size_bytes": 3319,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/config/config.yaml",
+      "sha256": "9b718989d5017490ed5a1c184160fb749a9faef65f2a87ad9df58982549e90f2",
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "config/feasible_pilot.yaml",
+      "size_bytes": 291,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/config/feasible_pilot.yaml",
+      "sha256": "24bdb58a8661df8f51742791d7cba591aa9c3672dfa1a721f95803a7d1899d79",
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "config/observations.example.yaml",
+      "size_bytes": 426,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/config/observations.example.yaml",
+      "sha256": "bb5c8d91c8c96b0894377299d52c8cd47dfda1ffc597ec80cf96e5309703140e",
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "data/raw/checkpoint.csv",
+      "size_bytes": 705011,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/data/raw/checkpoint.csv",
+      "sha256": "ef7e28e498668c326805e1f86331607a668aa8b2350ce6b89dcd608abbb64933",
+      "csv": {
+        "columns": [
+          "subhalo_id",
+          "group_id",
+          "is_central",
+          "stellar_mass",
+          "vel_dispersion",
+          "half_mass_radius",
+          "metallicity",
+          "pos_x",
+          "pos_y",
+          "pos_z",
+          "vel_x",
+          "vel_y",
+          "vel_z",
+          "halo_mass",
+          "halo_mass_log"
+        ],
+        "rows": 5000,
+        "groups": 500,
+        "groups_ge3": 500
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "data/raw/dataset-metadata.json",
+      "size_bytes": 126,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/data/raw/dataset-metadata.json",
+      "sha256": "c6702bda1981795137fb9aa88b2f65b2e70423246f08cbe548aa5c88af9de1b2",
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "data/raw/test_synthetic_features.pt",
+      "size_bytes": 192985,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/data/raw/test_synthetic_features.pt",
+      "sha256": "8df4d184977c36b6b12e3debb50311c9cdc5775c797130286bc98c0907705224",
+      "inspection_status": "unusable_or_unverified",
+      "reason": "checkpoint is not a mapping"
+    },
+    {
+      "relative_path": "data/raw/test_synthetic_preprocessed_data.csv",
+      "size_bytes": 3015447,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/data/raw/test_synthetic_preprocessed_data.csv",
+      "sha256": "2baa2bd3583d68c8d8e2935b9f3440ac96b0f048664fac5ae47a8842729af6c5",
+      "csv": {
+        "columns": [
+          "subhalo_id",
+          "halo_id",
+          "cluster_id",
+          "x",
+          "y",
+          "z",
+          "vx",
+          "vy",
+          "vz",
+          "stellar_mass",
+          "velocity_dispersion",
+          "half_mass_radius",
+          "metallicity",
+          "halo_mass",
+          "log_halo_mass",
+          "redshift"
+        ],
+        "rows": 11954
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "data/raw/tng100_clustered.csv",
+      "size_bytes": 1068424,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/data/raw/tng100_clustered.csv",
+      "sha256": "6c148f2cae68abac7bc5c34d370ff0130a647b49e79c32880bcf36ecc0ab4d53",
+      "csv": {
+        "columns": [
+          "subhalo_id",
+          "group_id",
+          "is_central",
+          "stellar_mass",
+          "vel_dispersion",
+          "half_mass_radius",
+          "metallicity",
+          "pos_x",
+          "pos_y",
+          "pos_z",
+          "vel_x",
+          "vel_y",
+          "vel_z",
+          "halo_mass",
+          "halo_mass_log",
+          "log_vel_dispersion",
+          "log_half_mass_radius",
+          "log_metallicity"
+        ],
+        "rows": 5378,
+        "groups": 541,
+        "groups_ge3": 541
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "data/raw/tng100_clustered.h5",
+      "size_bytes": 451771,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/data/raw/tng100_clustered.h5",
+      "sha256": "99d4b8e3b190e00a110c3253a6025f348648e749eff58418299ab6dae5050fa0",
+      "hdf5": {
+        "root_attributes": {
+          "columns": [
+            "subhalo_id",
+            "group_id",
+            "is_central",
+            "stellar_mass",
+            "vel_dispersion",
+            "half_mass_radius",
+            "metallicity",
+            "pos_x",
+            "pos_y",
+            "pos_z",
+            "vel_x",
+            "vel_y",
+            "vel_z",
+            "halo_mass",
+            "halo_mass_log",
+            "log_vel_dispersion",
+            "log_half_mass_radius",
+            "log_metallicity"
+          ],
+          "h_param": 0.6774,
+          "mass_unit": 10000000000.0,
+          "n_halos": 541,
+          "n_subhalos": 5378,
+          "snapshot": 99,
+          "source": "TNG100-1"
+        },
+        "datasets": {
+          "group_id": {
+            "shape": [
+              5378
+            ],
+            "dtype": "int64"
+          },
+          "half_mass_radius": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "halo_mass": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "halo_mass_log": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "is_central": {
+            "shape": [
+              5378
+            ],
+            "dtype": "int64"
+          },
+          "log_half_mass_radius": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "log_metallicity": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "log_vel_dispersion": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "metallicity": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "pos_x": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "pos_y": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "pos_z": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "stellar_mass": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "subhalo_id": {
+            "shape": [
+              5378
+            ],
+            "dtype": "int64"
+          },
+          "vel_dispersion": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "vel_x": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "vel_y": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          },
+          "vel_z": {
+            "shape": [
+              5378
+            ],
+            "dtype": "float64"
+          }
+        },
+        "declared_single_file": false,
+        "scientific_usability_verified": false
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "kaggle/best_model (2).pt",
+      "size_bytes": 10036137,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/kaggle/best_model (2).pt",
+      "sha256": "d398538e57852d659410dbe829b582a74935192be4a1bd6d56c33f49f9761bc8",
+      "checkpoint": {
+        "top_level_keys": [
+          "epoch",
+          "model_state_dict",
+          "optimizer_state_dict",
+          "lambda_scheduler_state",
+          "metrics",
+          "config",
+          "lr_scheduler_state_dict"
+        ],
+        "embedded_provenance": false,
+        "model_config": {
+          "activation": "leaky_relu",
+          "dropout": 0.05,
+          "edge_features": 5,
+          "hidden_dim": 64,
+          "mc_dropout": true,
+          "mc_samples": 30,
+          "node_features": 4,
+          "num_layers": 3,
+          "output_dim": 64,
+          "pooling": "mean",
+          "residual": true
+        },
+        "graph_config": {
+          "edge_features": [
+            "distance",
+            "delta_v",
+            "cos_theta",
+            "mass_ratio",
+            "proj_sep"
+          ],
+          "hierarchical": false,
+          "k_neighbors": 8,
+          "method": "radius",
+          "radius_mpc": 2.0,
+          "self_loops": true
+        },
+        "tensor_shapes": {
+          "input_proj.0.weight": [
+            64,
+            4
+          ],
+          "input_proj.0.bias": [
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.0.edge_mlp.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.0.conv.bias": [
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.0.conv.nn.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.0.conv.lin.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.0.norm.weight": [
+            64
+          ],
+          "conv_blocks.0.norm.bias": [
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.1.edge_mlp.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.1.conv.bias": [
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.1.conv.nn.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.1.conv.lin.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.1.norm.weight": [
+            64
+          ],
+          "conv_blocks.1.norm.bias": [
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.2.edge_mlp.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.2.conv.bias": [
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.2.conv.nn.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.2.conv.lin.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.2.norm.weight": [
+            64
+          ],
+          "conv_blocks.2.norm.bias": [
+            64
+          ],
+          "pred_head.0.weight": [
+            64,
+            64
+          ],
+          "pred_head.0.bias": [
+            64
+          ],
+          "pred_head.3.weight": [
+            32,
+            64
+          ],
+          "pred_head.3.bias": [
+            32
+          ],
+          "pred_head.6.weight": [
+            1,
+            32
+          ],
+          "pred_head.6.bias": [
+            1
+          ]
+        }
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "kaggle/best_model_augmented.pt",
+      "size_bytes": 3349165,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/kaggle/best_model_augmented.pt",
+      "sha256": "42764f0db204863b28672d6ec6e207443602de16dcfa926765a0429b3451c63f",
+      "checkpoint": {
+        "top_level_keys": [
+          "epoch",
+          "model_state_dict",
+          "config",
+          "metrics"
+        ],
+        "embedded_provenance": false,
+        "model_config": {
+          "activation": "leaky_relu",
+          "dropout": 0.05,
+          "edge_features": 5,
+          "hidden_dim": 64,
+          "mc_dropout": true,
+          "mc_samples": 30,
+          "node_features": 4,
+          "num_layers": 3,
+          "output_dim": 64,
+          "pooling": "mean",
+          "residual": true
+        },
+        "graph_config": {
+          "edge_features": [
+            "distance",
+            "delta_v",
+            "cos_theta",
+            "mass_ratio",
+            "proj_sep"
+          ],
+          "hierarchical": false,
+          "k_neighbors": 8,
+          "method": "radius",
+          "radius_mpc": 2.0,
+          "self_loops": true
+        },
+        "tensor_shapes": {
+          "input_proj.0.weight": [
+            64,
+            4
+          ],
+          "input_proj.0.bias": [
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.0.edge_mlp.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.0.conv.bias": [
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.0.conv.nn.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.0.conv.lin.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.0.norm.weight": [
+            64
+          ],
+          "conv_blocks.0.norm.bias": [
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.1.edge_mlp.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.1.conv.bias": [
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.1.conv.nn.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.1.conv.lin.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.1.norm.weight": [
+            64
+          ],
+          "conv_blocks.1.norm.bias": [
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.2.edge_mlp.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.2.conv.bias": [
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.2.conv.nn.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.2.conv.lin.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.2.norm.weight": [
+            64
+          ],
+          "conv_blocks.2.norm.bias": [
+            64
+          ],
+          "pred_head.0.weight": [
+            64,
+            64
+          ],
+          "pred_head.0.bias": [
+            64
+          ],
+          "pred_head.3.weight": [
+            32,
+            64
+          ],
+          "pred_head.3.bias": [
+            32
+          ],
+          "pred_head.6.weight": [
+            1,
+            32
+          ],
+          "pred_head.6.bias": [
+            1
+          ]
+        }
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/finetuned_gnn.pt",
+      "size_bytes": 3345785,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/finetuned_gnn.pt",
+      "sha256": "3ffc81c6f607ef6474f8cbc76d7267f029fe7cc30bd74c51a5c99c5eccdad4d8",
+      "checkpoint": {
+        "top_level_keys": [
+          "input_proj.0.weight",
+          "input_proj.0.bias",
+          "conv_blocks.0.edge_mlp.mlp.0.weight",
+          "conv_blocks.0.edge_mlp.mlp.0.bias",
+          "conv_blocks.0.edge_mlp.mlp.2.weight",
+          "conv_blocks.0.edge_mlp.mlp.2.bias",
+          "conv_blocks.0.edge_mlp.mlp.4.weight",
+          "conv_blocks.0.edge_mlp.mlp.4.bias",
+          "conv_blocks.0.conv.bias",
+          "conv_blocks.0.conv.nn.mlp.0.weight",
+          "conv_blocks.0.conv.nn.mlp.0.bias",
+          "conv_blocks.0.conv.nn.mlp.2.weight",
+          "conv_blocks.0.conv.nn.mlp.2.bias",
+          "conv_blocks.0.conv.nn.mlp.4.weight",
+          "conv_blocks.0.conv.nn.mlp.4.bias",
+          "conv_blocks.0.conv.lin.weight",
+          "conv_blocks.0.norm.weight",
+          "conv_blocks.0.norm.bias",
+          "conv_blocks.1.edge_mlp.mlp.0.weight",
+          "conv_blocks.1.edge_mlp.mlp.0.bias",
+          "conv_blocks.1.edge_mlp.mlp.2.weight",
+          "conv_blocks.1.edge_mlp.mlp.2.bias",
+          "conv_blocks.1.edge_mlp.mlp.4.weight",
+          "conv_blocks.1.edge_mlp.mlp.4.bias",
+          "conv_blocks.1.conv.bias",
+          "conv_blocks.1.conv.nn.mlp.0.weight",
+          "conv_blocks.1.conv.nn.mlp.0.bias",
+          "conv_blocks.1.conv.nn.mlp.2.weight",
+          "conv_blocks.1.conv.nn.mlp.2.bias",
+          "conv_blocks.1.conv.nn.mlp.4.weight",
+          "conv_blocks.1.conv.nn.mlp.4.bias",
+          "conv_blocks.1.conv.lin.weight",
+          "conv_blocks.1.norm.weight",
+          "conv_blocks.1.norm.bias",
+          "conv_blocks.2.edge_mlp.mlp.0.weight",
+          "conv_blocks.2.edge_mlp.mlp.0.bias",
+          "conv_blocks.2.edge_mlp.mlp.2.weight",
+          "conv_blocks.2.edge_mlp.mlp.2.bias",
+          "conv_blocks.2.edge_mlp.mlp.4.weight",
+          "conv_blocks.2.edge_mlp.mlp.4.bias",
+          "conv_blocks.2.conv.bias",
+          "conv_blocks.2.conv.nn.mlp.0.weight",
+          "conv_blocks.2.conv.nn.mlp.0.bias",
+          "conv_blocks.2.conv.nn.mlp.2.weight",
+          "conv_blocks.2.conv.nn.mlp.2.bias",
+          "conv_blocks.2.conv.nn.mlp.4.weight",
+          "conv_blocks.2.conv.nn.mlp.4.bias",
+          "conv_blocks.2.conv.lin.weight",
+          "conv_blocks.2.norm.weight",
+          "conv_blocks.2.norm.bias",
+          "pred_head.0.weight",
+          "pred_head.0.bias",
+          "pred_head.3.weight",
+          "pred_head.3.bias",
+          "pred_head.6.weight",
+          "pred_head.6.bias"
+        ],
+        "embedded_provenance": false,
+        "model_config": null,
+        "graph_config": null,
+        "tensor_shapes": {
+          "input_proj.0.weight": [
+            64,
+            4
+          ],
+          "input_proj.0.bias": [
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.0.edge_mlp.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.0.edge_mlp.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.0.conv.bias": [
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.0.conv.nn.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.0.conv.nn.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.0.conv.lin.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.0.norm.weight": [
+            64
+          ],
+          "conv_blocks.0.norm.bias": [
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.1.edge_mlp.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.1.edge_mlp.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.1.conv.bias": [
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.1.conv.nn.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.1.conv.nn.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.1.conv.lin.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.1.norm.weight": [
+            64
+          ],
+          "conv_blocks.1.norm.bias": [
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.2.edge_mlp.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.2.edge_mlp.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.2.conv.bias": [
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.0.weight": [
+            64,
+            5
+          ],
+          "conv_blocks.2.conv.nn.mlp.0.bias": [
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.2.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.2.bias": [
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.4.weight": [
+            4096,
+            64
+          ],
+          "conv_blocks.2.conv.nn.mlp.4.bias": [
+            4096
+          ],
+          "conv_blocks.2.conv.lin.weight": [
+            64,
+            64
+          ],
+          "conv_blocks.2.norm.weight": [
+            64
+          ],
+          "conv_blocks.2.norm.bias": [
+            64
+          ],
+          "pred_head.0.weight": [
+            64,
+            64
+          ],
+          "pred_head.0.bias": [
+            64
+          ],
+          "pred_head.3.weight": [
+            32,
+            64
+          ],
+          "pred_head.3.bias": [
+            32
+          ],
+          "pred_head.6.weight": [
+            1,
+            32
+          ],
+          "pred_head.6.bias": [
+            1
+          ]
+        }
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/policy.pt",
+      "size_bytes": 106909,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/policy.pt",
+      "sha256": "b1f41771c102bec644e0f84b0c002a228e5514321c768d8919e8beae3379f81d",
+      "checkpoint": {
+        "top_level_keys": [
+          "edge_mean",
+          "edge_scale",
+          "node_mean",
+          "node_scale",
+          "context_mean",
+          "context_scale",
+          "node_proj.weight",
+          "node_proj.bias",
+          "edge_proj.weight",
+          "edge_proj.bias",
+          "fc.0.weight",
+          "fc.0.bias",
+          "fc.2.weight",
+          "fc.2.bias",
+          "fc.4.weight",
+          "fc.4.bias"
+        ],
+        "embedded_provenance": false,
+        "model_config": null,
+        "graph_config": null,
+        "tensor_shapes": {
+          "edge_mean": [
+            5
+          ],
+          "edge_scale": [
+            5
+          ],
+          "node_mean": [
+            64
+          ],
+          "node_scale": [
+            64
+          ],
+          "context_mean": [
+            64
+          ],
+          "context_scale": [
+            64
+          ],
+          "node_proj.weight": [
+            64,
+            64
+          ],
+          "node_proj.bias": [
+            64
+          ],
+          "edge_proj.weight": [
+            64,
+            5
+          ],
+          "edge_proj.bias": [
+            64
+          ],
+          "fc.0.weight": [
+            64,
+            256
+          ],
+          "fc.0.bias": [
+            64
+          ],
+          "fc.2.weight": [
+            64,
+            64
+          ],
+          "fc.2.bias": [
+            64
+          ],
+          "fc.4.weight": [
+            1,
+            64
+          ],
+          "fc.4.bias": [
+            1
+          ]
+        }
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/provenance.json",
+      "size_bytes": 482355,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/provenance.json",
+      "sha256": "a775f072fa1a103517b72e611d75b95a00edf78ae594d7cbf99d3a4351049016",
+      "notebook_provenance": {
+        "research_label": "legacy_total_radius",
+        "run_mode": "full",
+        "evaluation_protocol": {
+          "decoder": "direct",
+          "constraint": "no_isolates",
+          "clustered_units": {
+            "position": "ckpc_per_h",
+            "radius": "ckpc_per_h",
+            "stellar_mass": "log10_Msun",
+            "halo_mass": "M_sun"
+          },
+          "target": "legacy_uncertified"
+        },
+        "dataset": {
+          "tng_csv": {
+            "path": "/kaggle/input/datasets/nealsalian/cosmicnet-data/tng100_clustered.csv",
+            "size_bytes": 1068424,
+            "sha256": "6c148f2cae68abac7bc5c34d370ff0130a647b49e79c32880bcf36ecc0ab4d53"
+          },
+          "checkpoint": {
+            "path": "/kaggle/input/datasets/nealsalian/cosmicnet-data/best_model_augmented.pt",
+            "size_bytes": 3349165,
+            "sha256": "42764f0db204863b28672d6ec6e207443602de16dcfa926765a0429b3451c63f"
+          }
+        },
+        "backbone": {
+          "stage": "frozen",
+          "sha256": "56907374794d9203b4b1873a3b930fff856aff427244d86e6a55742cded12034"
+        },
+        "split_counts": {
+          "train": 378,
+          "val": 81,
+          "test": 82
+        }
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/provenance.json",
+      "size_bytes": 30258,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/provenance.json",
+      "sha256": "44410f959bce77f56db28a26104cda722dca8f1f2a5409ef048e80614cd2fdbd",
+      "notebook_provenance": {
+        "research_label": "legacy_total_radius",
+        "run_mode": "full",
+        "evaluation_protocol": {
+          "decoder": "direct",
+          "constraint": "no_isolates",
+          "clustered_units": {
+            "position": "ckpc_per_h",
+            "radius": "ckpc_per_h",
+            "stellar_mass": "log10_Msun",
+            "halo_mass": "M_sun"
+          },
+          "target": "legacy_uncertified"
+        },
+        "dataset": {
+          "tng_csv": {
+            "path": "/kaggle/input/datasets/nealsalian/cosmicnet-data/tng100_clustered.csv",
+            "size_bytes": 1068424,
+            "sha256": "6c148f2cae68abac7bc5c34d370ff0130a647b49e79c32880bcf36ecc0ab4d53"
+          },
+          "checkpoint": {
+            "path": "/kaggle/input/datasets/nealsalian/cosmicnet-data/best_model_augmented.pt",
+            "size_bytes": 3349165,
+            "sha256": "42764f0db204863b28672d6ec6e207443602de16dcfa926765a0429b3451c63f"
+          }
+        },
+        "backbone": {
+          "stage": "frozen",
+          "sha256": "56907374794d9203b4b1873a3b930fff856aff427244d86e6a55742cded12034"
+        },
+        "split_counts": {
+          "train": 378,
+          "val": 81,
+          "test": 82
+        }
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "outputs/checkpoints/best_model.pt",
+      "size_bytes": 134,
+      "inspection_status": "unusable_or_unverified",
+      "reason": "Git LFS pointer is not artifact content: /Users/nealsalian/Desktop/cosmic-net/outputs/checkpoints/best_model.pt"
+    },
+    {
+      "relative_path": "outputs/rls/policy.pt",
+      "size_bytes": 120821,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/outputs/rls/policy.pt",
+      "sha256": "c28724f6c88fc95e972b9cbb808a556dac7cb9f426cda10ce7ba09d74004b180",
+      "checkpoint": {
+        "top_level_keys": [
+          "node_proj.weight",
+          "node_proj.bias",
+          "edge_proj.weight",
+          "edge_proj.bias",
+          "fc.0.weight",
+          "fc.0.bias",
+          "fc.2.weight",
+          "fc.2.bias",
+          "fc.4.weight",
+          "fc.4.bias"
+        ],
+        "embedded_provenance": false,
+        "model_config": null,
+        "graph_config": null,
+        "tensor_shapes": {
+          "node_proj.weight": [
+            64,
+            128
+          ],
+          "node_proj.bias": [
+            64
+          ],
+          "edge_proj.weight": [
+            64,
+            5
+          ],
+          "edge_proj.bias": [
+            64
+          ],
+          "fc.0.weight": [
+            64,
+            256
+          ],
+          "fc.0.bias": [
+            64
+          ],
+          "fc.2.weight": [
+            64,
+            64
+          ],
+          "fc.2.bias": [
+            64
+          ],
+          "fc.4.weight": [
+            1,
+            64
+          ],
+          "fc.4.bias": [
+            1
+          ]
+        }
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "outputs/rls/value_net.pt",
+      "size_bytes": 53037,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/outputs/rls/value_net.pt",
+      "sha256": "6a3fa753259d5e345dc00060a7f09ffd144ab1b96cba9e4bd81f0ce870abbe49",
+      "checkpoint": {
+        "top_level_keys": [
+          "net.0.weight",
+          "net.0.bias",
+          "net.2.weight",
+          "net.2.bias",
+          "net.4.weight",
+          "net.4.bias"
+        ],
+        "embedded_provenance": false,
+        "model_config": null,
+        "graph_config": null,
+        "tensor_shapes": {
+          "net.0.weight": [
+            64,
+            128
+          ],
+          "net.0.bias": [
+            64
+          ],
+          "net.2.weight": [
+            64,
+            64
+          ],
+          "net.2.bias": [
+            64
+          ],
+          "net.4.weight": [
+            1,
+            64
+          ],
+          "net.4.bias": [
+            1
+          ]
+        }
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "raw_hdf5/groupcat_99_0.hdf5",
+      "size_bytes": 11766449,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/raw_hdf5/groupcat_99_0.hdf5",
+      "sha256": "4d7bceec81376ad0351212244b470fb6a87d70b7a9fdbc094137928c6b168cf0",
+      "hdf5": {
+        "root_attributes": {},
+        "datasets": {
+          "Group/GroupBHMass": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupBHMdot": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupCM": {
+            "shape": [
+              1,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupFirstSub": {
+            "shape": [
+              1
+            ],
+            "dtype": "int32"
+          },
+          "Group/GroupGasMetalFractions": {
+            "shape": [
+              1,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupGasMetallicity": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupLen": {
+            "shape": [
+              1
+            ],
+            "dtype": "int32"
+          },
+          "Group/GroupLenType": {
+            "shape": [
+              1,
+              6
+            ],
+            "dtype": "int32"
+          },
+          "Group/GroupMass": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupMassType": {
+            "shape": [
+              1,
+              6
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupNsubs": {
+            "shape": [
+              1
+            ],
+            "dtype": "int32"
+          },
+          "Group/GroupPos": {
+            "shape": [
+              1,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupSFR": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupStarMetalFractions": {
+            "shape": [
+              1,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupStarMetallicity": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupVel": {
+            "shape": [
+              1,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupWindMass": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_M_Crit200": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_M_Crit500": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_M_Mean200": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_M_TopHat200": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_R_Crit200": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_R_Crit500": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_R_Mean200": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_R_TopHat200": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloBHMass": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloBHMdot": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloBfldDisk": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloBfldHalo": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloCM": {
+            "shape": [
+              17185,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloFlag": {
+            "shape": [
+              17185
+            ],
+            "dtype": "bool"
+          },
+          "Subhalo/SubhaloGasMetalFractions": {
+            "shape": [
+              17185,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetalFractionsHalfRad": {
+            "shape": [
+              17185,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetalFractionsMaxRad": {
+            "shape": [
+              17185,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetalFractionsSfr": {
+            "shape": [
+              17185,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetalFractionsSfrWeighted": {
+            "shape": [
+              17185,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetallicity": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetallicityHalfRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetallicityMaxRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetallicitySfr": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetallicitySfrWeighted": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGrNr": {
+            "shape": [
+              17185
+            ],
+            "dtype": "int32"
+          },
+          "Subhalo/SubhaloHalfmassRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloHalfmassRadType": {
+            "shape": [
+              17185,
+              6
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloIDMostbound": {
+            "shape": [
+              17185
+            ],
+            "dtype": "uint64"
+          },
+          "Subhalo/SubhaloLen": {
+            "shape": [
+              17185
+            ],
+            "dtype": "int32"
+          },
+          "Subhalo/SubhaloLenType": {
+            "shape": [
+              17185,
+              6
+            ],
+            "dtype": "int32"
+          },
+          "Subhalo/SubhaloMass": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassInHalfRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassInHalfRadType": {
+            "shape": [
+              17185,
+              6
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassInMaxRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassInMaxRadType": {
+            "shape": [
+              17185,
+              6
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassInRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassInRadType": {
+            "shape": [
+              17185,
+              6
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassType": {
+            "shape": [
+              17185,
+              6
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloParent": {
+            "shape": [
+              17185
+            ],
+            "dtype": "int32"
+          },
+          "Subhalo/SubhaloPos": {
+            "shape": [
+              17185,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloSFR": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloSFRinHalfRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloSFRinMaxRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloSFRinRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloSpin": {
+            "shape": [
+              17185,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStarMetalFractions": {
+            "shape": [
+              17185,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStarMetalFractionsHalfRad": {
+            "shape": [
+              17185,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStarMetalFractionsMaxRad": {
+            "shape": [
+              17185,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStarMetallicity": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStarMetallicityHalfRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStarMetallicityMaxRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStellarPhotometrics": {
+            "shape": [
+              17185,
+              8
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStellarPhotometricsMassInRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStellarPhotometricsRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloVel": {
+            "shape": [
+              17185,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloVelDisp": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloVmax": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloVmaxRad": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloWindMass": {
+            "shape": [
+              17185
+            ],
+            "dtype": "float32"
+          }
+        },
+        "header": {
+          "BoxSize": 75000.0,
+          "FlagDoubleprecision": 0,
+          "Git_commit": "d203ec8b07c7e2bdda5f608aa0babea46d603699",
+          "Git_date": "Thu Apr 7 14:14:27 2016 +0200",
+          "HubbleParam": 0.6774,
+          "Ngroups_ThisFile": 1,
+          "Ngroups_Total": 6291349,
+          "Nids_ThisFile": 11830481,
+          "Nids_Total": 5263038490,
+          "Nsubgroups_ThisFile": 17185,
+          "Nsubgroups_Total": 4371211,
+          "NumFiles": 448,
+          "Omega0": 0.3089,
+          "OmegaLambda": 0.6911,
+          "Redshift": 2.220446049250313e-16,
+          "Time": 0.9999999999999998
+        },
+        "native_group_range": [
+          0,
+          0
+        ],
+        "declared_single_file": false,
+        "scientific_usability_verified": false
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "raw_hdf5/groupcat_99_1.hdf5",
+      "size_bytes": 26840,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/raw_hdf5/groupcat_99_1.hdf5",
+      "sha256": "b45fa7b9d99a8ab6aa05617f61ebecdf1c23940a0d432ecf57942ed6c3058b2c",
+      "hdf5": {
+        "root_attributes": {},
+        "datasets": {},
+        "header": {
+          "BoxSize": 75000.0,
+          "FlagDoubleprecision": 0,
+          "Git_commit": "d203ec8b07c7e2bdda5f608aa0babea46d603699",
+          "Git_date": "Thu Apr 7 14:14:27 2016 +0200",
+          "HubbleParam": 0.6774,
+          "Ngroups_ThisFile": 0,
+          "Ngroups_Total": 6291349,
+          "Nids_ThisFile": 11595058,
+          "Nids_Total": 5263038490,
+          "Nsubgroups_ThisFile": 0,
+          "Nsubgroups_Total": 4371211,
+          "NumFiles": 448,
+          "Omega0": 0.3089,
+          "OmegaLambda": 0.6911,
+          "Redshift": 2.220446049250313e-16,
+          "Time": 0.9999999999999998
+        },
+        "declared_single_file": false,
+        "scientific_usability_verified": false
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "raw_hdf5/groupcat_99_10.hdf5",
+      "size_bytes": 26840,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/raw_hdf5/groupcat_99_10.hdf5",
+      "sha256": "e7caaad3e66e102b006668e82ace3a8dc7fe037432b455724f8de8e88dc7ec22",
+      "hdf5": {
+        "root_attributes": {},
+        "datasets": {},
+        "header": {
+          "BoxSize": 75000.0,
+          "FlagDoubleprecision": 0,
+          "Git_commit": "d203ec8b07c7e2bdda5f608aa0babea46d603699",
+          "Git_date": "Thu Apr 7 14:14:27 2016 +0200",
+          "HubbleParam": 0.6774,
+          "Ngroups_ThisFile": 0,
+          "Ngroups_Total": 6291349,
+          "Nids_ThisFile": 11416041,
+          "Nids_Total": 5263038490,
+          "Nsubgroups_ThisFile": 0,
+          "Nsubgroups_Total": 4371211,
+          "NumFiles": 448,
+          "Omega0": 0.3089,
+          "OmegaLambda": 0.6911,
+          "Redshift": 2.220446049250313e-16,
+          "Time": 0.9999999999999998
+        },
+        "declared_single_file": false,
+        "scientific_usability_verified": false
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "raw_hdf5/groupcat_99_11.hdf5",
+      "size_bytes": 26840,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/raw_hdf5/groupcat_99_11.hdf5",
+      "sha256": "c6a6e74421d954736e7e2375a8ad9a5944fd131240daff293c60526e1556df70",
+      "hdf5": {
+        "root_attributes": {},
+        "datasets": {},
+        "header": {
+          "BoxSize": 75000.0,
+          "FlagDoubleprecision": 0,
+          "Git_commit": "d203ec8b07c7e2bdda5f608aa0babea46d603699",
+          "Git_date": "Thu Apr 7 14:14:27 2016 +0200",
+          "HubbleParam": 0.6774,
+          "Ngroups_ThisFile": 0,
+          "Ngroups_Total": 6291349,
+          "Nids_ThisFile": 10987438,
+          "Nids_Total": 5263038490,
+          "Nsubgroups_ThisFile": 0,
+          "Nsubgroups_Total": 4371211,
+          "NumFiles": 448,
+          "Omega0": 0.3089,
+          "OmegaLambda": 0.6911,
+          "Redshift": 2.220446049250313e-16,
+          "Time": 0.9999999999999998
+        },
+        "declared_single_file": false,
+        "scientific_usability_verified": false
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "raw_hdf5/groupcat_99_2.hdf5",
+      "size_bytes": 26840,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/raw_hdf5/groupcat_99_2.hdf5",
+      "sha256": "91c1fa853184fbc1dcdb89e0ec30c935fb83f52b5c40cdb8456c27e43913bfbc",
+      "hdf5": {
+        "root_attributes": {},
+        "datasets": {},
+        "header": {
+          "BoxSize": 75000.0,
+          "FlagDoubleprecision": 0,
+          "Git_commit": "d203ec8b07c7e2bdda5f608aa0babea46d603699",
+          "Git_date": "Thu Apr 7 14:14:27 2016 +0200",
+          "HubbleParam": 0.6774,
+          "Ngroups_ThisFile": 0,
+          "Ngroups_Total": 6291349,
+          "Nids_ThisFile": 11181097,
+          "Nids_Total": 5263038490,
+          "Nsubgroups_ThisFile": 0,
+          "Nsubgroups_Total": 4371211,
+          "NumFiles": 448,
+          "Omega0": 0.3089,
+          "OmegaLambda": 0.6911,
+          "Redshift": 2.220446049250313e-16,
+          "Time": 0.9999999999999998
+        },
+        "declared_single_file": false,
+        "scientific_usability_verified": false
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "raw_hdf5/groupcat_99_3.hdf5",
+      "size_bytes": 26840,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/raw_hdf5/groupcat_99_3.hdf5",
+      "sha256": "c0e698ba26b575a4482e28d47aa098fb117eb8d832608db902d48cb4fff511fe",
+      "hdf5": {
+        "root_attributes": {},
+        "datasets": {},
+        "header": {
+          "BoxSize": 75000.0,
+          "FlagDoubleprecision": 0,
+          "Git_commit": "d203ec8b07c7e2bdda5f608aa0babea46d603699",
+          "Git_date": "Thu Apr 7 14:14:27 2016 +0200",
+          "HubbleParam": 0.6774,
+          "Ngroups_ThisFile": 0,
+          "Ngroups_Total": 6291349,
+          "Nids_ThisFile": 10961681,
+          "Nids_Total": 5263038490,
+          "Nsubgroups_ThisFile": 0,
+          "Nsubgroups_Total": 4371211,
+          "NumFiles": 448,
+          "Omega0": 0.3089,
+          "OmegaLambda": 0.6911,
+          "Redshift": 2.220446049250313e-16,
+          "Time": 0.9999999999999998
+        },
+        "declared_single_file": false,
+        "scientific_usability_verified": false
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "raw_hdf5/groupcat_99_4.hdf5",
+      "size_bytes": 0,
+      "inspection_status": "unusable_or_unverified",
+      "reason": "missing or empty required file: /Users/nealsalian/Desktop/cosmic-net/raw_hdf5/groupcat_99_4.hdf5"
+    },
+    {
+      "relative_path": "raw_hdf5/groupcat_99_5.hdf5",
+      "size_bytes": 26840,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/raw_hdf5/groupcat_99_5.hdf5",
+      "sha256": "cdd069565bc2a6d50e6239454ae4f558111fb2660c3adab6679152c8203dbd52",
+      "hdf5": {
+        "root_attributes": {},
+        "datasets": {},
+        "header": {
+          "BoxSize": 75000.0,
+          "FlagDoubleprecision": 0,
+          "Git_commit": "d203ec8b07c7e2bdda5f608aa0babea46d603699",
+          "Git_date": "Thu Apr 7 14:14:27 2016 +0200",
+          "HubbleParam": 0.6774,
+          "Ngroups_ThisFile": 0,
+          "Ngroups_Total": 6291349,
+          "Nids_ThisFile": 11175824,
+          "Nids_Total": 5263038490,
+          "Nsubgroups_ThisFile": 0,
+          "Nsubgroups_Total": 4371211,
+          "NumFiles": 448,
+          "Omega0": 0.3089,
+          "OmegaLambda": 0.6911,
+          "Redshift": 2.220446049250313e-16,
+          "Time": 0.9999999999999998
+        },
+        "declared_single_file": false,
+        "scientific_usability_verified": false
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "raw_hdf5/groupcat_99_6.hdf5",
+      "size_bytes": 26840,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/raw_hdf5/groupcat_99_6.hdf5",
+      "sha256": "b8474e21b6f0d80868cfdfb7b78821b76e17864c68f29dd8b7f221e502d4bf27",
+      "hdf5": {
+        "root_attributes": {},
+        "datasets": {},
+        "header": {
+          "BoxSize": 75000.0,
+          "FlagDoubleprecision": 0,
+          "Git_commit": "d203ec8b07c7e2bdda5f608aa0babea46d603699",
+          "Git_date": "Thu Apr 7 14:14:27 2016 +0200",
+          "HubbleParam": 0.6774,
+          "Ngroups_ThisFile": 0,
+          "Ngroups_Total": 6291349,
+          "Nids_ThisFile": 11873919,
+          "Nids_Total": 5263038490,
+          "Nsubgroups_ThisFile": 0,
+          "Nsubgroups_Total": 4371211,
+          "NumFiles": 448,
+          "Omega0": 0.3089,
+          "OmegaLambda": 0.6911,
+          "Redshift": 2.220446049250313e-16,
+          "Time": 0.9999999999999998
+        },
+        "declared_single_file": false,
+        "scientific_usability_verified": false
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "raw_hdf5/groupcat_99_7.hdf5",
+      "size_bytes": 9704381,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/raw_hdf5/groupcat_99_7.hdf5",
+      "sha256": "595ef2bb0f167fb3d5e520fad38187371812096390e7ad0316bc21fda23a7429",
+      "hdf5": {
+        "root_attributes": {},
+        "datasets": {
+          "Group/GroupBHMass": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupBHMdot": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupCM": {
+            "shape": [
+              1,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupFirstSub": {
+            "shape": [
+              1
+            ],
+            "dtype": "int32"
+          },
+          "Group/GroupGasMetalFractions": {
+            "shape": [
+              1,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupGasMetallicity": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupLen": {
+            "shape": [
+              1
+            ],
+            "dtype": "int32"
+          },
+          "Group/GroupLenType": {
+            "shape": [
+              1,
+              6
+            ],
+            "dtype": "int32"
+          },
+          "Group/GroupMass": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupMassType": {
+            "shape": [
+              1,
+              6
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupNsubs": {
+            "shape": [
+              1
+            ],
+            "dtype": "int32"
+          },
+          "Group/GroupPos": {
+            "shape": [
+              1,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupSFR": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupStarMetalFractions": {
+            "shape": [
+              1,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupStarMetallicity": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupVel": {
+            "shape": [
+              1,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Group/GroupWindMass": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_M_Crit200": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_M_Crit500": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_M_Mean200": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_M_TopHat200": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_R_Crit200": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_R_Crit500": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_R_Mean200": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Group/Group_R_TopHat200": {
+            "shape": [
+              1
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloBHMass": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloBHMdot": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloBfldDisk": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloBfldHalo": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloCM": {
+            "shape": [
+              14157,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloFlag": {
+            "shape": [
+              14157
+            ],
+            "dtype": "bool"
+          },
+          "Subhalo/SubhaloGasMetalFractions": {
+            "shape": [
+              14157,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetalFractionsHalfRad": {
+            "shape": [
+              14157,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetalFractionsMaxRad": {
+            "shape": [
+              14157,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetalFractionsSfr": {
+            "shape": [
+              14157,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetalFractionsSfrWeighted": {
+            "shape": [
+              14157,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetallicity": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetallicityHalfRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetallicityMaxRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetallicitySfr": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGasMetallicitySfrWeighted": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloGrNr": {
+            "shape": [
+              14157
+            ],
+            "dtype": "int32"
+          },
+          "Subhalo/SubhaloHalfmassRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloHalfmassRadType": {
+            "shape": [
+              14157,
+              6
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloIDMostbound": {
+            "shape": [
+              14157
+            ],
+            "dtype": "uint64"
+          },
+          "Subhalo/SubhaloLen": {
+            "shape": [
+              14157
+            ],
+            "dtype": "int32"
+          },
+          "Subhalo/SubhaloLenType": {
+            "shape": [
+              14157,
+              6
+            ],
+            "dtype": "int32"
+          },
+          "Subhalo/SubhaloMass": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassInHalfRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassInHalfRadType": {
+            "shape": [
+              14157,
+              6
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassInMaxRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassInMaxRadType": {
+            "shape": [
+              14157,
+              6
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassInRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassInRadType": {
+            "shape": [
+              14157,
+              6
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloMassType": {
+            "shape": [
+              14157,
+              6
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloParent": {
+            "shape": [
+              14157
+            ],
+            "dtype": "int32"
+          },
+          "Subhalo/SubhaloPos": {
+            "shape": [
+              14157,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloSFR": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloSFRinHalfRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloSFRinMaxRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloSFRinRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloSpin": {
+            "shape": [
+              14157,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStarMetalFractions": {
+            "shape": [
+              14157,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStarMetalFractionsHalfRad": {
+            "shape": [
+              14157,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStarMetalFractionsMaxRad": {
+            "shape": [
+              14157,
+              10
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStarMetallicity": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStarMetallicityHalfRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStarMetallicityMaxRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStellarPhotometrics": {
+            "shape": [
+              14157,
+              8
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStellarPhotometricsMassInRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloStellarPhotometricsRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloVel": {
+            "shape": [
+              14157,
+              3
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloVelDisp": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloVmax": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloVmaxRad": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          },
+          "Subhalo/SubhaloWindMass": {
+            "shape": [
+              14157
+            ],
+            "dtype": "float32"
+          }
+        },
+        "header": {
+          "BoxSize": 75000.0,
+          "FlagDoubleprecision": 0,
+          "Git_commit": "d203ec8b07c7e2bdda5f608aa0babea46d603699",
+          "Git_date": "Thu Apr 7 14:14:27 2016 +0200",
+          "HubbleParam": 0.6774,
+          "Ngroups_ThisFile": 1,
+          "Ngroups_Total": 6291349,
+          "Nids_ThisFile": 11284382,
+          "Nids_Total": 5263038490,
+          "Nsubgroups_ThisFile": 14157,
+          "Nsubgroups_Total": 4371211,
+          "NumFiles": 448,
+          "Omega0": 0.3089,
+          "OmegaLambda": 0.6911,
+          "Redshift": 2.220446049250313e-16,
+          "Time": 0.9999999999999998
+        },
+        "native_group_range": [
+          1,
+          1
+        ],
+        "declared_single_file": false,
+        "scientific_usability_verified": false
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "raw_hdf5/groupcat_99_8.hdf5",
+      "size_bytes": 26840,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/raw_hdf5/groupcat_99_8.hdf5",
+      "sha256": "855efeaba663640d70c4f82ff7631ee50af7d53667d3f6451515ad70021ce9dd",
+      "hdf5": {
+        "root_attributes": {},
+        "datasets": {},
+        "header": {
+          "BoxSize": 75000.0,
+          "FlagDoubleprecision": 0,
+          "Git_commit": "d203ec8b07c7e2bdda5f608aa0babea46d603699",
+          "Git_date": "Thu Apr 7 14:14:27 2016 +0200",
+          "HubbleParam": 0.6774,
+          "Ngroups_ThisFile": 0,
+          "Ngroups_Total": 6291349,
+          "Nids_ThisFile": 11078045,
+          "Nids_Total": 5263038490,
+          "Nsubgroups_ThisFile": 0,
+          "Nsubgroups_Total": 4371211,
+          "NumFiles": 448,
+          "Omega0": 0.3089,
+          "OmegaLambda": 0.6911,
+          "Redshift": 2.220446049250313e-16,
+          "Time": 0.9999999999999998
+        },
+        "declared_single_file": false,
+        "scientific_usability_verified": false
+      },
+      "inspection_status": "content_inspected"
+    },
+    {
+      "relative_path": "raw_hdf5/groupcat_99_9.hdf5",
+      "size_bytes": 26840,
+      "path": "/Users/nealsalian/Desktop/cosmic-net/raw_hdf5/groupcat_99_9.hdf5",
+      "sha256": "da9d56f501d5d0b2a7481320004c0a911451f9739f831190ffbb0c608b3f5886",
+      "hdf5": {
+        "root_attributes": {},
+        "datasets": {},
+        "header": {
+          "BoxSize": 75000.0,
+          "FlagDoubleprecision": 0,
+          "Git_commit": "d203ec8b07c7e2bdda5f608aa0babea46d603699",
+          "Git_date": "Thu Apr 7 14:14:27 2016 +0200",
+          "HubbleParam": 0.6774,
+          "Ngroups_ThisFile": 0,
+          "Ngroups_Total": 6291349,
+          "Nids_ThisFile": 11617026,
+          "Nids_Total": 5263038490,
+          "Nsubgroups_ThisFile": 0,
+          "Nsubgroups_Total": 4371211,
+          "NumFiles": 448,
+          "Omega0": 0.3089,
+          "OmegaLambda": 0.6911,
+          "Redshift": 2.220446049250313e-16,
+          "Time": 0.9999999999999998
+        },
+        "declared_single_file": false,
+        "scientific_usability_verified": false
+      },
+      "inspection_status": "content_inspected"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "scope": "One overlapping central galaxy, not a full-catalog certification",
+  "group_id": 1,
+  "csv_subhalo_id": 17185,
+  "csv_halo_mass_msun": 381146980873560.7,
+  "native_m200c_msun": 381146980873560.7,
+  "csv_radius_raw": 682.504,
+  "native_total_radius_ckpc_per_h": 682.5037841796875,
+  "native_stellar_radius_ckpc_per_h": 88.33854675292969,
+  "csv_members_group1": 10,
+  "native_subhalos_group1": 14157,
+  "native_stellar_members_group1": 2931,
+  "csv_group1_member_ids": [
+    17185,
+    17186,
+    17187,
+    17188,
+    17189,
+    17190,
+    17191,
+    17192,
+    17193,
+    17194
+  ],
+  "csv_richness_histogram": {
+    "7": 1,
+    "8": 4,
+    "9": 21,
+    "10": 515
+  },
+  "csv_target_log10_range": [
+    12.504518514850922,
+    14.581092484003346
+  ],
+  "source_files": [
+    {
+      "path": "/Users/nealsalian/Desktop/cosmic-net/data/raw/tng100_clustered.csv",
+      "size_bytes": 1068424,
+      "sha256": "6c148f2cae68abac7bc5c34d370ff0130a647b49e79c32880bcf36ecc0ab4d53"
+    },
+    {
+      "path": "/Users/nealsalian/Desktop/cosmic-net/raw_hdf5/groupcat_99_7.hdf5",
+      "size_bytes": 9704381,
+      "sha256": "595ef2bb0f167fb3d5e520fad38187371812096390e7ad0316bc21fda23a7429"
+    }
+  ]
+}

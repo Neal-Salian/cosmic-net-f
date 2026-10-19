@@ -1,0 +1,10 @@
+{
+  "status": "blocked_missing_independent_catalog_and_training_receipt",
+  "evaluation_executed": false,
+  "scientific_result": false,
+  "real_independent_halos_evaluated": 0,
+  "completed_experiments": [],
+  "per_halo_results_csv": "per_halo_results.csv",
+  "csv_rows": 0,
+  "note": "Header only. Software fixture outputs remain in pytest temporary directories and are not astronomy evidence."
+}

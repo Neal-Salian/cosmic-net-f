@@ -1,0 +1,25 @@
+{
+  "evaluation_executed": false,
+  "predictions_computed": false,
+  "scientific_result": false,
+  "scope": "strict tensor-state loadability only, no semantic/population certification",
+  "backbone": {
+    "path": "/Users/nealsalian/Desktop/cosmic-net/kaggle/best_model_augmented.pt",
+    "size_bytes": 3349165,
+    "sha256": "42764f0db204863b28672d6ec6e207443602de16dcfa926765a0429b3451c63f"
+  },
+  "policy": {
+    "path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/policy.pt",
+    "size_bytes": 106909,
+    "sha256": "b1f41771c102bec644e0f84b0c002a228e5514321c768d8919e8beae3379f81d"
+  },
+  "backbone_state_sha256": "56907374794d9203b4b1873a3b930fff856aff427244d86e6a55742cded12034",
+  "policy_state_sha256": "e99688e877e6f646147b16b5482d6429ab0c774e41210215223bd232897dff2e",
+  "backbone_embedding_dim": 64,
+  "backbone_strict_state_load": true,
+  "policy_strict_state_load": true,
+  "policy_config_assumed_for_load_test": {
+    "policy_hidden": 64,
+    "policy_normalize": true
+  }
+}

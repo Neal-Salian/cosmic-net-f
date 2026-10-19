@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "status": "pending",
+  "feature_contract": {
+    "target": "log10(M200c/M_sun)",
+    "target_field": "Group_M_Crit200",
+    "radius_field": "SubhaloHalfmassRad",
+    "radius_semantic": "total_subhalo_half_mass_radius",
+    "node_features": [
+      "log10_stellar_mass_Msun",
+      "log10_velocity_dispersion_kms",
+      "log10_total_half_mass_radius_Mpc",
+      "log10_stellar_metallicity"
+    ],
+    "edge_features": [
+      "distance",
+      "delta_v",
+      "cos_theta",
+      "mass_ratio",
+      "proj_sep"
+    ],
+    "position_units": "physical_Mpc",
+    "velocity_units": "peculiar_km/s",
+    "mass_units": "M_sun",
+    "metallicity": "SubhaloStarMetallicity_mass_fraction",
+    "normalization": "log10_nodes_no_refit_raw_physical_edges",
+    "geometry": "euclidean_per_halo_unwrapped"
+  },
+  "verification": {
+    "target": false,
+    "features": false,
+    "training_transforms": false,
+    "lineage": false,
+    "backbone_policy_binding": false
+  },
+  "training_catalogs": [
+    {
+      "suite": "IllustrisTNG",
+      "simulation": "TNG100-1",
+      "snapshot": "99",
+      "initial_condition_id": "PENDING_VERIFY_TNG100_PHASES",
+      "source_sha256": "6c148f2cae68abac7bc5c34d370ff0130a647b49e79c32880bcf36ecc0ab4d53"
+    }
+  ],
+  "backbone_sha256": "42764f0db204863b28672d6ec6e207443602de16dcfa926765a0429b3451c63f",
+  "policy_sha256": "b1f41771c102bec644e0f84b0c002a228e5514321c768d8919e8beae3379f81d",
+  "policy_backbone_sha256": "PENDING_VERIFY_NO_STAGE_B_SUBSTITUTION",
+  "target_range_log10_msun": null,
+  "config": null,
+  "evidence_files": {
+    "training_catalog": {
+      "path": "PENDING_training_catalog",
+      "sha256": "PENDING"
+    },
+    "split": {
+      "path": "PENDING_split",
+      "sha256": "PENDING"
+    },
+    "semantic_audit": {
+      "path": "PENDING_semantic_audit",
+      "sha256": "PENDING"
+    },
+    "training_code": {
+      "path": "PENDING_training_code",
+      "sha256": "PENDING"
+    }
+  },
+  "population_contract": null
+}
