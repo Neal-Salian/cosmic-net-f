@@ -1,0 +1,3118 @@
+[
+  {
+    "graph_id": "tng100_0000309",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000259",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000105",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000053",
+    "eligible": false,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": false,
+        "requested_pair_count": 3,
+        "minimum_pairs": 6,
+        "available_pair_count": 15,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 6,
+        "minimum_pairs": 6,
+        "available_pair_count": 15,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 6,
+        "available_pair_count": 15,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 12,
+        "minimum_pairs": 6,
+        "available_pair_count": 15,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000391",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000001",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 42,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 17,
+        "minimum_pairs": 5,
+        "available_pair_count": 42,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 26,
+        "minimum_pairs": 5,
+        "available_pair_count": 42,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 34,
+        "minimum_pairs": 5,
+        "available_pair_count": 42,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000511",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000360",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000049",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 6,
+        "minimum_pairs": 5,
+        "available_pair_count": 30,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 12,
+        "minimum_pairs": 5,
+        "available_pair_count": 30,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 30,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 24,
+        "minimum_pairs": 5,
+        "available_pair_count": 30,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000427",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000080",
+    "eligible": false,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": false,
+        "requested_pair_count": 4,
+        "minimum_pairs": 5,
+        "available_pair_count": 19,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 8,
+        "minimum_pairs": 5,
+        "available_pair_count": 19,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 12,
+        "minimum_pairs": 5,
+        "available_pair_count": 19,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 16,
+        "minimum_pairs": 5,
+        "available_pair_count": 19,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000205",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000034",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 41,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 17,
+        "minimum_pairs": 5,
+        "available_pair_count": 41,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 25,
+        "minimum_pairs": 5,
+        "available_pair_count": 41,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 33,
+        "minimum_pairs": 5,
+        "available_pair_count": 41,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000441",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000263",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000437",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000470",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000458",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000367",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000091",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000339",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000561",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 8,
+        "minimum_pairs": 5,
+        "available_pair_count": 36,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 15,
+        "minimum_pairs": 5,
+        "available_pair_count": 36,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 22,
+        "minimum_pairs": 5,
+        "available_pair_count": 36,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 29,
+        "minimum_pairs": 5,
+        "available_pair_count": 36,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000052",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 41,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 17,
+        "minimum_pairs": 5,
+        "available_pair_count": 41,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 25,
+        "minimum_pairs": 5,
+        "available_pair_count": 41,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 33,
+        "minimum_pairs": 5,
+        "available_pair_count": 41,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000345",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000264",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000241",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000013",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 6,
+        "minimum_pairs": 5,
+        "available_pair_count": 30,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 12,
+        "minimum_pairs": 5,
+        "available_pair_count": 30,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 30,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 24,
+        "minimum_pairs": 5,
+        "available_pair_count": 30,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000315",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000088",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000388",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000273",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000166",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000328",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000581",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000134",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000306",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000507",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000569",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 8,
+        "minimum_pairs": 5,
+        "available_pair_count": 36,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 15,
+        "minimum_pairs": 5,
+        "available_pair_count": 36,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 22,
+        "minimum_pairs": 5,
+        "available_pair_count": 36,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 29,
+        "minimum_pairs": 5,
+        "available_pair_count": 36,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000319",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000243",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000054",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 43,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 43,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 26,
+        "minimum_pairs": 5,
+        "available_pair_count": 43,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 35,
+        "minimum_pairs": 5,
+        "available_pair_count": 43,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000364",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000050",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000536",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000174",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000460",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000189",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000595",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000481",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 6,
+        "minimum_pairs": 4,
+        "available_pair_count": 28,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 12,
+        "minimum_pairs": 4,
+        "available_pair_count": 28,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 17,
+        "minimum_pairs": 4,
+        "available_pair_count": 28,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 23,
+        "minimum_pairs": 4,
+        "available_pair_count": 28,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000187",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000496",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000169",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000543",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000058",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000495",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000252",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000021",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 5,
+        "minimum_pairs": 5,
+        "available_pair_count": 25,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 10,
+        "minimum_pairs": 5,
+        "available_pair_count": 25,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 15,
+        "minimum_pairs": 5,
+        "available_pair_count": 25,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 20,
+        "minimum_pairs": 5,
+        "available_pair_count": 25,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000313",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000476",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 5,
+        "minimum_pairs": 4,
+        "available_pair_count": 21,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 4,
+        "available_pair_count": 21,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 13,
+        "minimum_pairs": 4,
+        "available_pair_count": 21,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 17,
+        "minimum_pairs": 4,
+        "available_pair_count": 21,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000160",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000276",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000191",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 44,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000386",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000418",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000514",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000343",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000308",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000130",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000099",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 8,
+        "minimum_pairs": 5,
+        "available_pair_count": 40,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 16,
+        "minimum_pairs": 5,
+        "available_pair_count": 40,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 24,
+        "minimum_pairs": 5,
+        "available_pair_count": 40,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 32,
+        "minimum_pairs": 5,
+        "available_pair_count": 40,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000373",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000087",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000475",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 8,
+        "minimum_pairs": 5,
+        "available_pair_count": 36,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 15,
+        "minimum_pairs": 5,
+        "available_pair_count": 36,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 22,
+        "minimum_pairs": 5,
+        "available_pair_count": 36,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 29,
+        "minimum_pairs": 5,
+        "available_pair_count": 36,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000330",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000214",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000484",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000121",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000020",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000071",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000106",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000270",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000446",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 6,
+        "minimum_pairs": 4,
+        "available_pair_count": 28,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 12,
+        "minimum_pairs": 4,
+        "available_pair_count": 28,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 17,
+        "minimum_pairs": 4,
+        "available_pair_count": 28,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 23,
+        "minimum_pairs": 4,
+        "available_pair_count": 28,
+        "constraint": "no_isolates"
+      }
+    ]
+  },
+  {
+    "graph_id": "tng100_0000102",
+    "eligible": true,
+    "budgets": [
+      {
+        "keep": 0.2,
+        "feasible": true,
+        "requested_pair_count": 9,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.4,
+        "feasible": true,
+        "requested_pair_count": 18,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.6,
+        "feasible": true,
+        "requested_pair_count": 27,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      },
+      {
+        "keep": 0.8,
+        "feasible": true,
+        "requested_pair_count": 36,
+        "minimum_pairs": 5,
+        "available_pair_count": 45,
+        "constraint": "no_isolates"
+      }
+    ]
+  }
+]

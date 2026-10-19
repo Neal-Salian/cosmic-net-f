@@ -1,0 +1,18 @@
+{
+  "kind": "historical_training_log_audit_not_retraining",
+  "epochs": 60,
+  "final_epoch": {
+    "reward_mean": 0.9142232751054936,
+    "accuracy_mean": -0.03588107390078733,
+    "virial_mean": -0.04931079841919777,
+    "sparsity_mean": -0.0005848544185659302,
+    "physical_isolates_mean": 0.0,
+    "physical_pair_keep_mean": 0.41417311944028057,
+    "target_pair_keep": 0.4,
+    "entropy": 0.4156109780546219
+  },
+  "reward_min_all_epochs": -7.638052940368652,
+  "reward_max_all_epochs": 2.369048595428467,
+  "zero_isolate_epochs": 60,
+  "note": "Logged accuracy omits w_acc (which is 1); logged reward includes connectivity and clipping."
+}
