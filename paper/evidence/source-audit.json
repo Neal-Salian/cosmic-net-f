@@ -1,0 +1,41 @@
+{
+  "original_checkout": "/Users/nealsalian/Desktop/cosmic-net",
+  "original_branch": "codex/fix-stageb-budget-feasibility",
+  "original_head": "c825bf57652005c80faff79cf4dfd58e3a9baa14",
+  "original_status": [
+    "?? output/",
+    "?? paper/"
+  ],
+  "all_24_original_source_hashes_unchanged": true,
+  "archives": {
+    "A": {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/A-v1-terminal-001/artifacts/cosmic-net-runs/notebook_A/notebook_A_full_outputs.zip",
+      "sha256": "5be79350625c2997318174ee0551fe21d35c9c1aba9cb5df946bcf012537763d",
+      "verified_against_original_summary": true
+    },
+    "B": {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/B-v1-terminal-001/artifacts/cosmic-net-runs/notebook_B/notebook_B_full_outputs.zip",
+      "sha256": "800c65be6fe3c02c96967c1db4fd4c77c6324d7df19f72898e60151f0659bf40",
+      "verified_against_original_summary": true
+    },
+    "C": {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/C-v1-terminal-001/artifacts/cosmic-net-runs/notebook_C/notebook_C_full_outputs.zip",
+      "sha256": "1c0b247b6df6e556d46eb7445baf6966dadcc572d9efc34ee05db0993a3eed11",
+      "verified_against_original_summary": true
+    },
+    "D": {
+      "original_path": "/Users/nealsalian/Desktop/cosmic-net/output/stageb-fix-campaign-20261015/D-v1-terminal-001/artifacts/cosmic-net-runs/notebook_D/notebook_D_full_outputs.zip",
+      "sha256": "c3fe1c371089db357c212926bbec6cde84f678fde570cb1918b5f8bb73ffb8ba",
+      "verified_against_original_summary": true
+    }
+  },
+  "selected_policy_sha256": "b1f41771c102bec644e0f84b0c002a228e5514321c768d8919e8beae3379f81d",
+  "D_archive_members": [
+    "provenance.json",
+    "budget_eligibility.json",
+    "tta_validation.csv",
+    "tta_results.csv",
+    "tta_histories.json",
+    "tta_summary.png"
+  ]
+}

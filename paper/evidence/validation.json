@@ -1,0 +1,58 @@
+{
+  "repository_tests": {
+    "command": "python3 -m pytest -q",
+    "summary": "808 passed, 13 skipped, 695 warnings in 21.85s",
+    "passed": 808,
+    "skipped": 13,
+    "warnings": 695
+  },
+  "statistical_reproduction": {
+    "contrasts": 21,
+    "maximum_difference_from_prior_analysis": 0,
+    "mask_checks": 4264,
+    "source_files": 24
+  },
+  "deterministic_regeneration": {
+    "products": 21,
+    "byte_identical": true,
+    "sha256": {
+      "paper/evidence/analysis.json": "93e5a0675d6c230d7370a09dd6a1a852cc155c72606fbd6f2af383285ded357e",
+      "paper/evidence/paired-comparisons.csv": "4d7e858d948d9997c69d2555d90b5266a52ddcd4fbdcaf7cd4b69dbed022aa55",
+      "paper/evidence/per-halo-error-differences.csv": "71868df830c4afed05d5d389dd72a1783bc0c4f222c26ad3c5acfb6752726884",
+      "paper/figures/figure_1_retention_performance.pdf": "2f891b82b505b630d394cf3ae834571cd921d1f9a24f4cc721404adf4dd5846a",
+      "paper/figures/figure_1_retention_performance.png": "2d5bb79d7396771eeaba276990d3e147e5211bb3989e8484288979f317bd3a03",
+      "paper/figures/figure_2_matched_budgets.pdf": "483cc435ce6adbd38f56f26f488ef45a5d5a85cdbf2de05d130d5218ea7bef9f",
+      "paper/figures/figure_2_matched_budgets.png": "6c9a5d6e3c9b4c4c8c30574e34dec3674001fc1a06eaae5cf8d33ca73d61846e",
+      "paper/figures/figure_3_degradation.pdf": "2b0d121da81f6066589723d91c24803ff9c0c4e464bf0c26e1eb67521c67bcf7",
+      "paper/figures/figure_3_degradation.png": "7f3a5a568b8c1b647f846663e33da9c7818905546de701448fd24bfa1c5fa776",
+      "paper/figures/figure_4_accuracy_latency.pdf": "d286dcc26c2e971b963873f88db2fcffa6ae1795df5bcbd0f4cda3c94f4cdbf2",
+      "paper/figures/figure_4_accuracy_latency.png": "d7b6549a7bb67a3a131c3e3105dfcf17e75db1b12925c6405c9f3508d8570789",
+      "paper/figures/figure_5_per_halo_differences.pdf": "e10855c90bb3ac496c5f91696f1c6194a1861b375ac5a255b702a02f4a35e84a",
+      "paper/figures/figure_5_per_halo_differences.png": "269cff2b84b029481b1e26ea72302129aea3930bb6a5cad54542618aeace343e",
+      "paper/figures/figure_6_paired_confidence_intervals.pdf": "9b01b031222d12e7f7fda0fb73587beffebb7559325b9c6a0de3eedb2f9aea24",
+      "paper/figures/figure_6_paired_confidence_intervals.png": "a8c3e7bc4ae4c1ca9d41d55423f7fc8f326b4608dddfe14947917750477c1159",
+      "paper/results.tex": "cfb4045dee124ddd28af2e9b8a22022c3eb99c80a0ccfef0feb362645c92d666",
+      "paper/tables/table_1_dataset_setup.tex": "19387d33718c2d27402b42a72c1f78702dc9363fc5e2a148d074cadfee3edafe",
+      "paper/tables/table_2_primary_benchmark.tex": "9773927f3feee3ea8ca7e80ccd8f1bda9598c15d957bf0a22ebc96ab08debbb0",
+      "paper/tables/table_3_statistical_comparisons.tex": "b70d3257ed6e0797730c931bc01b5207166e8c8f11bfebd99bc9c96a3bd5ade8",
+      "paper/tables/table_4_runtime.tex": "046c5689629a622647135ed7550c1ef3f8f3ecd32083af5cb4728727bc317739",
+      "paper/tables/table_5_adaptation.tex": "0b35167583a832069ce37bd9dbb6ed784f61370ffd458c89c758b6ea8fc55824"
+    }
+  },
+  "latex_compilation": {
+    "compiler": "Tectonic 0.17.0",
+    "exit_code": 0,
+    "pages": 12,
+    "overfull_boxes": 0,
+    "scope": "Generated results text, all five tables and six vector figures in a two-column manuscript layout"
+  },
+  "visual_qa": {
+    "all_six_png_figures_inspected": true,
+    "all_five_rendered_table_pages_inspected": true
+  },
+  "independent_review": {
+    "findings": "No actionable findings",
+    "original_source_hashes_checked": 24
+  },
+  "source_preservation_audit": "source-audit.json"
+}
